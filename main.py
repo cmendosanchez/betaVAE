@@ -55,6 +55,10 @@ from load_data import create_subset
 from utils.config import process_config
 from torch.utils.data import Subset, Dataset
 from tqdm import tqdm
+
+'''
+FilteredDataset for CustomDatasets
+'''
 class FilteredDataset(Dataset):
     def __init__(self, data, keep_ids):
         """
