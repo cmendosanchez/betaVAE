@@ -1,0 +1,9 @@
+# @package _global_
+dataset_name: full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c
+data_dir: ${dataset_folder}/R_S.C.-sylv._crops_full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c.npy
+subject_dir: ${dataset_folder}/R_S.C.-sylv._subjects.csv
+in_shape: [1, 84, 68, 98]
+subjects_to_remove: null
+remove_subjects: false
+train_list: null
+validation_list: null

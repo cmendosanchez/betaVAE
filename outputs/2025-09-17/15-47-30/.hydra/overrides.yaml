@@ -1,0 +1,6 @@
+- n=32
+- +dataset_localization=neurospin
+- +dataset=cristobal/SC-sylv_right_HCP
+- +MSE_loss=False
+- +preproc=Binary
+- +test_model_dir=/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-09-17/SC-sylv_right_HCP_dim_32_beta_2_13-53-40/

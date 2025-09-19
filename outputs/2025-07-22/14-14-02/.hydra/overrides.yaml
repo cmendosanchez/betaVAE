@@ -1,0 +1,7 @@
+- +dataset=cristobal/SC-sylv_right_subset_UKB
+- +test_model_dir=/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-07-22/14-02-39/
+- +dataset_localization=neurospin
+- n=256
+- +binary=True
+- +MSE_loss=False
+- ++subjects_to_remove=/neurospin/tmp/cmendoza/UKB_processing/2mm/S.C.-sylv./Subs_to_remove_sulci_eval.csv

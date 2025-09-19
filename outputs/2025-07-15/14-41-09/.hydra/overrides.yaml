@@ -1,0 +1,6 @@
+- +dataset=cristobal/SC-sylv_right_fibers_UKB
+- +test_model_dir=/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-07-15/14-17-45/
+- +dataset_localization=neurospin_fibers
+- n=512
+- binary=False
+- MSE_loss=True

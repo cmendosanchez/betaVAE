@@ -1,0 +1,8 @@
+# @package _global_
+dataset_name: SC-sylv_right_fibers_UKB
+data_dir: ${dataset_folder}/2mm/S.C.-sylv./Rskeleton_subject_standarized.npy
+subject_dir: ${dataset_folder}/2mm/S.C.-sylv./Rskeleton_subject_standarized.csv
+#in_shape: [1, 42, 34, 49]
+in_shape: [1, 84, 68, 98]
+subjects_to_remove: /neurospin/tmp/cmendoza/UKB_processing/2mm/S.C.-sylv./Interrupted_CS_subset.csv
+remove_subjects: False

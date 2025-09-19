@@ -1,0 +1,4 @@
+- dataset=cristobal/LARGE_CINGULATE_right_UKB.yaml
+- +test_model_dir=/neurospin/dico/cmendoza/Runs/Jeanzay/01_betavae_sulci_crops/2025-06-12/LARGE_CINGULATE_right_UKB_256
+- +dataset_localization=neurospin
+- ++n=256

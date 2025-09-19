@@ -1,0 +1,3 @@
+# @package _global_
+dataset_folder: /home_local/cm283129/Runs/13_Cortical_connectivity/Output
+save_dir: /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output

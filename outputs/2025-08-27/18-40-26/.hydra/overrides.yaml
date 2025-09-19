@@ -1,0 +1,6 @@
+- n=32
+- +dataset_localization=neurospin_CorticalConnectivity
+- +dataset=cristobal/R_SC-sylv_right_CorticalConnectivity_0_80
+- +MSE_loss=True
+- +binary=False
+- +test_model_dir=/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-08-27/16-26-27

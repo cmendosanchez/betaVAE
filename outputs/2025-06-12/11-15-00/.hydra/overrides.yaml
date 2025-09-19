@@ -1,0 +1,2 @@
+- dataset=cristobal/SC-sylv_right_UKB.yaml
+- +test_model_dir=/home/cm283129/jeanzay/Runs/01_betavae_sulci_crops/Output/2025-06-12/toto

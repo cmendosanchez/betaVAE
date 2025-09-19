@@ -1,0 +1,8 @@
+- +dataset_localization=neurospin_fibers
+- +dataset=cristobal/SC-sylv_right_fibers_UKB
+- batch_size=8
+- n=256
+- binary=True
+- threshold=0.2
+- MSE_loss=True
+- depth=3

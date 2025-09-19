@@ -1,0 +1,8 @@
+- n=75
+- +dataset_localization=neurospin_CorticalConnectivity
+- +dataset=CorticalConnectivity/two_ends_R_S.C.-sylv._Track_0_80_icbm09c
+- +MSE_loss=True
+- +binary=False
+- +split=Random
+- +preproc=MinMax
+- +test_model_dir=/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-08-30/R_S.C.-sylv_crops_two_ends_R_S.C.-sylv._Track_0_80_icbm09c_11-44-25

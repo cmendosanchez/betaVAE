@@ -1,0 +1,7 @@
+# @package _global_
+dataset_name: R_S.C.-sylv
+data_dir: ${dataset_folder}/${dataset_name}/R_S.C.-sylv_crops_two_ends_R_S.C.-sylv._Track_0_80_icbm09c.npy
+subject_dir: ${dataset_folder}/${dataset_name}/R_S.C.-sylv_subjects.csv
+in_shape: [1, 84, 68, 98]
+subjects_to_remove: /neurospin/tmp/cmendoza/UKB_processing/2mm/S.C.-sylv./Interrupted_CS_subset.csv
+remove_subjects: False

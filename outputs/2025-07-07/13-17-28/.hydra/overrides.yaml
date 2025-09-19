@@ -1,0 +1,4 @@
+- n=256
+- +dataset_localization=neurospin_fibers
+- +dataset=cristobal/SC-sylv_right_fibers_UKB
+- loss=MSE

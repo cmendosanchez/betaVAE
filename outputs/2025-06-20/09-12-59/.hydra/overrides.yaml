@@ -1,0 +1,4 @@
+- dataset=cristobal/ACCpatterns_LARGE_CINGULATE_RIGHT.yaml
+- +test_model_dir=/neurospin/dico/cmendoza/Runs/Jeanzay/01_betavae_sulci_crops/2025-06-12/ACCpatterns_LARGE_CINGULATE_RIGHT_32
+- +dataset_localization=neurospin
+- ++n=32

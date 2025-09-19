@@ -1,0 +1,7 @@
+# @package _global_
+dataset_name: SC-sylv_right_HCP
+data_dir: "/neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/S.C.-sylv./mask/Rskeleton.pkl"
+subject_dir: "/neurospin/dico/data/deep_folding/current/datasets/hcp/crops/2mm/S.C.-sylv./mask/Rskeleton_subject.csv"
+in_shape: [1, 42, 34, 49]
+subjects_to_remove: None
+remove_subjects: False

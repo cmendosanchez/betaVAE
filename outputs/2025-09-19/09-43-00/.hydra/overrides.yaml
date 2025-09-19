@@ -1,0 +1,6 @@
+- n=32
+- +dataset_localization=neurospin
+- +dataset=cristobal/SC-sylv_right_HCP
+- +MSE_loss=False
+- +preproc=Binary
+- +split=CustomSplit

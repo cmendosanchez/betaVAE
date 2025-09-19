@@ -1,0 +1,23 @@
+dataset_name: SC-sylv_right_UKB
+data_dir: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rskeleton.npy
+subject_dir: ${dataset_folder}/UkBioBank40/crops/2mm/S.C.-sylv./mask/Rskeleton_subject.csv
+in_shape:
+- 1
+- 42
+- 34
+- 49
+subjects_to_remove: ${dataset_folder}/UkBioBank40/CSLabel/interrupted_CS_QC.csv
+remove_subjects: false
+kl: 2
+embedding_size: 10
+depth: 3
+'n': 75
+batch_size: 32
+nb_epoch: 150
+lr: 0.0002
+weights:
+- 1
+- 2
+dataset_folder: /neurospin/dico/data/deep_folding/current/datasets
+save_dir: /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output
+test_model_dir: /neurospin/dico/cmendoza/Runs/Jeanzay/01_betavae_sulci_crops/2025-06-12/toto

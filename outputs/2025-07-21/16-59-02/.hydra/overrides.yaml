@@ -1,0 +1,6 @@
+- +dataset_localization=neurospin
+- +dataset=cristobal/SC-sylv_right_subset_UKB
+- batch_size=16
+- n=75
+- +binary=True
+- +MSE_loss=False

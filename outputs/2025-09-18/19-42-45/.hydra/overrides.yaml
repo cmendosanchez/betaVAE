@@ -1,0 +1,5 @@
+- n=256
+- +dataset_localization=jeanzay_PhD_UKB
+- +dataset=PhD_UKB/full_brain_R_S.C.-sylv._Track_0_250_icbm09c
+- +MSE_loss=True
+- +preproc=LogMinMax

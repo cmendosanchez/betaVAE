@@ -1,0 +1,5 @@
+- n=32
+- +dataset_localization=neurospin_CorticalConnectivity
+- +dataset=cristobal/R_SC-sylv_right_CorticalConnectivity_0_80
+- +MSE_loss=True
+- +binary=False

@@ -1,0 +1,25 @@
+kl: 2
+embedding_size: 10
+depth: 3
+'n': 2048
+batch_size: 32
+nb_epoch: 150
+lr: 0.0002
+weights:
+- 1
+- 2
+dataset_name: SC-sylv_right_fibers_UKB
+data_dir: ${dataset_folder}/2mm/S.C.-sylv./Rskeleton_subject_standarized.npy
+subject_dir: ${dataset_folder}/2mm/S.C.-sylv./Rskeleton_subject_standarized.csv
+in_shape:
+- 1
+- 84
+- 68
+- 98
+subjects_to_remove: /neurospin/tmp/cmendoza/UKB_processing/2mm/S.C.-sylv./Interrupted_CS_subset.csv
+remove_subjects: false
+dataset_folder: /neurospin/tmp/cmendoza/UKB_processing/
+save_dir: /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output
+test_model_dir: /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-07-22/15-05-22/
+binary: false
+MSE_loss: true

@@ -1,0 +1,23 @@
+dataset_name: ACCpatterns_LARGE_CINGULATE_RIGHT
+data_dir: ${dataset_folder}/ACCpatterns/crops/2mm/LARGE_CINGULATE./mask/Rskeleton.npy
+subject_dir: ${dataset_folder}/ACCpatterns/crops/2mm/LARGE_CINGULATE./mask/Rskeleton_subject.csv
+in_shape:
+- 1
+- 18
+- 73
+- 57
+subjects_to_remove: ''
+remove_subjects: false
+kl: 2
+embedding_size: 10
+depth: 3
+'n': 75
+batch_size: 32
+nb_epoch: 150
+lr: 0.0002
+weights:
+- 1
+- 2
+dataset_folder: /neurospin/dico/data/deep_folding/current/datasets
+save_dir: /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output
+test_model_dir: /neurospin/dico/cmendoza/Runs/Jeanzay/01_betavae_sulci_crops/2025-06-12/ACCpatterns_LARGE_CINGULATE_RIGHT_75

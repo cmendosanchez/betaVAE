@@ -1,0 +1,8 @@
+- n=75
+- +dataset_localization=neurospin_CorticalConnectivity
+- +dataset=CorticalConnectivity/two_ends_R_S.C.-sylv._Track_0_80_icbm09c
+- +MSE_loss=True
+- +binary=False
+- +split=Random
+- ++remove_subjects=True
+- +preproc=LogMinMax
