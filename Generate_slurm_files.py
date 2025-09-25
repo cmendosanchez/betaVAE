@@ -78,7 +78,7 @@ for config_name in config_names:
                 # avec la partition choisie
                 # Execution du code
                 cd $WORK
-                cd PhD_UKB/Program/betaVAE
+                cd PhD_UKB/betaVAE
                 python3 main.py n={latent_dim} kl={beta} +dataset_folder=/lustre/fsn1/projects/rech/tgu/ugf68us/{Hemi}_{Region}_numpy +save_dir=/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE_Output +dataset=$dataset +MSE_loss=True +preproc=LogMinMax +split=CustomSplit +train_list=/lustre/fsn1/projects/rech/tgu/ugf68us/{Hemi}_{Region}_numpy/Train_{train_idx}.csv +validation_list=/lustre/fsn1/projects/rech/tgu/ugf68us/{Hemi}_{Region}_numpy/Validation_{train_idx}.csv""")
                 with open(f"{output}/{job_name}.slurm", "w") as f:
                     f.write(script)
