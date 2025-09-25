@@ -41,7 +41,7 @@ import torchvision
 #from torchsummary import summary
 from torch.utils.tensorboard import SummaryWriter
 import torch.nn as nn
-from torchsummary import summary
+
 from beta_vae import *
 from utils.pytorchtools import EarlyStopping
 from postprocess import plot_loss
@@ -67,7 +67,7 @@ def train_vae(config, trainloader, valloader, root_dir=None):
     if torch.cuda.is_available():
         device = "cuda:0"
     vae.to(device)
-    summary(vae, list(config.in_shape))
+    #summary(vae, list(config.in_shape))
     print(config)
     if config.MSE_loss == False:
         print('Using Cross Entropy Loss, reduction=sum')
