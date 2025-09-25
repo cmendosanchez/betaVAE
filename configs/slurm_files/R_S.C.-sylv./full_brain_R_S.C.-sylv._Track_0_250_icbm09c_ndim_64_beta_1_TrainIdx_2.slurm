@@ -1,4 +1,3 @@
-
 #!/bin/bash
 #SBATCH --job-name=full_brain_R_S.C.-sylv._Track_0_250_icbm09c_ndim_64_beta_1_TrainIdx_2          # nom du job
 # Il est possible d'utiliser une autre partition que celle par défaut
@@ -41,7 +40,6 @@ module load pytorch-gpu/py3/2.4.0
 # Echo des commandes lancees
 set -x
 # Pour les partitions "gpu_p5" et "gpu_p6", le code doit etre compile avec les modules compatibles
-
 # avec la partition choisie
 # Execution du code
 cd $WORK

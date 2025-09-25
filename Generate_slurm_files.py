@@ -32,7 +32,7 @@ for config_name in config_names:
                 job_name += f'_beta_{beta}'
                 job_name += f'_TrainIdx_{train_idx}'
 
-                script = textwrap.dedent(f"""
+                script = textwrap.dedent(f"""\
                 #!/bin/bash
                 #SBATCH --job-name={job_name}          # nom du job
                 # Il est possible d'utiliser une autre partition que celle par défaut
@@ -53,7 +53,7 @@ for config_name in config_names:
                 ##SBATCH --cpus-per-task=3           # nombre de CPU par tache pour gpu_p2 (1/8 des CPU du noeud 8-GPU V100)
                 ##SBATCH --cpus-per-task=8           # nombre de CPU par tache pour gpu_p5 (1/8 des CPU du noeud 8-GPU A100)
                 ##SBATCH --cpus-per-task=24           # nombre de CPU par tache pour gpu_p6 (1/4 des CPU du noeud 4-GPU H100)
-                # /!\ Attention, "multithread" fait reference à l'hyperthreading dans la terminologie Slurm
+                # /!\\ Attention, "multithread" fait reference à l'hyperthreading dans la terminologie Slurm
                 #SBATCH --hint=nomultithread         # hyperthreading desactive
                 #SBATCH --time=20:00:00              # temps maximum d'execution demande (HH:MM:SS)
                 #SBATCH --output=$WORK/PhD_UKB/Program/betaVAE/configs/logs/{job_name}%j.out      # nom du fichier de sortie
@@ -74,7 +74,7 @@ for config_name in config_names:
                 module load pytorch-gpu/py3/2.4.0
                 # Echo des commandes lancees
                 set -x
-                # Pour les partitions "gpu_p5" et "gpu_p6", le code doit etre compile avec les modules compatibles\n
+                # Pour les partitions "gpu_p5" et "gpu_p6", le code doit etre compile avec les modules compatibles
                 # avec la partition choisie
                 # Execution du code
                 cd $WORK
