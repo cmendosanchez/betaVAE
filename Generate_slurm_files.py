@@ -30,7 +30,7 @@ for config_name in config_names:
                 job_name  = f'{config_name}'
                 job_name += f'_ndim_{latent_dim}'
                 job_name += f'_beta_{beta}'
-                job_name += f'_TrainIdx_{train_idx}'
+                job_name += f'_TrainIdx_{train_idx}_'
 
                 script = textwrap.dedent(f"""\
                 #!/bin/bash
