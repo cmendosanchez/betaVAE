@@ -21,8 +21,8 @@
 # /!\ Attention, "multithread" fait reference à l'hyperthreading dans la terminologie Slurm
 #SBATCH --hint=nomultithread         # hyperthreading desactive
 #SBATCH --time=20:00:00              # temps maximum d'execution demande (HH:MM:SS)
-#SBATCH --output=$WORK/PhD_UKB/Program/betaVAE/configs/logs/full_brain_R_S.C.-sylv._Track_0_250_icbm09c_ndim_1024_beta_32_TrainIdx_1%j.out      # nom du fichier de sortie
-#SBATCH --error=$WORK/PhD_UKB/Program/betaVAE/configs/logs/full_brain_R_S.C.-sylv._Track_0_250_icbm09c_ndim_1024_beta_32_TrainIdx_1%j.out       # nom du fichier d'erreur (ici commun avec la sortie)
+#SBATCH --output=/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE/configs/logs/full_brain_R_S.C.-sylv._Track_0_250_icbm09c_ndim_1024_beta_32_TrainIdx_1%j.out      # nom du fichier de sortie
+#SBATCH --error=/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE/configs/logs/full_brain_R_S.C.-sylv._Track_0_250_icbm09c_ndim_1024_beta_32_TrainIdx_1%j.out       # nom du fichier d'erreur (ici commun avec la sortie)
 #SBATCH -A tgu@v100                  # choice of the partition
 # Nettoyage des modules charges en interactif et herites par defaut
 module purge
@@ -32,7 +32,7 @@ module purge
 # Decommenter la commande module suivante si vous utilisez la partition "gpu_p6"
 # pour avoir acces aux modules compatibles avec cette partition
 #module load arch/h100
-dataset=$WORK/PhD_UKB/Program/betaVAE/PhD_UKB/full_brain_R_S.C.-sylv._Track_0_250_icbm09c
+dataset=$WORK/PhD_UKB/betaVAE/PhD_UKB/full_brain_R_S.C.-sylv._Track_0_250_icbm09c
 # Chargement des modules
 # module load ...
 module purge

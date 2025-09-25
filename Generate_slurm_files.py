@@ -56,8 +56,8 @@ for config_name in config_names:
                 # /!\\ Attention, "multithread" fait reference à l'hyperthreading dans la terminologie Slurm
                 #SBATCH --hint=nomultithread         # hyperthreading desactive
                 #SBATCH --time=20:00:00              # temps maximum d'execution demande (HH:MM:SS)
-                #SBATCH --output=$WORK/PhD_UKB/Program/betaVAE/configs/logs/{job_name}%j.out      # nom du fichier de sortie
-                #SBATCH --error=$WORK/PhD_UKB/Program/betaVAE/configs/logs/{job_name}%j.out       # nom du fichier d'erreur (ici commun avec la sortie)
+                #SBATCH --output=/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE/configs/logs/{job_name}%j.out      # nom du fichier de sortie
+                #SBATCH --error=/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE/configs/logs/{job_name}%j.out       # nom du fichier d'erreur (ici commun avec la sortie)
                 #SBATCH -A tgu@v100                  # choice of the partition
                 # Nettoyage des modules charges en interactif et herites par defaut
                 module purge
@@ -67,7 +67,7 @@ for config_name in config_names:
                 # Decommenter la commande module suivante si vous utilisez la partition "gpu_p6"
                 # pour avoir acces aux modules compatibles avec cette partition
                 #module load arch/h100
-                dataset=$WORK/PhD_UKB/Program/betaVAE/PhD_UKB/{config_name}
+                dataset=$WORK/PhD_UKB/betaVAE/PhD_UKB/{config_name}
                 # Chargement des modules
                 # module load ...
                 module purge
