@@ -32,7 +32,7 @@ module purge
 # Decommenter la commande module suivante si vous utilisez la partition "gpu_p6"
 # pour avoir acces aux modules compatibles avec cette partition
 #module load arch/h100
-dataset=$WORK/PhD_UKB/betaVAE/PhD_UKB/full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c
+dataset=$WORK/PhD_UKB/betaVAE/configs/dataset/PhD_UKB/full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c
 # Chargement des modules
 # module load ...
 module purge
