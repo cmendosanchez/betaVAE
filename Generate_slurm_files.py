@@ -54,8 +54,8 @@ for config_name in config_names:
                 # /!\ Attention, "multithread" fait reference à l'hyperthreading dans la terminologie Slurm
                 #SBATCH --hint=nomultithread         # hyperthreading desactive
                 #SBATCH --time=20:00:00              # temps maximum d'execution demande (HH:MM:SS)
-                #SBATCH --output={output}/logs/{job_name}%j.out      # nom du fichier de sortie
-                #SBATCH --error={output}/logs/{job_name}%j.out       # nom du fichier d'erreur (ici commun avec la sortie)
+                #SBATCH --output=$WORK/PhD_UKB/Program/betaVAE/configs/logs/{job_name}%j.out      # nom du fichier de sortie
+                #SBATCH --error=$WORK/PhD_UKB/Program/betaVAE/configs/logs/{job_name}%j.out       # nom du fichier d'erreur (ici commun avec la sortie)
                 #SBATCH -A tgu@v100                  # choice of the partition
 
                 # Nettoyage des modules charges en interactif et herites par defaut

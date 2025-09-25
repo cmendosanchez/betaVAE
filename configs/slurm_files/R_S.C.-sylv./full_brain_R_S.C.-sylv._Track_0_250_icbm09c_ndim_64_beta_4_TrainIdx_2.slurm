@@ -21,8 +21,8 @@
                 # /!\ Attention, "multithread" fait reference à l'hyperthreading dans la terminologie Slurm
                 #SBATCH --hint=nomultithread         # hyperthreading desactive
                 #SBATCH --time=20:00:00              # temps maximum d'execution demande (HH:MM:SS)
-                #SBATCH --output=/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/slurm_files/R_S.C.-sylv./logs/full_brain_R_S.C.-sylv._Track_0_250_icbm09c_ndim_64_beta_4_TrainIdx_2%j.out      # nom du fichier de sortie
-                #SBATCH --error=/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/slurm_files/R_S.C.-sylv./logs/full_brain_R_S.C.-sylv._Track_0_250_icbm09c_ndim_64_beta_4_TrainIdx_2%j.out       # nom du fichier d'erreur (ici commun avec la sortie)
+                #SBATCH --output=$WORK/PhD_UKB/Program/betaVAE/configs/logs/full_brain_R_S.C.-sylv._Track_0_250_icbm09c_ndim_64_beta_4_TrainIdx_2%j.out      # nom du fichier de sortie
+                #SBATCH --error=$WORK/PhD_UKB/Program/betaVAE/configs/logs/full_brain_R_S.C.-sylv._Track_0_250_icbm09c_ndim_64_beta_4_TrainIdx_2%j.out       # nom du fichier d'erreur (ici commun avec la sortie)
                 #SBATCH -A tgu@v100                  # choice of the partition
 
                 # Nettoyage des modules charges en interactif et herites par defaut
