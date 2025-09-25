@@ -67,7 +67,7 @@ for config_name in config_names:
                 # Decommenter la commande module suivante si vous utilisez la partition "gpu_p6"
                 # pour avoir acces aux modules compatibles avec cette partition
                 #module load arch/h100
-                dataset=PhD_UKB/betaVAE/configs/dataset/PhD_UKB/{config_name}
+                dataset=PhD_UKB/{config_name}
                 # Chargement des modules
                 # module load ...
                 module purge
