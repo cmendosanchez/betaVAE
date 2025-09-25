@@ -1,4 +1,4 @@
 # @package _global_
-batch_size: 32
+batch_size: 16
 nb_epoch: 150
 lr: 2e-4 #2e-4 for CrossEntropy

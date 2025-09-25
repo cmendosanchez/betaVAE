@@ -1,0 +1,27 @@
+kl: 2
+embedding_size: 10
+depth: 3
+'n': 256
+batch_size: 16
+nb_epoch: 150
+lr: 0.0002
+weights:
+- 1
+- 2
+dataset_name: full_brain_R_S.C.-sylv._Track_0_250_icbm09c
+data_dir: ${dataset_folder}/R_S.C.-sylv._crops_full_brain_R_S.C.-sylv._Track_0_250_icbm09c.npy
+subject_dir: ${dataset_folder}/R_S.C.-sylv._subjects.csv
+in_shape:
+- 1
+- 84
+- 68
+- 98
+subjects_to_remove: null
+remove_subjects: false
+train_list: /home_local/cm283129/PhD_UKB/R_S.C.-sylv._numpy/Train.csv
+validation_list: /home_local/cm283129/PhD_UKB/R_S.C.-sylv._numpy/Validation.csv
+dataset_folder: /home_local/cm283129/PhD_UKB/R_S.C.-sylv._numpy
+save_dir: /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output
+MSE_loss: true
+preproc: LogMinMax
+split: CustomSplit
