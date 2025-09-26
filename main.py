@@ -59,6 +59,18 @@ from tqdm import tqdm
 '''
 FilteredDataset for CustomDatasets
 '''
+
+def split_by_ids(dataset, train_ids, val_ids):
+    train_ids = set(train_ids)
+    val_ids = set(val_ids)
+
+    train_indices = [i for i in tqdm(range(len(dataset)), desc="Building train split") if dataset[i][1] in train_ids]
+    val_indices   = [i for i in tqdm(range(len(dataset)), desc="Building validation split") if dataset[i][1] in val_ids]
+
+    train_set = Subset(dataset, train_indices)
+    val_set   = Subset(dataset, val_indices)
+    return train_set, val_set
+
 class FilteredDataset(Dataset):
     def __init__(self, data, keep_ids):
         """
@@ -126,9 +138,9 @@ def train_model(config):
         train_ids_cleaned = [s.removeprefix("sub-") for s in train_ids]
         validation_ids = pd.read_csv(config.validation_list)['Subject'].values.tolist()
         validation_ids_cleaned = [s.removeprefix("sub-") for s in validation_ids]
-        #print(train_ids)
-        train_set = FilteredDataset(subset1, train_ids_cleaned)
-        val_set = FilteredDataset(subset1, validation_ids_cleaned)
+        train_set, val_set = split_by_ids(subset1, train_ids_cleaned, validation_ids_cleaned)
+        #train_set = FilteredDataset(subset1, train_ids_cleaned)
+        #val_set = FilteredDataset(subset1, validation_ids_cleaned)
     print('Nsubjects Train:',len(train_set),'Nsubjects Validation:',len(val_set),'Nsubjects total (Train + Validation):',len(train_set)+len(val_set))
 
     #Train and Validation split

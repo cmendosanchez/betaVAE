@@ -2,8 +2,8 @@
 #SBATCH --job-name=full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c_ndim_256_beta_8_TrainIdx_2_          # nom du job
 # Il est possible d'utiliser une autre partition que celle par défaut
 # en activant l'une des 5 directives suivantes :
-#SBATCH -C v100-16g                 # decommenter pour reserver uniquement des GPU V100 16 Go
-##SBATCH -C v100-32g                 # decommenter pour reserver uniquement des GPU V100 32 Go
+##SBATCH -C v100-16g                 # decommenter pour reserver uniquement des GPU V100 16 Go
+#SBATCH -C v100-32g                 # decommenter pour reserver uniquement des GPU V100 32 Go
 ##SBATCH --partition=gpu_p2          # decommenter pour la partition gpu_p2 (GPU V100 32 Go)
 ##SBATCH -C a100                     # decommenter pour la partition gpu_p5 (GPU A100 80 Go)
 ##SBATCH -C h100                     # decommenter pour la partition gpu_p6 (GPU H100 80 Go)
@@ -14,7 +14,7 @@
 # Le nombre de CPU par tache doit etre adapte en fonction de la partition utilisee. Sachant
 # qu'ici on ne reserve qu'un seul GPU (soit 1/4 ou 1/8 des GPU du noeud suivant la partition),
 # l'ideal est de reserver 1/4 ou 1/8 des CPU du noeud pour la seule tache:
-#SBATCH --cpus-per-task=10           # nombre de CPU par tache (1/4 des CPU du noeud 4-GPU V100)
+#SBATCH --cpus-per-task=30           # nombre de CPU par tache (1/4 des CPU du noeud 4-GPU V100)
 ##SBATCH --cpus-per-task=3           # nombre de CPU par tache pour gpu_p2 (1/8 des CPU du noeud 8-GPU V100)
 ##SBATCH --cpus-per-task=8           # nombre de CPU par tache pour gpu_p5 (1/8 des CPU du noeud 8-GPU A100)
 ##SBATCH --cpus-per-task=24           # nombre de CPU par tache pour gpu_p6 (1/4 des CPU du noeud 4-GPU H100)
