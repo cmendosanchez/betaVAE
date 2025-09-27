@@ -30,7 +30,7 @@ for path in out_paths:
         print('except')
 '''
 
-out_path = f"/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-09-17/SC-sylv_right_HCP_dim_32_beta_2_13-53-40/"
+out_path = f"/neurospin/dico/cmendoza/Runs/14_PhD_UKB/JeanZay/R_S.C.-sylv./full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c_dim_64_beta_1_14-07-42/"
 print(out_path)
 try:
     for vol in ['_input','_output']:
@@ -43,7 +43,7 @@ try:
             vol_npy = np.load(out_path+'subjects/'+sub).astype(np.float32)
             #print('Volume shape',vol_npy.shape)
             vol_nifty = aims.Volume(vol_npy)
-            vol_nifty.header()['voxel_size'] = [2.0, 2.0, 2.0]
+            vol_nifty.header()['voxel_size'] = [1.0, 1.0, 1.0]
             aims.write(vol_nifty, out_path+'subjects/'+sub.split('.npy')[0]+'.nii.gz')
             #call([f'rm -rf '+out_path+'subjects/'+sub+' -v'],shell=True)
 except:

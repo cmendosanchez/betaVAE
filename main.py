@@ -55,6 +55,8 @@ from load_data import create_subset
 from utils.config import process_config
 from torch.utils.data import Subset, Dataset
 from tqdm import tqdm
+from subprocess import call
+from hydra.utils import get_original_cwd
 
 '''
 FilteredDataset for CustomDatasets
@@ -108,7 +110,12 @@ def train_model(config):
     #Configuration step
     config=process_config(config)
     torch.manual_seed(3)
-    config.save_dir = config.save_dir + f"/{now:%Y-%m-%d}/{config.dataset_name}_dim_{config.n}_beta_{config.kl}_{now:%H-%M-%S}/"
+    if config.train_list!=None:
+        filename_train = os.path.basename(config.train_list) 
+        config.save_dir = config.save_dir + f"/{now:%Y-%m-%d}/{config.dataset_name}_dim_{config.n}_beta_{config.kl}_{os.path.splitext(filename_train)[0]}_{now:%H-%M-%S}/"
+    else:
+        config.save_dir = config.save_dir + f"/{now:%Y-%m-%d}/{config.dataset_name}_dim_{config.n}_beta_{config.kl}_{now:%H-%M-%S}/"
+
     config.in_shape = adjust_in_shape(config)
     print(config)
 
@@ -176,7 +183,13 @@ def train_model(config):
     print(""" Train model for given configuration """)
     vae, final_loss_val = train_vae(config, trainloader, valloader,
                                     root_dir=config.save_dir)
+    original_dir = get_original_cwd()
+    print("Original working directory:", original_dir)
 
+    # change back to it if needed
+    os.chdir(original_dir)
+    print(config)
+    call([f'python3 Generate_embeddings.py n={config.n} kl={config.kl} +dataset_folder={config.dataset_folder} +save_dir=None +dataset=PhD_UKB/{config.dataset_name} +MSE_loss=True +preproc=LogMinMax +test_model_dir={config.save_dir}'],shell=True)
 
 if __name__ == '__main__':
     start_time = time.time()

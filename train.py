@@ -218,8 +218,8 @@ def train_vae(config, trainloader, valloader, root_dir=None):
                            'phase': phase_arr, 'id': id_arr}.items():
         np.save(config.save_dir+key, np.array([array]))
 
-    plot_loss(list_loss_train[1:], config.save_dir+'tot_train_')
-    plot_loss(list_loss_val[1:], config.save_dir+'tot_val_')
+    plot_loss(list_loss_train[1:], config.save_dir+'tot_train_',label='Train')
+    plot_loss(list_loss_val[1:], config.save_dir+'tot_val_',label='Validation')
     final_loss_val = list_loss_val[-1:]
 
     """Saving of trained model"""

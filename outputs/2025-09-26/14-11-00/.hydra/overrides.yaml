@@ -1,0 +1,9 @@
+- n=256
+- +dataset_folder=/home_local/cm283129/PhD_UKB/R_S.C.-sylv._numpy
+- +save_dir=/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output
+- +dataset=PhD_UKB/full_brain_R_S.C.-sylv._Track_0_250_icbm09c
+- +MSE_loss=True
+- +preproc=LogMinMax
+- +split=CustomSplit
+- +train_list=/home_local/cm283129/PhD_UKB/R_S.C.-sylv._numpy/Train_1.csv
+- +validation_list=/home_local/cm283129/PhD_UKB/R_S.C.-sylv._numpy/Validation_1.csv

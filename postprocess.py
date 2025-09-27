@@ -36,7 +36,7 @@
 import matplotlib.pyplot as plt
 
 
-def plot_loss(list_loss_train, root_dir, *list_loss_val):
+def plot_loss(list_loss_train, root_dir, label):
     """
     Plot training loss given two lists of loss
     Args:
@@ -46,9 +46,7 @@ def plot_loss(list_loss_train, root_dir, *list_loss_val):
     plt.clf()
     plt.subplot()
     epoch = [k for k in range(1, len(list_loss_train) + 1)]
-    plt.plot(epoch, list_loss_train, label='Train')
-    if list_loss_val:
-        plt.plot(epoch, list_loss_val, label='Validation')
+    plt.plot(epoch, list_loss_train, label=label)
     plt.xlabel('Number of epochs')
     plt.ylabel('Loss value')
     plt.legend()

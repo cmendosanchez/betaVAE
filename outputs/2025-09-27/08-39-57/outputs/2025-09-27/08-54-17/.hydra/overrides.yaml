@@ -1,0 +1,7 @@
+- n=256
+- kl=1
+- +dataset_folder=/home_local/cm283129/PhD_UKB/R_S.C.-sylv._numpy
+- +save_dir=None
+- +MSE_Loss=True
+- +preproc=LogMinMax
+- +test_model_dir=/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output/2025-09-27/full_brain_R_S.C.-sylv._Track_0_250_icbm09c_dim_256_beta_1_08-39-32/
