@@ -48,6 +48,7 @@ import json
 import yaml
 import itertools
 import torch
+import gc
 from datetime import datetime
 now = datetime.now()
 from train import train_vae
@@ -189,6 +190,9 @@ def train_model(config):
     # change back to it if needed
     os.chdir(original_dir)
     print(config)
+    del subset1,train_set,val_set,trainloader,valloader, vae, final_loss_val
+    gc.collect()
+    torch.cuda.empty_cache()
     call([f'python3 Generate_embeddings.py n={config.n} kl={config.kl} +dataset_folder={config.dataset_folder} +save_dir=None +dataset=PhD_UKB/{config.dataset_name} +MSE_loss=True +preproc=LogMinMax +test_model_dir={config.save_dir}'],shell=True)
 
 if __name__ == '__main__':
