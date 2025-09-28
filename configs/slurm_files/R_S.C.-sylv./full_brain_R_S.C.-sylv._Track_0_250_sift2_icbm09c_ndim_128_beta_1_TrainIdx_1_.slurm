@@ -14,7 +14,7 @@
 # Le nombre de CPU par tache doit etre adapte en fonction de la partition utilisee. Sachant
 # qu'ici on ne reserve qu'un seul GPU (soit 1/4 ou 1/8 des GPU du noeud suivant la partition),
 # l'ideal est de reserver 1/4 ou 1/8 des CPU du noeud pour la seule tache:
-#SBATCH --cpus-per-task=30           # nombre de CPU par tache (1/4 des CPU du noeud 4-GPU V100)
+#SBATCH --cpus-per-task=40           # nombre de CPU par tache (1/4 des CPU du noeud 4-GPU V100)
 ##SBATCH --cpus-per-task=3           # nombre de CPU par tache pour gpu_p2 (1/8 des CPU du noeud 8-GPU V100)
 ##SBATCH --cpus-per-task=8           # nombre de CPU par tache pour gpu_p5 (1/8 des CPU du noeud 8-GPU A100)
 ##SBATCH --cpus-per-task=24           # nombre de CPU par tache pour gpu_p6 (1/4 des CPU du noeud 4-GPU H100)
@@ -44,4 +44,4 @@ set -x
 # Execution du code
 cd $WORK
 cd PhD_UKB/betaVAE
-python3 main.py n=128 kl=1 +dataset_folder=/lustre/fsn1/projects/rech/tgu/ugf68us/R_S.C.-sylv._numpy +save_dir=/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE_Output +dataset=$dataset +MSE_loss=True +preproc=LogMinMax +split=CustomSplit +train_list=/lustre/fsn1/projects/rech/tgu/ugf68us/R_S.C.-sylv._numpy/Train_1.csv +validation_list=/lustre/fsn1/projects/rech/tgu/ugf68us/R_S.C.-sylv._numpy/Validation_1.csv
+python3 main.py n=128 kl=1 nb_epoch=100 +dataset_folder=/lustre/fsn1/projects/rech/tgu/ugf68us/R_S.C.-sylv._numpy +save_dir=/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE_Output +dataset=$dataset +MSE_loss=True +preproc=LogMinMax +split=CustomSplit +train_list=/lustre/fsn1/projects/rech/tgu/ugf68us/R_S.C.-sylv._numpy/Train_1.csv +validation_list=/lustre/fsn1/projects/rech/tgu/ugf68us/R_S.C.-sylv._numpy/Validation_1.csv
