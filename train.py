@@ -81,7 +81,7 @@ def train_vae(config, trainloader, valloader, root_dir=None):
 
     optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
     nb_epoch = config.nb_epoch
-    early_stopping = EarlyStopping(patience=10, verbose=True, root_dir=root_dir)
+    early_stopping = EarlyStopping(patience=5, verbose=True, root_dir=root_dir)
 
     list_loss_train, list_loss_val = [], []
 

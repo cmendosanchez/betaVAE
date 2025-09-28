@@ -44,4 +44,4 @@ set -x
 # Execution du code
 cd $WORK
 cd PhD_UKB/betaVAE
-python3 main.py n=2048 kl=16 nb_epoch=100 +dataset_folder=/lustre/fsn1/projects/rech/tgu/ugf68us/R_S.C.-sylv._numpy +save_dir=/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE_Output +dataset=$dataset +MSE_loss=True +preproc=LogMinMax +split=CustomSplit +train_list=/lustre/fsn1/projects/rech/tgu/ugf68us/R_S.C.-sylv._numpy/Train_2.csv +validation_list=/lustre/fsn1/projects/rech/tgu/ugf68us/R_S.C.-sylv._numpy/Validation_2.csv
+python3 main.py n=2048 kl=16 nb_epoch=30 +dataset_folder=/lustre/fsn1/projects/rech/tgu/ugf68us/R_S.C.-sylv._numpy +save_dir=/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE_Output +dataset=$dataset +MSE_loss=True +preproc=LogMinMax +split=CustomSplit +train_list=/lustre/fsn1/projects/rech/tgu/ugf68us/R_S.C.-sylv._numpy/Train_2.csv +validation_list=/lustre/fsn1/projects/rech/tgu/ugf68us/R_S.C.-sylv._numpy/Validation_2.csv
