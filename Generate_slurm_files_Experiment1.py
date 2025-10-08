@@ -1,6 +1,11 @@
 import os
 import textwrap
 
+"""
+Experiment 1: Comparison of classification task on interrupted right CS. Train with and without interrupted subjects in the train set
+Assesment of Fiber Count vs SIFT2 (144 slurm files)
+"""
+
 Hemi   = f'R'
 Region = f'S.C.-sylv.'
 mode   = f'full_brain'
@@ -14,11 +19,13 @@ for conn in ['','_sift2']:
 latent_dimensions = ['64','128','256','512','1024','2048']
 betas = ['1','2','4','8','16','32']
 train_index = ['1','2']
-output = f'/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/slurm_files/{Hemi}_{Region}'
+output = f'/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/slurm_files/{Hemi}_{Region}/Experiment1'
 
 if not os.path.exists(output):
     os.makedirs(output)
 
+
+#Experiment 1
 for config_name in config_names:
 
     for latent_dim in latent_dimensions:
@@ -82,3 +89,5 @@ for config_name in config_names:
                 python3 main.py n={latent_dim} kl={beta} nb_epoch=30 +dataset_folder=/lustre/fsn1/projects/rech/tgu/ugf68us/{Hemi}_{Region}_numpy +save_dir=/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE_Output +dataset=$dataset +MSE_loss=True +preproc=LogMinMax +split=CustomSplit +train_list=/lustre/fsn1/projects/rech/tgu/ugf68us/{Hemi}_{Region}_numpy/Train_{train_idx}.csv +validation_list=/lustre/fsn1/projects/rech/tgu/ugf68us/{Hemi}_{Region}_numpy/Validation_{train_idx}.csv""")
                 with open(f"{output}/{job_name}.slurm", "w") as f:
                     f.write(script)
+
+

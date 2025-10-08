@@ -40,6 +40,35 @@ import pandas as pd
 from torch.autograd import Variable
 import torch.nn as nn
 import os
+from subprocess import call
+
+def compute_correlation(density_1, density_2):
+    """
+    Compute the overlap (dice coefficient) between two density
+    maps (or binary). Correlation being less robust to extreme
+    case (no overlap, identical array), a lot of check a needed to prevent NaN.
+    Parameters
+    ----------
+    density_1: ndarray
+        Density (or binary) map computed from the first bundle
+    density_2: ndarray
+        Density (or binary) map computed from the second bundle
+    Returns
+    -------
+    float: Value between 0 and 1 that represent the spatial aggrement
+        between both bundles taking into account density.
+    """
+    indices = np.where(density_1 + density_2 > 0)
+    if np.array_equal(density_1, density_2):
+        density_correlation = 1
+    elif (np.sum(density_1) > 0 and np.sum(density_2) > 0) \
+            and np.count_nonzero(density_1 * density_2):
+        density_correlation = np.corrcoef(density_1[indices],
+                                          density_2[indices])[0, 1]
+    else:
+        density_correlation = 0
+
+    return max(0, density_correlation)
 
 
 class VAE(nn.Module):
@@ -191,8 +220,9 @@ class ModelTester():
 
         device = torch.device("cuda", index=0)
         results = {k:{} for k in self.dico_set_loaders.keys()}
-        recon_error = {}
-        embeddings = {}
+        recon_error  = {}
+        embeddings   = {}
+        pearson_corr = {}
         output_list = []
 
         for loader_name, loader in self.dico_set_loaders.items(): #loader is just the tensor dataset of subjects
@@ -224,19 +254,24 @@ class ModelTester():
                     if not os.path.exists(self.save_dir+'/subjects'):
                         os.mkdir(self.save_dir+'/subjects')
 
-                    if counter < 20: #We save input and output of 20 subjects
-                        np.save(self.save_dir+'/subjects/'+path[0]+'_input.npy',inputs.cpu().numpy()[0,0,:,:,:])
-                        if self.MSE_loss == False:
-                            np.save(self.save_dir+'/subjects/'+path[0]+'_output.npy',outputs.cpu().numpy()[0,:,:,:])
-                                    
-                        elif self.MSE_loss == True:
-                            np.save(self.save_dir+'/subjects/'+path[0]+'_output.npy',outputs.cpu().numpy()[0,0,:,:,:]) 
+                    #if counter < 20: #We save input and output of 20 subjects
+                    np.save(self.save_dir+'/subjects/'+path[0]+'_input.npy',inputs.cpu().numpy()[0,0,:,:,:])
+                    if self.MSE_loss == False:
+                        np.save(self.save_dir+'/subjects/'+path[0]+'_output.npy',outputs.cpu().numpy()[0,:,:,:])
+                                
+                    elif self.MSE_loss == True:
+                        np.save(self.save_dir+'/subjects/'+path[0]+'_output.npy',outputs.cpu().numpy()[0,0,:,:,:]) 
 
-                    recon_error[str(path[0])] = [recon_loss_val.cpu().detach().numpy().item()] #Save reconstruction error
-                    embeddings[str(path[0])] = np.array(np.squeeze(z).cpu().detach().numpy()) #Save embeddings
+                    recon_error[str(path[0])]  = [recon_loss_val.cpu().detach().numpy().item()] #Save reconstruction error
+                    embeddings[str(path[0])]   = np.array(np.squeeze(z).cpu().detach().numpy()) #Save embeddings
+                    if self.MSE_loss:
+                        pearson_corr[str(path[0])] = [compute_correlation(inputs.cpu().numpy()[0,0,:,:,:],outputs.cpu().numpy()[0,0,:,:,:])]
                     output_list.append(np.array(outputs.cpu().detach().numpy()).astype(bool))
                     counter += 1
                     sub_counter += 1
+
+        call([f'tar -czf {self.save_dir}/numpy_files.tar.gz -C {self.save_dir}/subjects .'],shell=True)
+        call([f'rm -rf {self.save_dir}/subjects'],shell=True)
 
         results_recon_error = pd.DataFrame.from_dict(recon_error)
         results_recon_error = results_recon_error.T
@@ -245,6 +280,15 @@ class ModelTester():
         results_recon_error.columns = ["ID", "ReconstructionError"]
         results_recon_error.to_csv(self.save_dir+'/RconError_'+self.dataset_name+'_dim_'+str(self.n_latent)+'_beta_'+str(self.kl_weight)+'.csv',index=False)
         
+        print(pearson_corr)
+        if self.MSE_loss:
+            results_pearson_corr = pd.DataFrame.from_dict(pearson_corr)
+            results_pearson_corr = results_pearson_corr.T
+            print(results_pearson_corr)
+            results_pearson_corr = results_pearson_corr.reset_index()  # moves index into a column
+            results_pearson_corr.columns = ["ID", "PearsonCorr"]
+            results_pearson_corr.to_csv(self.save_dir+'/PearsonCorr_'+self.dataset_name+'_dim_'+str(self.n_latent)+'_beta_'+str(self.kl_weight)+'.csv',index=False)
+
         results_embeddings = pd.DataFrame.from_dict(embeddings)
         results_embeddings = results_embeddings.T
         print(results_embeddings)
@@ -257,5 +301,6 @@ class ModelTester():
 
         output = np.vstack(output_list)
         print('Reconstruction Error DataFrame\n',results_recon_error)
+        print('Pearson Correlation DataFrame\n',results_pearson_corr)
         print('Embeddings DataFrame\n',results_embeddings)
         return output

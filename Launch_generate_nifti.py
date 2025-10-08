@@ -30,7 +30,7 @@ for path in out_paths:
         print('except')
 '''
 
-out_path = f"/neurospin/dico/cmendoza/Runs/14_PhD_UKB/JeanZay/R_S.C.-sylv./full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c_dim_64_beta_1_14-07-42/"
+out_path = f"/neurospin/dico/cmendoza/Runs/14_PhD_UKB/JeanZay/R_S.C.-sylv./full_brain_R_S.C.-sylv._Track_0_250_icbm09c_dim_1024_beta_1_Train_1_22-18-51/"
 print(out_path)
 try:
     for vol in ['_input','_output']:
