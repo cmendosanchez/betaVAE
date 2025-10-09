@@ -254,13 +254,13 @@ class ModelTester():
                     if not os.path.exists(self.save_dir+'/subjects'):
                         os.mkdir(self.save_dir+'/subjects')
 
-                    #if counter < 20: #We save input and output of 20 subjects
-                    np.save(self.save_dir+'/subjects/'+path[0]+'_input.npy',inputs.cpu().numpy()[0,0,:,:,:])
-                    if self.MSE_loss == False:
-                        np.save(self.save_dir+'/subjects/'+path[0]+'_output.npy',outputs.cpu().numpy()[0,:,:,:])
-                                
-                    elif self.MSE_loss == True:
-                        np.save(self.save_dir+'/subjects/'+path[0]+'_output.npy',outputs.cpu().numpy()[0,0,:,:,:]) 
+                    if counter < 10: #We save input and output of 20 subjects
+                        np.save(self.save_dir+'/subjects/'+path[0]+'_input.npy',inputs.cpu().numpy()[0,0,:,:,:])
+                        if self.MSE_loss == False:
+                            np.save(self.save_dir+'/subjects/'+path[0]+'_output.npy',outputs.cpu().numpy()[0,:,:,:])
+                                    
+                        elif self.MSE_loss == True:
+                            np.save(self.save_dir+'/subjects/'+path[0]+'_output.npy',outputs.cpu().numpy()[0,0,:,:,:]) 
 
                     recon_error[str(path[0])]  = [recon_loss_val.cpu().detach().numpy().item()] #Save reconstruction error
                     embeddings[str(path[0])]   = np.array(np.squeeze(z).cpu().detach().numpy()) #Save embeddings
@@ -270,8 +270,8 @@ class ModelTester():
                     counter += 1
                     sub_counter += 1
 
-        call([f'tar -czf {self.save_dir}/numpy_files.tar.gz -C {self.save_dir}/subjects .'],shell=True)
-        call([f'rm -rf {self.save_dir}/subjects'],shell=True)
+        #call([f'tar -czf {self.save_dir}/numpy_files.tar.gz -C {self.save_dir}/subjects .'],shell=True)
+        #call([f'rm -rf {self.save_dir}/subjects'],shell=True)
 
         results_recon_error = pd.DataFrame.from_dict(recon_error)
         results_recon_error = results_recon_error.T
