@@ -1,0 +1,7 @@
+- +dataset_localization=jeanzay_PhD_UKB
+- +dataset=PhD_UKB/full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c
+- +MSE_loss=True
+- +binary=False
+- +test_model_dir=/neurospin/dico/cmendoza/Runs/14_PhD_UKB/totomodel_delet_later/
+- +decode_sub_list=/neurospin/dico/cmendoza/Runs/14_PhD_UKB/Output/UMAP_prob_sorted_200_id.csv
+- save_dir=/neurospin/dico/cmendoza/Runs/14_PhD_UKB/totomodel_delet_later

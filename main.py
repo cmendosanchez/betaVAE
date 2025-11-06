@@ -193,7 +193,7 @@ def train_model(config):
     del subset1,train_set,val_set,trainloader,valloader, vae, final_loss_val
     gc.collect()
     torch.cuda.empty_cache()
-    call([f'python3 Generate_embeddings.py n={config.n} kl={config.kl} +dataset_folder={config.dataset_folder} +save_dir=None +dataset=PhD_UKB/{config.dataset_name} +MSE_loss=True +preproc=LogMinMax +test_model_dir={config.save_dir}'],shell=True)
+    call([f'python3 Generate_embeddings.py n={config.n} kl={config.kl} nsamples=None +dataset_folder={config.dataset_folder} +save_dir=None +dataset=PhD_UKB/{config.dataset_name} +test_model_dir={config.save_dir}'],shell=True)
 
 if __name__ == '__main__':
     start_time = time.time()

@@ -74,7 +74,7 @@ def compute_correlation(density_1, density_2):
 class VAE(nn.Module):
     """ beta-VAE class
     """
-    def __init__(self, in_shape, n_latent, depth, Use_MSE):
+    def __init__(self, in_shape, n_latent, depth, loss_selected):
         """
         Args:
             in_shape: tuple, input shape
@@ -90,8 +90,7 @@ class VAE(nn.Module):
         self.z_dim_h = h//2**depth # receptive field downsampled 2 times
         self.z_dim_w = w//2**depth
         self.z_dim_d = d//2**depth
-        self.Use_MSE = Use_MSE
-
+        self.loss_selected = loss_selected
         modules_encoder = []
         for step in range(depth):
             in_channels = 1 if step == 0 else out_channels
@@ -125,10 +124,10 @@ class VAE(nn.Module):
             modules_decoder.append(('ReLU%sa' %step, nn.ReLU()))
         modules_decoder.append(('convtrans3dn', nn.ConvTranspose3d(16, 1, kernel_size=2,
                         stride=2, padding=0)))
-        if self.Use_MSE == False:
+        if self.loss_selected == 'CrossEntropy':
             print('"""Final Convolution Layer Adapted for Cross Entropy Loss"""')
             modules_decoder.append(('conv_final', nn.Conv3d(1, 2, kernel_size=1, stride=1)))  #Here two channels output for CrossEntropy
-        elif self.Use_MSE == True:
+        elif self.loss_selected == 'MSE':
             print('"""Final Convolution Layer Adapted for Mean Squared Error (MSE)"""')
             modules_decoder.append(('conv_final', nn.Conv3d(1, 1, kernel_size=1, stride=1))) #Here one channel output for MSE
 
@@ -189,7 +188,7 @@ class ModelTester():
     Class to test data with a trained model
     """
     def __init__(self, model, dico_set_loaders, kl_weight, loss_func,
-                n_latent, depth,save_dir,dataset_name,MSE_loss):
+                n_latent, depth,save_dir,dataset_name,selected_loss):
         """
         Args:
             model: trained model to use
@@ -201,7 +200,7 @@ class ModelTester():
             depth     : Depth of the model
             save_dir  : Directory where recon error and embeddings will be saved
             dataset_name : Name of the dataset
-            MSE_loss     : Define the loss -> True = MSE, False = CrossEntropy 
+            selected_loss     : Define the loss -> MSE, CrossEntropy 
         Returns:
             results: Write embeddings and reconstruction error to save_dir/.csv
         """
@@ -213,7 +212,7 @@ class ModelTester():
         self.loss_func = loss_func
         self.save_dir = save_dir
         self.dataset_name = dataset_name
-        self.MSE_loss = MSE_loss
+        self.loss = selected_loss
 
         print('""" Model Tester',self.dataset_name,'n:',self.n_latent,'beta:',self.kl_weight,'"""')
     def test(self):
@@ -240,12 +239,12 @@ class ModelTester():
                     outputs = self.model.decode(z)
                     
 
-                    if self.MSE_loss == False:
+                    if self.loss == 'CrossEntropy':
                         recon_loss_val, kl_val, loss_val = vae_loss(outputs, target, z, logvar, self.loss_func,
                                         kl_weight=self.kl_weight) 
                         outputs = torch.argmax(outputs, dim=1) 
 
-                    elif self.MSE_loss == True:
+                    elif self.loss == 'MSE':
                         recon_loss_val, kl_val, loss_val = vae_loss(outputs, inputs, z, logvar, self.loss_func,
                                         kl_weight=self.kl_weight) 
 
@@ -256,15 +255,15 @@ class ModelTester():
 
                     if counter < 10: #We save input and output of 20 subjects
                         np.save(self.save_dir+'/subjects/'+path[0]+'_input.npy',inputs.cpu().numpy()[0,0,:,:,:])
-                        if self.MSE_loss == False:
+                        if self.loss == 'CrossEntropy':
                             np.save(self.save_dir+'/subjects/'+path[0]+'_output.npy',outputs.cpu().numpy()[0,:,:,:])
                                     
-                        elif self.MSE_loss == True:
+                        elif self.loss == 'MSE':
                             np.save(self.save_dir+'/subjects/'+path[0]+'_output.npy',outputs.cpu().numpy()[0,0,:,:,:]) 
 
                     recon_error[str(path[0])]  = [recon_loss_val.cpu().detach().numpy().item()] #Save reconstruction error
                     embeddings[str(path[0])]   = np.array(np.squeeze(z).cpu().detach().numpy()) #Save embeddings
-                    if self.MSE_loss:
+                    if self.loss=='MSE':
                         pearson_corr[str(path[0])] = [compute_correlation(inputs.cpu().numpy()[0,0,:,:,:],outputs.cpu().numpy()[0,0,:,:,:])]
                     output_list.append(np.array(outputs.cpu().detach().numpy()).astype(bool))
                     counter += 1
@@ -281,7 +280,7 @@ class ModelTester():
         results_recon_error.to_csv(self.save_dir+'/RconError_'+self.dataset_name+'_dim_'+str(self.n_latent)+'_beta_'+str(self.kl_weight)+'.csv',index=False)
         
         print(pearson_corr)
-        if self.MSE_loss:
+        if self.loss =='MSE' :
             results_pearson_corr = pd.DataFrame.from_dict(pearson_corr)
             results_pearson_corr = results_pearson_corr.T
             print(results_pearson_corr)
@@ -304,3 +303,76 @@ class ModelTester():
         print('Pearson Correlation DataFrame\n',results_pearson_corr)
         print('Embeddings DataFrame\n',results_embeddings)
         return output
+
+
+class ModelReconstruct():
+    """
+    Class to reconstruct data with a trained model
+    """
+    def __init__(self, model, dico_set_loaders, kl_weight,
+                n_latent, depth,save_dir,dataset_name,selected_loss):
+        """
+        Args:
+            model: trained model to use
+            dico_set_loaders: dictionnary of type:
+                                            {"test_set_1": test_set_1_loader}
+            kl_weight : Beta value
+            loss_func : Reconstruction criterion
+            n_latent  : Size of latent space
+            depth     : Depth of the model
+            save_dir  : Directory where recon error and embeddings will be saved
+            dataset_name : Name of the dataset
+            MSE_loss     : Define the loss -> True = MSE, False = CrossEntropy 
+        Returns:
+            results: Write embeddings and reconstruction error to save_dir/.csv
+        """
+        self.model = model
+        self.dico_set_loaders = dico_set_loaders
+        self.kl_weight = kl_weight
+        self.n_latent = n_latent
+        self.depth = depth
+        self.save_dir = save_dir
+        self.dataset_name = dataset_name
+        self.loss = selected_loss
+
+        print('Decoding Input Data')
+    def decode(self):
+
+        device = torch.device("cuda", index=0)
+        results = {k:{} for k in self.dico_set_loaders.keys()}
+        recon_error  = {}
+        embeddings   = {}
+        pearson_corr = {}
+        output_list = []
+
+        for loader_name, loader in self.dico_set_loaders.items(): #loader is just the tensor dataset of subjects
+            print('loader_name loader',loader_name,loader)
+            self.model.eval()
+            with torch.no_grad():
+
+                counter = 0 
+                sub_counter = 0
+
+                for inputs, path in loader: #We iterate the subjects dataset one by one
+                    inputs = Variable(inputs).to(device, dtype=torch.float32)
+                    target = torch.squeeze(inputs, dim=1).long()
+                    z, logvar = self.model.encode(inputs) # z = mean because no random sampling
+                    outputs = self.model.decode(z)
+                    
+                    if not os.path.exists(self.save_dir+'/Input_Output'):
+                        os.mkdir(self.save_dir+'/Input_Output')
+
+                    np.save(self.save_dir+'/Input_Output/'+path[0]+'_input.npy',inputs.cpu().numpy()[0,0,:,:,:])
+                    if self.loss == 'CrossEntropy':
+                        np.save(self.save_dir+'/Input_Output/'+path[0]+'_output.npy',outputs.cpu().numpy()[0,:,:,:])
+                                
+                    elif self.loss == 'MSE':
+                        np.save(self.save_dir+'/Input_Output/'+path[0]+'_output.npy',outputs.cpu().numpy()[0,0,:,:,:]) 
+                        omissions = inputs.cpu().numpy()[0,0,:,:,:]-outputs.cpu().numpy()[0,0,:,:,:]
+                        omissions = np.where(omissions>0,omissions,0)
+                        additions = outputs.cpu().numpy()[0,0,:,:,:]-inputs.cpu().numpy()[0,0,:,:,:]
+                        additions = np.where(additions>0,additions,0)
+                        np.save(self.save_dir+'/Input_Output/'+path[0]+'_omissions.npy',omissions) 
+                        np.save(self.save_dir+'/Input_Output/'+path[0]+'_additions.npy',additions) 
+
+

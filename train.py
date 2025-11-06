@@ -41,7 +41,7 @@ import torchvision
 #from torchsummary import summary
 from torch.utils.tensorboard import SummaryWriter
 import torch.nn as nn
-
+import optuna
 from beta_vae import *
 from utils.pytorchtools import EarlyStopping
 from postprocess import plot_loss
@@ -62,26 +62,26 @@ def train_vae(config, trainloader, valloader, root_dir=None):
     writer = SummaryWriter(log_dir= config.save_dir+'logs/',
                             comment="")
     lr = config.lr
-    vae = VAE(config.in_shape, config.n, depth=config.depth, Use_MSE = config.MSE_loss)
+    vae = VAE(config.in_shape, config.n, depth=config.depth, loss_selected=config.loss)
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda:0"
     vae.to(device)
     #summary(vae, list(config.in_shape))
-    print(config)
-    if config.MSE_loss == False:
+    #print(config)
+    if config.loss == 'CrossEntropy':
         print('Using Cross Entropy Loss, reduction=sum')
         weights = [1, 2]
         class_weights = torch.FloatTensor(weights).to(device)
         criterion = nn.CrossEntropyLoss(weight=class_weights, reduction='sum')
         
-    elif config.MSE_loss == True:
+    elif config.loss == 'MSE':
         print('Using Mean Square Error Loss, reduction=sum')
         criterion = nn.MSELoss(reduction='sum')
 
     optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
     nb_epoch = config.nb_epoch
-    early_stopping = EarlyStopping(patience=5, verbose=True, root_dir=root_dir)
+    early_stopping = EarlyStopping(patience=10, verbose=True, root_dir=root_dir)
 
     list_loss_train, list_loss_val = [], []
 
@@ -99,14 +99,14 @@ def train_vae(config, trainloader, valloader, root_dir=None):
             inputs = Variable(inputs).to(device, dtype=torch.float32)
             output, z, logvar = vae(inputs)
 
-            if config.MSE_loss == False:
+            if config.loss == 'CrossEntropy':
                 target = torch.squeeze(inputs, dim=1).long()
                 partial_recon_loss, partial_kl, loss = vae_loss(output, target, z,
                                         logvar, criterion,
                                         kl_weight=config.kl) 
                 output = torch.argmax(output, dim=1) 
             
-            elif config.MSE_loss== True:
+            elif config.loss== 'MSE':
                 partial_recon_loss, partial_kl, loss = vae_loss(output, inputs, z,
                                         logvar, criterion,
                                         kl_weight=config.kl) 
@@ -117,13 +117,16 @@ def train_vae(config, trainloader, valloader, root_dir=None):
             kl_loss += partial_kl
             epoch_steps += 1
 
+            #Edit
+            #del inputs,output
+
         running_loss = running_loss / epoch_steps
         recon_loss = recon_loss / epoch_steps
         kl_loss = kl_loss / epoch_steps
 
-        if config.MSE_loss == False:
+        if config.loss == 'CrossEntropy':
             images = [inputs[0][0][10][:][:], output[0][10][:][:]]
-        elif config.MSE_loss == True:
+        elif config.loss == 'MSE':
             images = [inputs[0][0][10][:][:], output[0][0][10][:][:]] #For CrossEntroy -> images = [inputs[0][0][10][:][:], output[0][10][:][:]]
 
         grid = torchvision.utils.make_grid(images)
@@ -161,14 +164,14 @@ def train_vae(config, trainloader, valloader, root_dir=None):
             with torch.no_grad():
                 inputs = Variable(inputs).to(device, dtype=torch.float32)
                 output, z, logvar = vae(inputs)
-                if config.MSE_loss == False:
+                if config.loss == 'CrossEntropy':
                     target = torch.squeeze(inputs, dim=1).long()
                     partial_recon_loss_val, partial_kl_val, loss = vae_loss(output, target,  
                                             z, logvar, criterion,
                                             kl_weight=config.kl)
                     output = torch.argmax(output, dim=1)
 
-                elif config.MSE_loss == True:
+                elif config.loss == 'MSE':
                     partial_recon_loss_val, partial_kl_val, loss = vae_loss(output, inputs,  
                                             z, logvar, criterion,
                                             kl_weight=config.kl)
@@ -177,15 +180,18 @@ def train_vae(config, trainloader, valloader, root_dir=None):
                 recon_loss_val += partial_recon_loss_val
                 kl_val += partial_kl_val
                 val_steps += 1
+                
+                #del inputs, output
+
         valid_loss = val_loss / val_steps
         recon_loss_val = recon_loss_val / val_steps
         kl_val = kl_val / val_steps
 
-        if config.MSE_loss == False:
+        if config.loss == 'CrossEntropy':
             images = [inputs[0][0][10][:][:],\
                     output[0][10][:][:]]
             
-        elif config.MSE_loss == True:
+        elif config.loss == 'MSE':
             images = [inputs[0][0][10][:][:],\
                     output[0][0][10][:][:]]  
             
@@ -201,11 +207,10 @@ def train_vae(config, trainloader, valloader, root_dir=None):
         print("[%d] recon validation loss: %.2e" % (epoch + 1, recon_loss_val))
         #print(kl_val * config.kl + recon_loss_val)
         print("[%d] validation loss: %.2e" % (epoch + 1, valid_loss))
+
         list_loss_val.append(valid_loss)
-
         early_stopping(valid_loss, vae)
-        print("")
-
+ 
         """ Saving of reconstructions for visualization in Anatomist software """
         if early_stopping.early_stop or epoch == nb_epoch-1:
             for k in range(len(path)):
@@ -221,10 +226,148 @@ def train_vae(config, trainloader, valloader, root_dir=None):
     plot_loss(list_loss_train[1:], config.save_dir+'tot_train_',label='Train')
     plot_loss(list_loss_val[1:], config.save_dir+'tot_val_',label='Validation')
     final_loss_val = list_loss_val[-1:]
-
+    
     """Saving of trained model"""
     torch.save((vae.state_dict(), optimizer.state_dict()),
                 config.save_dir + 'vae.pt')
 
     print("Finished Training")
     return vae, final_loss_val
+
+
+
+def train_vae_optuna(config, trainloader, valloader, trial,root_dir=None):
+    """ Trains beta-VAE for a given hyperparameter configuration
+    Args:
+        config: instance of class Config
+        trainloader: torch loader of training data
+        valloader: torch loader of validation data
+        root_dir: str, directory where to save model
+    Returns:
+        vae: trained model
+        final_loss_val
+    """
+    torch.manual_seed(5)
+    writer = SummaryWriter(log_dir= config.save_dir+'logs/',
+                            comment="")
+    lr = config.lr
+    vae = VAE(config.in_shape, config.n, depth=config.depth, loss_selected=config.loss)
+    device = "cpu"
+    if torch.cuda.is_available():
+        device = "cuda:0"
+    vae.to(device)
+    #summary(vae, list(config.in_shape))
+    print(config)
+    if config.loss == 'CrossEntropy':
+        print('Using Cross Entropy Loss, reduction=sum')
+        weights = [1, 2]
+        class_weights = torch.FloatTensor(weights).to(device)
+        criterion = nn.CrossEntropyLoss(weight=class_weights, reduction='sum')
+        
+    elif config.loss == 'MSE':
+        print('Using Mean Square Error Loss, reduction=sum')
+        criterion = nn.MSELoss(reduction='sum')
+
+    optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
+    nb_epoch = config.nb_epoch
+    early_stopping = EarlyStopping(patience=10, verbose=True, root_dir=root_dir,save_model=False)
+
+    list_loss_train, list_loss_val = [], []
+
+    # arrays enabling to see model reconstructions
+    id_arr, phase_arr, input_arr, output_arr = [], [], [], []
+
+    for epoch in range(config.nb_epoch):
+        running_loss = 0.0
+        recon_loss = 0.0
+        kl_loss = 0.0
+        epoch_steps = 0
+        for inputs, path in trainloader:
+            optimizer.zero_grad()
+
+            inputs = Variable(inputs).to(device, dtype=torch.float32)
+            output, z, logvar = vae(inputs)
+
+            if config.loss == 'CrossEntropy':
+                target = torch.squeeze(inputs, dim=1).long()
+                partial_recon_loss, partial_kl, loss = vae_loss(output, target, z,
+                                        logvar, criterion,
+                                        kl_weight=config.kl) 
+                output = torch.argmax(output, dim=1) 
+            
+            elif config.loss== 'MSE':
+                partial_recon_loss, partial_kl, loss = vae_loss(output, inputs, z,
+                                        logvar, criterion,
+                                        kl_weight=config.kl) 
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+            recon_loss += partial_recon_loss
+            kl_loss += partial_kl
+            epoch_steps += 1
+
+        running_loss = running_loss / epoch_steps
+        recon_loss = recon_loss / epoch_steps
+        kl_loss = kl_loss / epoch_steps
+
+        print("[%d] KL loss: %.2e" % (epoch + 1, kl_loss))
+        print("[%d] recon loss: %.2e" % (epoch + 1, recon_loss))
+        print("[%d] loss: %.2e" % (epoch + 1,running_loss))
+        list_loss_train.append(running_loss)
+        running_loss = 0.0
+
+        # Validation loss
+        val_loss = 0.0
+        recon_loss_val = 0.0
+        kl_val = 0.0
+        val_steps = 0
+        total = 0
+        vae.eval()
+        for inputs, path in valloader:
+            with torch.no_grad():
+                inputs = Variable(inputs).to(device, dtype=torch.float32)
+                output, z, logvar = vae(inputs)
+                if config.loss == 'CrossEntropy':
+                    target = torch.squeeze(inputs, dim=1).long()
+                    partial_recon_loss_val, partial_kl_val, loss = vae_loss(output, target,  
+                                            z, logvar, criterion,
+                                            kl_weight=config.kl)
+                    output = torch.argmax(output, dim=1)
+
+                elif config.loss == 'MSE':
+                    partial_recon_loss_val, partial_kl_val, loss = vae_loss(output, inputs,  
+                                            z, logvar, criterion,
+                                            kl_weight=config.kl)
+
+                val_loss += loss.cpu().numpy()
+                recon_loss_val += partial_recon_loss_val
+                kl_val += partial_kl_val
+                val_steps += 1
+                
+        valid_loss = val_loss / val_steps
+        recon_loss_val = recon_loss_val / val_steps
+        kl_val = kl_val / val_steps
+
+        # If loss is NaN, prune the trial
+        if torch.isnan(recon_loss_val):
+            print(f"NaN encountered at epoch {epoch}")
+            raise optuna.exceptions.TrialPruned()
+
+        #Report to Optuna
+        trial.report(recon_loss_val, epoch)
+        # If Optuna determines that the trial should be pruned, raise an exception to stop training early
+        if trial.should_prune():
+            raise optuna.exceptions.TrialPruned()  # This will stop the trial early if it is underperforming
+        
+        # prints on the terminal
+        print("[%d] KL validation loss: %.2e" % (epoch + 1, kl_val))
+        print("[%d] recon validation loss: %.2e" % (epoch + 1, recon_loss_val))
+        print("[%d] validation loss: %.2e" % (epoch + 1, valid_loss))
+
+        list_loss_val.append(valid_loss)
+        early_stopping(valid_loss, vae)
+        print("")
+
+    final_loss_val = list_loss_val[-1:]
+    print("Finished Training")
+    return final_loss_val

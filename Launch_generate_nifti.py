@@ -30,21 +30,22 @@ for path in out_paths:
         print('except')
 '''
 
-out_path = f"/neurospin/dico/cmendoza/Runs/14_PhD_UKB/JeanZay/R_S.C.-sylv./full_brain_R_S.C.-sylv._Track_0_250_icbm09c_dim_1024_beta_1_Train_1_22-18-51/"
+out_path = f"/neurospin/dico/cmendoza/Runs/14_PhD_UKB/full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c_dim_512_beta_32_Train_2_22-20-38/subjects/"
 print(out_path)
 try:
     for vol in ['_input','_output']:
-        files = [f for f in os.listdir(out_path+'subjects') if f.endswith(vol+'.npy')]
+        files = [f for f in os.listdir(out_path) if f.endswith(vol+'.npy')]
         print('files:', files)
         for sub in files:
             print(sub)
             
-            print('Split',out_path+'subjects/'+sub)
-            vol_npy = np.load(out_path+'subjects/'+sub).astype(np.float32)
+            print('Split',out_path+sub)
+            vol_npy = np.load(out_path+sub).astype(np.float32)
             #print('Volume shape',vol_npy.shape)
             vol_nifty = aims.Volume(vol_npy)
             vol_nifty.header()['voxel_size'] = [1.0, 1.0, 1.0]
-            aims.write(vol_nifty, out_path+'subjects/'+sub.split('.npy')[0]+'.nii.gz')
+            aims.write(vol_nifty, out_path+sub.split('.npy')[0]+'.nii.gz')
             #call([f'rm -rf '+out_path+'subjects/'+sub+' -v'],shell=True)
-except:
-    print('except')
+except Exception as e:
+    # Catch the exception and print it
+    print(f"An error occurred: {e}")

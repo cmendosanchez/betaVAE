@@ -1,0 +1,6 @@
+- n=512
+- kl=1
+- nb_epoch=2
+- nsamples=None
+- +dataset_localization=jeanzay_PhD_UKB
+- +dataset=PhD_UKB/full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c

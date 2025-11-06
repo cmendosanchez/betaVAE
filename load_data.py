@@ -73,6 +73,9 @@ def create_subset(config):
         tmp_sub = [subject[4:] for subject in tmp_sub]
         train_list['subjects']=tmp_sub
 
+    if config.nsamples!='None':
+        train_list = train_list.head(config.nsamples)
+
     print('""" Train list without the prefix sub- """')
     print(train_list)
 
@@ -89,6 +92,8 @@ def create_subset(config):
         print('""" Loading numpy file """')
         #We load the numpy file and append the crop to a list ( [numpy array] ) 
         tmp = np.load(config.data_dir)
+        if config.nsamples!='None':
+            tmp = tmp[:config.nsamples]
         print('Shape of numpy file',tmp.shape)
         list_crops = []
         for crop in range(0,tmp.shape[0]):
@@ -98,47 +103,7 @@ def create_subset(config):
         dict_sub_crop = dict(zip(train_list['subjects'].tolist(), list_crops))
         print('Size of dictionary containing Subject id (key) and Crop (value)', len(dict_sub_crop))
 
-        #If we want to train with the whole dataset
-        if config.remove_subjects == False:
-            tmp = pd.DataFrame.from_dict(dict_sub_crop)
-            #print('Print some pickle info',type(tmp),list(tmp.index),list(tmp.columns.values),tmp.info(),type(tmp.iloc[0]['1000021']),tmp.iloc[0]['1000021'].shape)
-
-        #If we want to remove some subjects
-        else:
-            #We load the list of subjects to be removed from train
-            subjects_to_exclude = pd.read_csv(config.subjects_to_remove)
-            print('""" Subjects to exclude"""\n',subjects_to_exclude)
-            subjects_to_exclude.columns = ['subjects']
-
-            #We remove the sub- part from the string (if exists)
-            subjects_to_exclude['subjects'] = subjects_to_exclude['subjects'].astype('str')
-            tmp_excluded = subjects_to_exclude['subjects'].tolist()
-            print('Before removing sub- prefix\n',tmp_excluded[0][:4])
-            if tmp_excluded[0][:4]=='sub-':
-                tmp_excluded = [subject[4:] for subject in tmp_excluded]
-                subjects_to_exclude['subjects']=tmp_excluded
-            print('After removing sub- prefix\n',subjects_to_exclude)
-
-            #We get a list of the subjects to be removed
-            subs_to_remove = subjects_to_exclude['subjects'].tolist()
-            print(' ° dict_sub_crop size before removing subjects', len(dict_sub_crop))
-            print(' ° train_list size before removing subjects',len(train_list))
-
-            print('""" Removing subjects """')
-            #We removed the subjects from the dictionary and from the whole list of subjects
-            for sub in subs_to_remove:
-                del dict_sub_crop[sub]
-            train_list = filter_rows_by_values(train_list , "subjects", subs_to_remove)
-
-            print('°° dict_sub_crop size after removing subjects', len(dict_sub_crop))
-            print('°° train_list size before after removing subjects',len(train_list))
-            #Save everything to csv
-            train_dataset = pd.DataFrame.from_dict({'ID':train_list['subjects'].tolist()})
-            train_dataset.to_csv(config.save_dir+'/Subjects_list.csv')
-
-            #Finally, we create a dataframe from the dictionary
-            tmp = pd.DataFrame.from_dict(dict_sub_crop)
-    
+    tmp = pd.DataFrame.from_dict(dict_sub_crop)
     #We are almost there
     tmp = tmp.T
     tmp.index.astype('str')

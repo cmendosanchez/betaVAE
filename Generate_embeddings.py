@@ -77,18 +77,18 @@ def main(config):
 
     print('""" Model',os.path.join(config.test_model_dir, 'checkpoint.pt'),'"""')
     model_dir = os.path.join(config.test_model_dir, 'checkpoint.pt') 
-    model = VAE(config.in_shape, config.n, depth=config.depth, Use_MSE = config.MSE_loss)
+    model = VAE(config.in_shape, config.n, depth=config.depth, loss_selected= config.loss)
     model.load_state_dict(torch.load(model_dir))
     model = model.to(device)
     print(config)
 
-    if config.MSE_loss == False:
+    if config.loss == 'CrossEntropy':
         weights = [1, 2]
         class_weights = torch.FloatTensor(weights).to(device)
         criterion = nn.CrossEntropyLoss(weight=class_weights, reduction='sum')
         print('"""Using Cross Entropy Loss, reduction=sum')
 
-    elif config.MSE_loss == True:
+    elif config.loss == 'MSE':
         criterion = nn.MSELoss( reduction='sum')
         print('"""Using MSE Loss, reduction=sum')
 
@@ -102,7 +102,7 @@ def main(config):
 
     tester = ModelTester(model=model, dico_set_loaders=dico_set_loaders,
                          kl_weight=config.kl, loss_func=criterion,
-                         n_latent=config.n, depth=config.depth,save_dir=config.test_model_dir,dataset_name = config.dataset_name,MSE_loss=config.MSE_loss)
+                         n_latent=config.n, depth=config.depth,save_dir=config.test_model_dir,dataset_name = config.dataset_name,selected_loss=config.loss)
     results = tester.test()
 
 if __name__ == '__main__':
