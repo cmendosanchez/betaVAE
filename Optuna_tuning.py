@@ -212,7 +212,7 @@ def train(config):
     pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=2, interval_steps=1)
     study = optuna.create_study(direction='minimize',study_name=f"betaVAE_{now:%Y-%m-%d}_{now:%H-%M-%S}",pruner=pruner)
     # Objective function is a wrapped version of the training function
-    study.optimize(lambda trial: objective(trial,config,subset1), n_trials=4, n_jobs=2)  # 10 trials
+    study.optimize(lambda trial: objective(trial,config,subset1), n_trials=10, n_jobs=5)  # 10 trials
 
     print('~~~~ Plotting Results ~~~~')
     # Plot optimization history

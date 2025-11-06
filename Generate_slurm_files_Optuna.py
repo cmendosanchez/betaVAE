@@ -2,7 +2,7 @@ import os
 import textwrap
 
 """
-Experiment 2: Train of different models using density images with different fiber bundle segmentation criterias
+Experiment 3: Optuna Optimization
 Only sift2 is used
 """
 
@@ -10,13 +10,9 @@ Hemi   = f'R'
 Region = f'S.C.-sylv.'
 config_names =   []
 for conn in ['_sift2']:
-    for mode in ['full_brain','two_ends','one_end','CC']:
+    for mode in ['two_ends']:
         if   mode =='two_ends':
-            l_ranges = [('0','40'),('40','80'),('0','80')]
-        elif mode =='one_end':
-            l_ranges = [('0','40'),('40','80'),('0','80'),('80','250'),('0','250')]
-        else:
-            l_ranges = [('0','250')]
+            l_ranges = [('0','40')]
 
         for l_range in l_ranges:
             config_names.append(f'{mode}_{Hemi}_{Region}_Track_{l_range[0]}_{l_range[1]}{conn}_icbm09c')
