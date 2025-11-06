@@ -200,7 +200,8 @@ def objective(trial: Trial, config, dataset):
 @hydra.main(config_name='config', version_base="1.1", config_path="configs")
 def train(config):
     start_time = time.time()
-    out_plots = f'/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}/'
+    #out_plots = f'/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}/'
+    out_plots = f'/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE_Output/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}'
     if not os.path.exists(out_plots):
         os.makedirs(out_plots)
     print(""" Load data and generate torch datasets within train """)
@@ -228,7 +229,7 @@ def train(config):
     fig4 = optuna.visualization.plot_timeline(study)
     fig4.write_image(f"{out_plots}/timelines.png",scale=3)
 
-    fig5 = optuna.visualization.plot_contour(study, params=["N_DIMENSIONS","BETA"])
+    fig5 = optuna.visualization.plot_contour(study, params=["LATENT_DIMENSIONS","BETA"])
     fig5.write_image(f"{out_plots}/contour_plot_NDIM_BETA.png",scale=3)
 
     # Print the best trial details
