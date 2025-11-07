@@ -51,7 +51,7 @@ import torch
 import gc
 from datetime import datetime
 from train import train_vae, train_vae_optuna
-from load_data import create_subset
+from load_data import create_subset_from_folder
 from utils.config import process_config
 from torch.utils.data import Subset, Dataset
 from tqdm import tqdm
@@ -61,10 +61,11 @@ import optuna
 import optuna.visualization as vis
 from optuna.pruners import MedianPruner
 import matplotlib.pyplot as plt
-import threading
+from optuna.storages import JournalStorage
+from optuna.storages.journal import JournalFileBackend
 from optuna.trial import Trial
-import joblib
-
+from multiprocessing import Pool
+from functools import partial
 now = datetime.now()
 optuna.logging.set_verbosity(optuna.logging.INFO)
 '''
@@ -113,19 +114,17 @@ def adjust_in_shape(config):
     return((1, dims[0]+4, dims[1], dims[2]))
 
 # This will be the objective function for Optuna optimization
-def objective(trial: Trial, config, dataset):
+def objective(trial, config, dataset):
     try:
-        print(f"Running trial {trial.number=} in {threading.current_thread().name}")
-        print(f"Active threads at the start of trial {trial.number}: {threading.active_count()}")
-
+        print(f"Running trial {trial.number=} in process {os.getpid()}")
         # Suggest hyperparameters with Optuna
         # Optuna will suggest a learning rate and batch size for each trial
         LEARNING_RATE      = trial.suggest_categorical('LEARNING_RATE', [1e-5,1e-4,1e-3])
         BATCH_SIZE         = trial.suggest_categorical('BATCH_SIZE', [16,32,64])
-        N_EPOCH            = trial.suggest_categorical('N_EPOCH', [5,10])
+        N_EPOCH            = trial.suggest_categorical('N_EPOCH', [10,20,30])
         LATENT_DIMENSIONS  = trial.suggest_categorical('LATENT_DIMENSIONS', [32,64,128,256,512])
         BETA               = trial.suggest_categorical('BETA', [1,2,4,8,16,32,64])
-        N_SUBJECTS         = trial.suggest_categorical('N_SUBJECTS', [2000,3000])
+        N_SUBJECTS         = trial.suggest_categorical('N_SUBJECTS', [2000,3000,6000])
 
         # Update config dynamically
         config.lr         = LEARNING_RATE
@@ -141,7 +140,8 @@ def objective(trial: Trial, config, dataset):
         torch.manual_seed(3)
 
         # Create a subset dataset
-        subset1 = Subset(dataset, list(range(0, config.nsamples)))
+        #subset1 = Subset(dataset, list(range(0, config.nsamples)))
+        subset1 = create_subset_from_folder(config,dataset,int(config.nsamples))
         print('Objective fun - subset size',len(subset1),subset1[0][0].shape)
 
         if config.train_list is not None:
@@ -181,8 +181,8 @@ def objective(trial: Trial, config, dataset):
         print(f'Nsubjects Train: {len(train_set)}, Nsubjects Validation: {len(val_set)}')
         
         # DataLoader for training and validation
-        trainloader = torch.utils.data.DataLoader(train_set, batch_size=config.batch_size, num_workers=8, shuffle=True)
-        valloader = torch.utils.data.DataLoader(val_set, batch_size=1, num_workers=8, shuffle=False)
+        trainloader = torch.utils.data.DataLoader(train_set, batch_size=config.batch_size, num_workers=1, shuffle=True)
+        valloader = torch.utils.data.DataLoader(val_set, batch_size=1, num_workers=1, shuffle=False)
 
         print(""" Train model for given configuration """)
         final_loss_val = train_vae_optuna(config, trainloader, valloader, trial,root_dir=config.save_dir)
@@ -196,31 +196,31 @@ def objective(trial: Trial, config, dataset):
         print(f"Trial {trial.number} failed with error: {e}")
         raise optuna.exceptions.TrialPruned() 
     
-def log_active_threads(study, trial):
-    print(f"Active threads after trial {trial.number} finished: {threading.active_count()}")
-
-
 @hydra.main(config_name='config', version_base="1.1", config_path="configs")
 def train(config):
+    Region        = f"S.C.-sylv."
+    Hemi          = f"R"
+    #PATH_NUMPY_CROPS = f'/home_local/cm283129/PhD_UKB/R_S.C.-sylv._crops/two_ends_R_S.C.-sylv._Track_0_40_sift2_icbm09c'
+    PATH_NUMPY_CROPS = f'/lustre/fsn1/projects/rech/tgu/ugf68us/two_ends_R_S.C.-sylv._Track_0_40_sift2_icbm09c'
+
     start_time = time.time()
-    #out_plots = f'/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}'
-    out_plots = f'/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE_Output/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}'
+    out_plots = f'/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}'
+    #out_plots = f'/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE_Output/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}'
     if not os.path.exists(out_plots):
         os.makedirs(out_plots)
     print(""" Load data and generate torch datasets within train """)
-    subset1 = create_subset(config)
-    print('Set',subset1,len(subset1))
     config.in_shape = adjust_in_shape(config)
-    #Create Optuna pruner
+
     print('~~~~~~ @ Running Optuna Framework @ ~~~~~~')
-    pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=2, interval_steps=1)
+    pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
     study = optuna.create_study(direction='minimize',study_name=f"betaVAE_{now:%Y-%m-%d}_{now:%H-%M-%S}",pruner=pruner,storage=f'sqlite:///{out_plots}/study.db')
     # Objective function is a wrapped version of the training function
-    study.optimize(lambda trial: objective(trial,config,subset1), n_trials=10, n_jobs=10,callbacks=[log_active_threads])  # 10 trials
+    study.optimize(lambda trial: objective(trial,config,PATH_NUMPY_CROPS), n_trials=10,n_jobs=5)  # 10 trials
+    
 
     print('~~~~ Plotting Results ~~~~')
     # Plot optimization history
-    
+    '''
     fig1 = vis.plot_optimization_history(study)
     fig1.write_image(f"{out_plots}/optimization_history.png",scale=3)
 
@@ -241,10 +241,12 @@ def train(config):
     print(f"Best value: {study.best_value}")
     print(f"Best params: {study.best_params}")
     print(f'Saving study to {out_plots}')
-    joblib.dump(study, f"{out_plots}/optuna_study_batch.pkl")   # save study
-
+    #joblib.dump(study, f"{out_plots}/optuna_study_batch.pkl")   # save study
+    '''
     print("--- %s seconds ---" % (time.time() - start_time))
 
 
 if __name__ == '__main__':
     train()
+
+

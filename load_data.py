@@ -47,7 +47,8 @@ from random import sample as sample_2args
 import pandas as pd
 import numpy as np
 from preprocess import *
-
+import nibabel as nib
+from tqdm import tqdm
 def filter_rows_by_values(df, col, values):
     return df[~df[col].isin(values)]
 
@@ -135,3 +136,76 @@ def create_subset(config):
 
 
 
+def split_filename(filename):
+    # Use regular expression to match the subject ID pattern
+    match = re.search(r'sub-\d+', filename)
+    #print(match)
+    if match:
+        return match.group(0)
+
+
+def create_subset_from_folder(config,folder_path, num_subjects=None):
+    """
+    Creates a dataset subset from files in a folder.
+    
+    Args:
+        folder_path (str): Path to the folder containing subject data.
+        num_subjects (int, optional): Number of subjects to include in the subset. Defaults to None (all subjects).
+    
+    Returns:
+        subset: Dataset corresponding to the subset of subjects.
+    """
+    print("~~~ Creating dataset from folder ~~~")
+    # List all files in the folder
+    all_files = os.listdir(folder_path)
+
+    
+    # Filter files that are in the expected format (e.g., numpy arrays or pickle files)
+    subject_files = [f for f in all_files if f.endswith(('.nii.gz'))][0:num_subjects]
+    #print('""" Filtered subject files: ', subject_files, '"""')
+
+    # Create an empty list to store the crops and a list of subject ids
+    list_crops = []
+    subject_ids = []
+
+    # Load data for each subject file
+    crops = np.zeros((num_subjects,84,68,98,1),dtype=np.float32)
+    for i, file_name in enumerate(tqdm(subject_files)):
+        subject_id = split_filename(file_name)  # Assuming the file name is the subject ID
+        subject_ids.append(subject_id)
+        file_path = os.path.join(folder_path, file_name)
+        if file_name.endswith('.nii.gz'):
+            list_crops.append([nib.load(f'{folder_path}/{file_name}').get_fdata()])
+
+    # Create the dataframe with subject IDs and their respective crops
+    dict_sub_crop = dict(zip(subject_ids, list_crops))
+    print(f'Size of dictionary containing Subject ID (key) and Crop (value): {len(dict_sub_crop)}')
+    tmp = pd.DataFrame.from_dict(dict_sub_crop)
+    #We are almost there
+    tmp = tmp.T
+    tmp.index.astype('str')
+    ''' Just as a reminder
+    a = {'A':[123],'B':[245],'C':[678]}
+    tmp = pd.DataFrame.from_dict(a)
+    print(tmp,'\n',tmp.T)
+    tmp = tmp.T
+    print([tmp.index[k] for k in range(len(tmp))])
+    Output:
+         A    B    C
+        0  123  245  678 
+            0
+        A  123
+        B  245
+        C  678
+        ['A', 'B', 'C']
+        ** Process exited - Return Code: 0 **
+        Press Enter to exit terminal
+    '''
+    #Here we get a list with the ID of the subjects
+    tmp['subjects'] = [tmp.index[k] for k in range(len(tmp))]
+    print('Final input number of subject:',len(tmp['subjects'].tolist()))
+    tmp = tmp.merge(tmp['subjects'], left_on = 'subjects', right_on='subjects', how='right')
+    filenames = list(tmp['subjects'])
+    subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
+    print('------- Successfully created dataset subset')
+    return subset
