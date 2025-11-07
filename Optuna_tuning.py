@@ -116,16 +116,16 @@ def adjust_in_shape(config):
 def objective(trial: Trial, config, dataset):
     try:
         print(f"Running trial {trial.number=} in {threading.current_thread().name}")
+        print(f"Active threads at the start of trial {trial.number}: {threading.active_count()}")
+
         # Suggest hyperparameters with Optuna
         # Optuna will suggest a learning rate and batch size for each trial
-        LEARNING_RATE = trial.suggest_categorical('LEARNING_RATE', [1e-5,1e-4,1e-3])
-        BATCH_SIZE    = trial.suggest_categorical('BATCH_SIZE', [16,32,64])
-        #EPOCH_OPTUNA         = trial.suggest_int('EPOCH_OPTUNA', 10, 60, step=10)
-        N_EPOCH         = trial.suggest_int('N_EPOCH', 3, 6, step=1)
-        LATENT_DIMENSIONS             = trial.suggest_categorical('LATENT_DIMENSIONS', [32,64,128,256,512])
-        #N_OPTUNA             = trial.suggest_categorical('N_OPTUNA', [32,64])
-        BETA          = trial.suggest_categorical('BETA', [1,2,4,8,16,32,64])
-        N_SUBJECTS    = trial.suggest_int('N_SUBJECTS', 1000, 3000, step=100)
+        LEARNING_RATE      = trial.suggest_categorical('LEARNING_RATE', [1e-5,1e-4,1e-3])
+        BATCH_SIZE         = trial.suggest_categorical('BATCH_SIZE', [16,32,64])
+        N_EPOCH            = trial.suggest_categorical('N_EPOCH', [5,10])
+        LATENT_DIMENSIONS  = trial.suggest_categorical('LATENT_DIMENSIONS', [32,64,128,256,512])
+        BETA               = trial.suggest_categorical('BETA', [1,2,4,8,16,32,64])
+        N_SUBJECTS         = trial.suggest_categorical('N_SUBJECTS', [2000,3000])
 
         # Update config dynamically
         config.lr         = LEARNING_RATE
@@ -195,13 +195,16 @@ def objective(trial: Trial, config, dataset):
     except Exception as e:
         print(f"Trial {trial.number} failed with error: {e}")
         raise optuna.exceptions.TrialPruned() 
+    
+def log_active_threads(study, trial):
+    print(f"Active threads after trial {trial.number} finished: {threading.active_count()}")
 
 
 @hydra.main(config_name='config', version_base="1.1", config_path="configs")
 def train(config):
     start_time = time.time()
-    out_plots = f'/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}'
-    #out_plots = f'/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE_Output/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}'
+    #out_plots = f'/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}'
+    out_plots = f'/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE_Output/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}'
     if not os.path.exists(out_plots):
         os.makedirs(out_plots)
     print(""" Load data and generate torch datasets within train """)
@@ -213,10 +216,11 @@ def train(config):
     pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=2, interval_steps=1)
     study = optuna.create_study(direction='minimize',study_name=f"betaVAE_{now:%Y-%m-%d}_{now:%H-%M-%S}",pruner=pruner,storage=f'sqlite:///{out_plots}/study.db')
     # Objective function is a wrapped version of the training function
-    study.optimize(lambda trial: objective(trial,config,subset1), n_trials=6, n_jobs=4)  # 10 trials
+    study.optimize(lambda trial: objective(trial,config,subset1), n_trials=10, n_jobs=10,callbacks=[log_active_threads])  # 10 trials
 
     print('~~~~ Plotting Results ~~~~')
     # Plot optimization history
+    
     fig1 = vis.plot_optimization_history(study)
     fig1.write_image(f"{out_plots}/optimization_history.png",scale=3)
 

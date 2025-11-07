@@ -45,7 +45,7 @@ import optuna
 from beta_vae import *
 from utils.pytorchtools import EarlyStopping
 from postprocess import plot_loss
-
+import time
 
 def train_vae(config, trainloader, valloader, root_dir=None):
     """ Trains beta-VAE for a given hyperparameter configuration
@@ -247,6 +247,7 @@ def train_vae_optuna(config, trainloader, valloader, trial,root_dir=None):
         vae: trained model
         final_loss_val
     """
+    start_time = time.time()
     torch.manual_seed(5)
     writer = SummaryWriter(log_dir= config.save_dir+'logs/',
                             comment="")
@@ -369,5 +370,5 @@ def train_vae_optuna(config, trainloader, valloader, trial,root_dir=None):
         print("")
 
     final_loss_val = list_loss_val[-1:]
-    print("Finished Training")
+    print(f"Finished train Ndimensions {config.n} Beta {config.kl} Total Subjects {config.nsamples} --- %s seconds --- {time.time() - start_time}")
     return final_loss_val
