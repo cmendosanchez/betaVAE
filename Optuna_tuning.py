@@ -118,7 +118,7 @@ def objective(trial: Trial, config, dataset):
         print(f"Running trial {trial.number=} in {threading.current_thread().name}")
         # Suggest hyperparameters with Optuna
         # Optuna will suggest a learning rate and batch size for each trial
-        LEARNING_RATE = trial.suggest_categorical('LEARNING_RATE', [1e-5,1e-4,1e-3,1e-2])
+        LEARNING_RATE = trial.suggest_categorical('LEARNING_RATE', [1e-5,1e-4,1e-3])
         BATCH_SIZE    = trial.suggest_categorical('BATCH_SIZE', [16,32,64])
         #EPOCH_OPTUNA         = trial.suggest_int('EPOCH_OPTUNA', 10, 60, step=10)
         N_EPOCH         = trial.suggest_int('N_EPOCH', 3, 6, step=1)
@@ -200,8 +200,8 @@ def objective(trial: Trial, config, dataset):
 @hydra.main(config_name='config', version_base="1.1", config_path="configs")
 def train(config):
     start_time = time.time()
-    #out_plots = f'/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}/'
-    out_plots = f'/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE_Output/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}'
+    out_plots = f'/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}'
+    #out_plots = f'/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE_Output/OptunaResults/Optuna_{now:%Y-%m-%d}_{now:%H-%M-%S}'
     if not os.path.exists(out_plots):
         os.makedirs(out_plots)
     print(""" Load data and generate torch datasets within train """)
@@ -211,9 +211,9 @@ def train(config):
     #Create Optuna pruner
     print('~~~~~~ @ Running Optuna Framework @ ~~~~~~')
     pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=2, interval_steps=1)
-    study = optuna.create_study(direction='minimize',study_name=f"betaVAE_{now:%Y-%m-%d}_{now:%H-%M-%S}",pruner=pruner)
+    study = optuna.create_study(direction='minimize',study_name=f"betaVAE_{now:%Y-%m-%d}_{now:%H-%M-%S}",pruner=pruner,storage=f'sqlite:///{out_plots}/study.db')
     # Objective function is a wrapped version of the training function
-    study.optimize(lambda trial: objective(trial,config,subset1), n_trials=10, n_jobs=5)  # 10 trials
+    study.optimize(lambda trial: objective(trial,config,subset1), n_trials=6, n_jobs=4)  # 10 trials
 
     print('~~~~ Plotting Results ~~~~')
     # Plot optimization history
