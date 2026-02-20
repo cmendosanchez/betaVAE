@@ -39,8 +39,6 @@ for nifti in tqdm(nifti_files, desc="Processing config files"):
         "data_dir"          : f'${{dataset_folder}}/{Hemi}_{Region}_crops_{base}.npy',
         "subject_dir"       : f'${{dataset_folder}}/{Hemi}_{Region}_subjects.csv',
         "in_shape"          : [1, 84, 68, 98],
-        "subjects_to_remove": None,
-        "remove_subjects"   : False,
         "train_list"        : None, 
         "validation_list"   : None}
     with open(f"{yaml_folder}/{base}.yaml", "w") as f:

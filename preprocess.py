@@ -41,16 +41,12 @@ import pandas as pd
 import torch
 import torchvision.transforms as transforms
 from scipy.ndimage import rotate, find_objects, shift,binary_erosion
-from skimage.morphology import local_maxima
 from numpy import random
-from skimage.morphology import skeletonize
-from skimage.morphology import binary_opening
-from skimage.segmentation import watershed
 from scipy import ndimage
-from skimage.filters import laplace
+from torch.utils.data import Dataset
+from torch import multiprocessing as mp
+
 #from configs.config import Config
-
-
 class SkeletonDataset():
     """Custom dataset for skeleton images that includes image file paths.
     Args:

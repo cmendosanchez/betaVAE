@@ -49,6 +49,10 @@ import numpy as np
 from preprocess import *
 import nibabel as nib
 from tqdm import tqdm
+from joblib import Parallel, delayed
+from concurrent.futures import ProcessPoolExecutor as Pool
+import time
+
 def filter_rows_by_values(df, col, values):
     return df[~df[col].isin(values)]
 
@@ -134,8 +138,6 @@ def create_subset(config):
     print('------- Succesfully loaded dataset')
     return subset
 
-
-
 def split_filename(filename):
     # Use regular expression to match the subject ID pattern
     match = re.search(r'sub-\d+', filename)
@@ -143,6 +145,10 @@ def split_filename(filename):
     if match:
         return match.group(0)
 
+def read_nifti_parallel(folder_path,file_name):
+    subject_id = split_filename(file_name)  # Assuming the file name is the subject ID
+    file_path = os.path.join(folder_path, file_name)
+    return subject_id,[nib.load(f'{folder_path}/{file_name}').get_fdata()]
 
 def create_subset_from_folder(config,folder_path, num_subjects=None):
     """
@@ -159,26 +165,30 @@ def create_subset_from_folder(config,folder_path, num_subjects=None):
     # List all files in the folder
     all_files = os.listdir(folder_path)
 
-    
     # Filter files that are in the expected format (e.g., numpy arrays or pickle files)
     subject_files = [f for f in all_files if f.endswith(('.nii.gz'))][0:num_subjects]
     #print('""" Filtered subject files: ', subject_files, '"""')
 
     # Create an empty list to store the crops and a list of subject ids
+    start_time_ser = time.time()
+    '''
     list_crops = []
     subject_ids = []
 
     # Load data for each subject file
-    crops = np.zeros((num_subjects,84,68,98,1),dtype=np.float32)
     for i, file_name in enumerate(tqdm(subject_files)):
         subject_id = split_filename(file_name)  # Assuming the file name is the subject ID
         subject_ids.append(subject_id)
         file_path = os.path.join(folder_path, file_name)
         if file_name.endswith('.nii.gz'):
             list_crops.append([nib.load(f'{folder_path}/{file_name}').get_fdata()])
+    '''
+    print("--- %s seconds ---" % (time.time() - start_time_ser))
 
+    results = Parallel(n_jobs=8)(delayed(read_nifti_parallel)(folder_path, file_name) for file_name in tqdm(subject_files))
     # Create the dataframe with subject IDs and their respective crops
-    dict_sub_crop = dict(zip(subject_ids, list_crops))
+    #dict_sub_crop = dict(zip(subject_ids, list_crops))
+    dict_sub_crop = dict(results)
     print(f'Size of dictionary containing Subject ID (key) and Crop (value): {len(dict_sub_crop)}')
     tmp = pd.DataFrame.from_dict(dict_sub_crop)
     #We are almost there
@@ -208,4 +218,107 @@ def create_subset_from_folder(config,folder_path, num_subjects=None):
     filenames = list(tmp['subjects'])
     subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
     print('------- Successfully created dataset subset')
+    return subset
+
+
+
+def process_subject_file(folder_path,file_name):
+    """
+    Process a single file: Load the .nii.gz file and return the subject_id and the corresponding data.
+    """
+    #print('process_subject_file args',folder_path,file_name,len(file_name))
+    subject_id = split_filename(file_name)  # Get subject ID from the file name
+    subject_data = None
+    
+    if file_name.endswith('.nii.gz'):
+        # Load the NIfTI file and get the data
+        subject_data = nib.load(os.path.join(folder_path, file_name)).get_fdata()
+    
+    return subject_id, subject_data
+
+def parallel_process_files(subject_files, folder_path, num_workers=4):
+    """
+    Process the subject files in parallel using multiprocessing.
+    """
+    #print('Parallel processing on files')
+    # Use multiprocessing Pool to distribute the workload
+    with Pool(max_workers=num_workers) as pool:
+        results = pool.map(process_subject_file, [folder_path]*len(subject_files) ,subject_files)
+    
+    #print('results',list(results)[0:1])
+    # Collect results
+    subject_ids = []
+    list_crops = []
+    
+    for subject_id, subject_data in list(results):
+        subject_ids.append(subject_id)
+        if subject_data is not None:
+            list_crops.append([subject_data])
+    
+    return subject_ids, list_crops
+
+
+def create_subset_from_list(config,folder_path,subject_files):
+    """
+    Creates a dataset subset from files in a folder.
+    
+    Args:
+        folder_path (str): Path to the folder containing subjects data.
+        subject_files (list): List with the name of the files to load from folder_path.
+    
+    Returns:
+        subset: Dataset corresponding to the subset of subjects.
+    """
+    #print("~~~ Creating dataset from folder ~~~")
+    
+    #start_time_ser = time.time()
+    list_crops = []
+    subject_ids = []
+    # Load data for each subject file
+    
+    for i, file_name in enumerate(subject_files):
+        subject_id = split_filename(file_name)  #We get the subject ID
+        subject_ids.append(subject_id)
+        if file_name.endswith('.nii.gz'):
+            list_crops.append([nib.load(f'{folder_path}/{file_name}').get_fdata()])
+    
+    #print("--- %s seconds ser ---" % (time.time() - start_time_ser))
+    
+    #start_time_par = time.time()
+    #subject_ids, list_crops = parallel_process_files(subject_files, folder_path, num_workers=4)
+    #print("--- %s seconds par---" % (time.time() - start_time_par))
+    '''
+    print('Checking if lists are equal',subject_ids_1==subject_ids)
+    all_true = all(np.array_equal(list_crops_1[i], list_crops[i]) for i in range(len(list_crops_1)))
+    print("All comparisons are True" if all_true else "Not all comparisons are True")
+    '''
+    # Create the dataframe with subject IDs and their respective crops
+    dict_sub_crop = dict(zip(subject_ids, list_crops))
+    tmp = pd.DataFrame.from_dict(dict_sub_crop)
+    #We are almost there
+    tmp = tmp.T
+    tmp.index.astype('str')
+    ''' Just as a reminder
+    a = {'A':[123],'B':[245],'C':[678]}
+    tmp = pd.DataFrame.from_dict(a)
+    print(tmp,'\n',tmp.T)
+    tmp = tmp.T
+    print([tmp.index[k] for k in range(len(tmp))])
+    Output:
+         A    B    C
+        0  123  245  678 
+            0
+        A  123
+        B  245
+        C  678
+        ['A', 'B', 'C']
+        ** Process exited - Return Code: 0 **
+        Press Enter to exit terminal
+    '''
+    #Here we get a list with the ID of the subjects
+    tmp['subjects'] = [tmp.index[k] for k in range(len(tmp))]
+    tmp = tmp.merge(tmp['subjects'], left_on = 'subjects', right_on='subjects', how='right')
+    filenames = list(tmp['subjects'])
+    subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
+    #print('------- Successfully created dataset subset')
     return subset

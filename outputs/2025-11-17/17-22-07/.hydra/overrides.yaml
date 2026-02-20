@@ -1,0 +1,7 @@
+- n=512
+- kl=
+- nsamples=1000
+- +dataset_folder=/home_local/cm283129/PhD_UKB/R_S.C.-sylv._numpy
+- +save_dir=None
+- +dataset=PhD_UKB/full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c
+- +test_model_dir=/neurospin/dico/cmendoza/Runs/14_PhD_UKB/full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c_dim_512_beta_2_Train_2_22-19-03

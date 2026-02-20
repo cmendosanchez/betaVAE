@@ -1,0 +1,25 @@
+kl: 2
+depth: 3
+'n': 75
+batch_size: 16
+nb_epoch: 150
+lr: 0.0002
+split: RandomSplit
+loss: MSE
+preproc: LogMinMax
+nsamples: None
+dataset_name: two_ends_R_S.C.-sylv._Track_0_40_sift2_icbm09c
+data_dir: ${dataset_folder}/R_S.C.-sylv._crops_two_ends_R_S.C.-sylv._Track_0_40_sift2_icbm09c.npy
+subject_dir: ${dataset_folder}/R_S.C.-sylv._subjects.csv
+in_shape:
+- 1
+- 84
+- 68
+- 98
+train_list: null
+validation_list: null
+save_dir: /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output
+path_crops: /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/crops/R.S.C.-sylv/two_ends_R_S.C.-sylv._Track_0_40_sift2_icbm09c
+optuna_folder: /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/OptunaResults/two_ends_R_S.C.-sylv._Track_0_40_sift2_icbm09c_trial2
+optuna_workers: 2
+optuna_trials_per_worker: 4

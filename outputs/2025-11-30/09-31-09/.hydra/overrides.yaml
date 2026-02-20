@@ -1,0 +1,6 @@
+- +save_dir=/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output
+- +dataset=PhD_UKB/two_ends_R_S.C.-sylv._Track_0_80_sift2_icbm09c
+- +path_crops=/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/crops/R.S.C.-sylv/two_ends_R_S.C.-sylv._Track_0_80_sift2_icbm09c
+- +optuna_folder=/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/OptunaResults/two_ends_R_S.C.-sylv._Track_0_80_sift2_icbm09c_trial_12
+- +optuna_workers=2
+- +optuna_trials_per_worker=3

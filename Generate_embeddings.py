@@ -41,7 +41,7 @@ import torch
 import torch.nn as nn
 
 from beta_vae import VAE, ModelTester
-from load_data import create_subset
+from load_data import create_subset,create_subset_from_folder
 import hydra
 from utils.config import process_config
 
@@ -75,12 +75,16 @@ def main(config):
 
     config.in_shape = adjust_in_shape(config)
 
-    print('""" Model',os.path.join(config.test_model_dir, 'checkpoint.pt'),'"""')
-    model_dir = os.path.join(config.test_model_dir, 'checkpoint.pt') 
+    #print('""" Model',os.path.join(config.test_model_dir, 'checkpoint.pt'),'"""')
+    #model_dir = os.path.join(config.test_model_dir, 'checkpoint.pt') 
+    print('""" Model',os.path.join(config.test_model_dir, 'vae.pt'),'"""')
+    model_dir = os.path.join(config.test_model_dir, 'vae.pt') 
     model = VAE(config.in_shape, config.n, depth=config.depth, loss_selected= config.loss)
-    model.load_state_dict(torch.load(model_dir))
+    print('torch load',torch.load(model_dir)[0])
+    #print('torch load',torch.load(model_dir)[1])
+    model.load_state_dict(torch.load(model_dir)[0])
     model = model.to(device)
-    print(config)
+    print('Config',config)
 
     if config.loss == 'CrossEntropy':
         weights = [1, 2]
@@ -106,4 +110,5 @@ def main(config):
     results = tester.test()
 
 if __name__ == '__main__':
+    print('Generating embeddings')
     main()

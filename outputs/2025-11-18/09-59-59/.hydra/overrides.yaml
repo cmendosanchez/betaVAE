@@ -1,0 +1,7 @@
+- n=512
+- kl=2
+- nsamples=1000
+- +path_crops=/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/crops/R.S.C.-sylv/full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c
+- +save_dir=None
+- +dataset=PhD_UKB/full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c
+- +test_model_dir=/neurospin/dico/cmendoza/Runs/14_PhD_UKB/full_brain_R_S.C.-sylv._Track_0_250_sift2_icbm09c_dim_512_beta_2_Train_2_22-19-03
