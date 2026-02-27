@@ -90,7 +90,7 @@ def main():
                     f"python3 Regional_Optuna_tuning.py "
                     f"+save_dir=../Output "
                     f"+dataset=UKB_Train_{train_tag}/{config_name} "
-                    f"+optuna_folder=../OptunaResults/{config_name} "
+                    f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{config_name} "
                     f"+Train_with_anomaly=False "
                     f"+optuna_lr=[1e-5,1e-2] "
                     f"+optuna_batch_size=[16,64] "
@@ -105,19 +105,19 @@ def main():
                 script = textwrap.dedent(f"""\
                 #!/bin/bash
                 #SBATCH --job-name={job_name}
-                #SBATCH -C a100
+                #SBATCH -C h100
                 #SBATCH --nodes=1
                 #SBATCH --ntasks-per-node=1
                 #SBATCH --gres=gpu:1
-                #SBATCH --cpus-per-task=32
+                #SBATCH --cpus-per-task=24
                 #SBATCH --hint=nomultithread
                 #SBATCH --time=20:00:00
-                #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/configs/logs/{job_name}%j.out
-                #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/configs/logs/{job_name}%j.out
-                #SBATCH -A miu@a100
+                #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}%j.out
+                #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}%j.out
+                #SBATCH -A miu@h100
 
                 module purge
-                module load arch/a100
+                module load arch/h100
                 module purge
                 module load pytorch-gpu/py3/2.4.0
 

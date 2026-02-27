@@ -518,6 +518,6 @@ def train_vae_optuna(config, trial,root_dir=None):
     #np.save(f'{config.save_dir}val_loss.npy', np.asarray(list_val_recon_loss))
 
     final_loss_val = list_val_recon_loss[-1]
-    print(f"Finished train Ndimensions {config.n} Beta {config.kl} Total Subjects {config.nsamples} --- %s seconds --- {time.time() - start_time}") 
+    print(f"{bcolors.BG_GREEN}Finished Optuna Trial in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 
     return final_loss_val
 
