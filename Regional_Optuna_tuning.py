@@ -189,10 +189,9 @@ def Run_optuna_optimization(config):
             if len(study.trials) == 0:
                 study.enqueue_trial({
                     "LEARNING_RATE": 2e-4,
-                    "BATCH_SIZE": 32,
+                    "BATCH_SIZE": 64,
                     "N_EPOCH": 10,
-                    "SUB_PERC": 10
-                })
+                    "SUB_PERC": 0.1})
         study.optimize(lambda trial: objective(trial,config), n_trials=config.optuna_ntrials)
 
     except optuna.TrialPruned:
