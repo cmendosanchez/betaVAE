@@ -2,6 +2,7 @@ import os
 import argparse
 import textwrap
 from colors import bcolors
+from datetime import datetime
 
 # -----------------------------
 # Argument parser
@@ -84,13 +85,13 @@ def main():
             for mode in modes:
 
                 config_name = f"{database}_{region}_{mode}"
-                job_name = config_name
+                job_name = f'{config_name}_{datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}'
                 print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
                 python_call = (
                     f"python3 Regional_Optuna_tuning.py "
-                    f"+save_dir=../Output "
+                    f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/Output/{job_name} "
                     f"+dataset=UKB_Train_{train_tag}/{config_name} "
-                    f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{config_name} "
+                    f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/Output/{job_name} "
                     f"+Train_with_anomaly=False "
                     f"+optuna_lr=[1e-5,1e-2] "
                     f"+optuna_batch_size=[16,64] "
