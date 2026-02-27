@@ -49,6 +49,7 @@ import optuna
 from optuna.pruners import MedianPruner
 from optuna.samplers import TPESampler
 from colors import bcolors
+from copy import deepcopy
 
 def adjust_in_shape(config):
     dims=[]
@@ -74,6 +75,7 @@ optuna.logging.set_verbosity(optuna.logging.INFO)
 # This will be the objective function for Optuna optimization
 def objective(trial, config):
     try:
+        config = deepcopy(config)
         # Suggest hyperparameters with Optuna
         # Optuna will suggest a learning rate and batch size for each trial
         # ---- LEARNING RATE (float, log scale) ----
@@ -144,7 +146,7 @@ def objective(trial, config):
         config = process_config(config)
         torch.manual_seed(3)
 
-        config.save_dir = config.save_dir + f"/{now:%Y-%m-%d}/{config.dataset_name}_dim_{config.n}_beta_{config.kl}_{now:%H-%M-%S}_trial_{trial.number}/"
+        config.save_dir = config.save_dir + f"/{config.dataset_name}_dim_{config.n}_beta_{config.kl}_{now:%H-%M-%S}_trial_{trial.number}/"
 
         # Create the save directory
         try:
@@ -163,9 +165,16 @@ def objective(trial, config):
         torch.cuda.empty_cache()
         return final_loss_val
     
-    except Exception as e:
-        print(f"Trial {trial.number} failed with error: {e}")
-        raise optuna.exceptions.TrialPruned() 
+    except optuna.TrialPruned:
+        raise
+    except RuntimeError as e:
+        # Optional: prune on CUDA OOM
+        if "CUDA out of memory" in str(e):
+            print("CUDA out of memory")
+            raise optuna.TrialPruned()
+        else:
+            print(e)
+            raise
     
 
 def Run_optuna_optimization(config):
@@ -174,8 +183,21 @@ def Run_optuna_optimization(config):
         print('Run optimization')
         storage_name = f"sqlite:///{config.optuna_folder}/study.db"
         pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
-        study = optuna.create_study(direction='minimize',storage=storage_name,sampler=TPESampler(),pruner=pruner)
+        sampler = optuna.samplers.TPESampler(seed=42)
+        study = optuna.create_study(study_name="main_study",direction='minimize',storage=storage_name,sampler=sampler,pruner=pruner,load_if_exists=True)
+        if config.optuna_enqueue_trial == True:
+            if len(study.trials) == 0:
+                study.enqueue_trial({
+                    "LEARNING_RATE": 2e-4,
+                    "BATCH_SIZE": 64,
+                    "N_EPOCH": 10,
+                    "SUB_PERC": 10
+                })
         study.optimize(lambda trial: objective(trial,config), n_trials=config.optuna_ntrials)
+
+    except optuna.TrialPruned:
+        pass
+
     except Exception as e:
         print(f"Run optimization failed with error: {e}")
 

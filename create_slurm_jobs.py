@@ -100,6 +100,7 @@ def main():
                     f"+optuna_beta=1 "
                     f"+optuna_sub_perc=[0.10,0.20] "
                     f"+optuna_ntrials=1 "
+                    f"+optuna_enqueue_trial=True "
                     f"+dataset_folder={dataset_folder}"
                 )
 

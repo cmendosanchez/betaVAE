@@ -269,8 +269,6 @@ def train_vae_optuna(config, trial,root_dir=None):
     """
     start_time = time.time()
     torch.manual_seed(5)
-    if not os.path.exists(config.save_dir):
-        os.mkdir(config.save_dir)
 
     #writer = SummaryWriter(log_dir= config.save_dir+'logs/',comment="")
     lr = config.lr
