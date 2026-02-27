@@ -6,7 +6,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=32
 #SBATCH --hint=nomultithread
-#SBATCH --time=24:00:00
+#SBATCH --time=20:00:00
 #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/configs/logs/UKB_S.C.-sylv._left_SWM%j.out
 #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/configs/logs/UKB_S.C.-sylv._left_SWM%j.out
 #SBATCH -A miu@a100
