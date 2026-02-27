@@ -189,7 +189,7 @@ def Run_optuna_optimization(config):
             if len(study.trials) == 0:
                 study.enqueue_trial({
                     "LEARNING_RATE": 2e-4,
-                    "BATCH_SIZE": 64,
+                    "BATCH_SIZE": 32,
                     "N_EPOCH": 10,
                     "SUB_PERC": 10
                 })
