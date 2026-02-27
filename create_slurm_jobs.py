@@ -85,13 +85,13 @@ def main():
             for mode in modes:
 
                 config_name = f"{database}_{region}_{mode}"
-                job_name = f'{config_name}_{datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}'
+                job_name = f'{config_name}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}'
                 print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
                 python_call = (
                     f"python3 Regional_Optuna_tuning.py "
-                    f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/Output/{job_name} "
+                    f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
                     f"+dataset=UKB_Train_{train_tag}/{config_name} "
-                    f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/Output/{job_name} "
+                    f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
                     f"+Train_with_anomaly=False "
                     f"+optuna_lr=[1e-5,1e-2] "
                     f"+optuna_batch_size=[16,64] "
@@ -106,21 +106,23 @@ def main():
                 script = textwrap.dedent(f"""\
                 #!/bin/bash
                 #SBATCH --job-name={job_name}
-                #SBATCH -C h100
+                #SBATCH -C v100-32g
                 #SBATCH --nodes=1
                 #SBATCH --ntasks-per-node=1
                 #SBATCH --gres=gpu:1
-                #SBATCH --cpus-per-task=24
+                #SBATCH --cpus-per-task=14
                 #SBATCH --hint=nomultithread
                 #SBATCH --time=20:00:00
-                #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}%j.out
-                #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}%j.out
-                #SBATCH -A miu@h100
+                #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/{job_name}%j.out
+                #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/{job_name}%j.out
+                #SBATCH -A miu@v100
 
                 module purge
-                module load arch/h100
-                module purge
                 module load pytorch-gpu/py3/2.4.0
+
+                nvidia-smi
+                lscpu
+                free -h
 
                 set -x
 

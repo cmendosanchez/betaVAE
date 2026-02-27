@@ -1,0 +1,26 @@
+#!/bin/bash
+#SBATCH --job-name=UKB_S.F.int.-F.C.M.ant._right_SWM_2026_02_27_16_38_42
+#SBATCH -C v100-32g
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=14
+#SBATCH --hint=nomultithread
+#SBATCH --time=20:00:00
+#SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/UKB_S.F.int.-F.C.M.ant._right_SWM_2026_02_27_16_38_42/UKB_S.F.int.-F.C.M.ant._right_SWM_2026_02_27_16_38_42%j.out
+#SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/UKB_S.F.int.-F.C.M.ant._right_SWM_2026_02_27_16_38_42/UKB_S.F.int.-F.C.M.ant._right_SWM_2026_02_27_16_38_42%j.out
+#SBATCH -A miu@v100
+
+module purge
+module load pytorch-gpu/py3/2.4.0
+
+nvidia-smi
+lscpu
+free -h
+
+set -x
+
+cd $WORK
+cd PhD_2026/betaVAE
+
+python3 Regional_Optuna_tuning.py +save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/UKB_S.F.int.-F.C.M.ant._right_SWM_2026_02_27_16_38_42 +dataset=UKB_Train_6Regions/UKB_S.F.int.-F.C.M.ant._right_SWM +optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/UKB_S.F.int.-F.C.M.ant._right_SWM_2026_02_27_16_38_42 +Train_with_anomaly=False +optuna_lr=[1e-5,1e-2] +optuna_batch_size=[16,64] +optuna_epoch=[5,30] +optuna_ndim=64 +optuna_beta=1 +optuna_sub_perc=[0.10,0.20] +optuna_ntrials=1 +dataset_folder=/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions
