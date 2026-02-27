@@ -98,6 +98,7 @@ def main():
                     f"+optuna_ndim=64 "
                     f"+optuna_beta=1 "
                     f"+optuna_sub_perc=[0.10,0.20] "
+                    f"+optuna_ntrials=1 "
                     f"+dataset_folder={dataset_folder}"
                 )
 
@@ -110,10 +111,10 @@ def main():
                 #SBATCH --gres=gpu:1
                 #SBATCH --cpus-per-task=32
                 #SBATCH --hint=nomultithread
-                #SBATCH --time=20:00:00
-                #SBATCH --output=/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE/configs/logs/{job_name}%j.out
-                #SBATCH --error=/lustre/fswork/projects/rech/tgu/ugf68us/PhD_UKB/betaVAE/configs/logs/{job_name}%j.out
-                #SBATCH -A tgu@a100
+                #SBATCH --time=24:00:00
+                #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/configs/logs/{job_name}%j.out
+                #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/configs/logs/{job_name}%j.out
+                #SBATCH -A miu@a100
 
                 module purge
                 module load arch/a100
@@ -123,7 +124,7 @@ def main():
                 set -x
 
                 cd $WORK
-                cd PhD_UKB/betaVAE
+                cd PhD_2026/betaVAE
 
                 {python_call}
                 """)

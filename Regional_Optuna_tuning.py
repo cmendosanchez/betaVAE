@@ -175,7 +175,7 @@ def Run_optuna_optimization(config):
         storage_name = f"sqlite:///{config.optuna_folder}/study.db"
         pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
         study = optuna.create_study(direction='minimize',storage=storage_name,sampler=TPESampler(),pruner=pruner)
-        study.optimize(lambda trial: objective(trial,config), n_trials=30)
+        study.optimize(lambda trial: objective(trial,config), n_trials=config.optuna_ntrials)
     except Exception as e:
         print(f"Run optimization failed with error: {e}")
 
