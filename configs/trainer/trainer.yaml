@@ -1,8 +1,7 @@
 # @package _global_
-batch_size: 16
-nb_epoch: 150
-lr: 2e-4 #2e-4 for CrossEntropy
-split: 'RandomSplit'
+batch_size: None #16
+nb_epoch: None #150
+lr: None #2e-4 for CrossEntropy
 loss: 'MSE'
 preproc: 'LogMinMax'
-nsamples: 'None'
+sub_perc: None

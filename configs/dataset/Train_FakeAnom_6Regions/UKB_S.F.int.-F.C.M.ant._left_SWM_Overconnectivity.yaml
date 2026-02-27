@@ -1,0 +1,17 @@
+# @package _global_
+dataset_name: UKB_S.F.int.-F.C.M.ant._left_SWM_Overconnectivity
+data_dir: null
+subject_dir: null
+in_shape: [1, 31, 109, 103]
+Train_list: ${dataset_folder}/DataSplit_DL/train.tsv
+Rcon_val_list: ${dataset_folder}/DataSplit_DL/val_rconerror.tsv
+Class_val_list: ${dataset_folder}/DataSplit_DL/val_anorm.tsv
+Anomaly: Overconnectivity
+Criteria: SWM
+Region: S.F.int.-F.C.M.ant._left
+Database: UKB
+path_crops: ${dataset_folder}/crops/S.F.int.-F.C.M.ant._left/SWM
+path_anom: ${dataset_folder}/FakeAnomaly_crops/UKB/S.F.int.-F.C.M.ant._left/SWM/Overconnectivity
+minl: 0
+maxl: 80
+referential: icbm09c

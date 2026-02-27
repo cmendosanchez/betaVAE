@@ -1,0 +1,17 @@
+# @package _global_
+dataset_name: UKB_S.T.s._right_DWM_Underconnectivity
+data_dir: null
+subject_dir: null
+in_shape: [1, 47, 103, 101]
+Train_list: ${dataset_folder}/DataSplit_DL/train.tsv
+Rcon_val_list: ${dataset_folder}/DataSplit_DL/val_rconerror.tsv
+Class_val_list: ${dataset_folder}/DataSplit_DL/val_anorm.tsv
+Anomaly: Underconnectivity
+Criteria: DWM
+Region: S.T.s._right
+Database: UKB
+path_crops: ${dataset_folder}/crops/S.T.s._right/DWM
+path_anom: ${dataset_folder}/FakeAnomaly_crops/UKB/S.T.s._right/DWM/Underconnectivity
+minl: 80
+maxl: 250
+referential: icbm09c

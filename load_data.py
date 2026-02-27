@@ -258,7 +258,7 @@ def parallel_process_files(subject_files, folder_path, num_workers=4):
     return subject_ids, list_crops
 
 
-def create_subset_from_list(config,folder_path,subject_files):
+def create_subset_from_list(config,subjects):
     """
     Creates a dataset subset from files in a folder.
     
@@ -272,53 +272,227 @@ def create_subset_from_list(config,folder_path,subject_files):
     #print("~~~ Creating dataset from folder ~~~")
     
     #start_time_ser = time.time()
-    list_crops = []
-    subject_ids = []
-    # Load data for each subject file
+    try:
+        list_crops = []
+        subject_ids = []
+        # Load data for each subject file
+        for i, sub in enumerate(subjects):
+            sub_id = split_filename(sub)  #We get the subject ID
+            file_name = f'{config.path_crops}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_{config.referential}.nii.gz'
+            if os.path.exists(file_name):
+                subject_ids.append(sub_id)
+                list_crops.append([nib.load(file_name).get_fdata()])
+            else:
+                continue
+        #print("--- %s seconds ser ---" % (time.time() - start_time_ser))
+        
+        #start_time_par = time.time()
+        #subject_ids, list_crops = parallel_process_files(subject_files, folder_path, num_workers=4)
+        #print("--- %s seconds par---" % (time.time() - start_time_par))
+        '''
+        print('Checking if lists are equal',subject_ids_1==subject_ids)
+        all_true = all(np.array_equal(list_crops_1[i], list_crops[i]) for i in range(len(list_crops_1)))
+        print("All comparisons are True" if all_true else "Not all comparisons are True")
+        '''
+        # Create the dataframe with subject IDs and their respective crops
+        dict_sub_crop = dict(zip(subject_ids, list_crops))
+        tmp = pd.DataFrame.from_dict(dict_sub_crop)
+        #We are almost there
+        tmp = tmp.T
+        tmp.index.astype('str')
+        ''' Just as a reminder
+        a = {'A':[123],'B':[245],'C':[678]}
+        tmp = pd.DataFrame.from_dict(a)
+        print(tmp,'\n',tmp.T)
+        tmp = tmp.T
+        print([tmp.index[k] for k in range(len(tmp))])
+        Output:
+            A    B    C
+            0  123  245  678 
+                0
+            A  123
+            B  245
+            C  678
+            ['A', 'B', 'C']
+            ** Process exited - Return Code: 0 **
+            Press Enter to exit terminal
+        '''
+        #Here we get a list with the ID of the subjects
+        tmp['subjects'] = [tmp.index[k] for k in range(len(tmp))]
+        tmp = tmp.merge(tmp['subjects'], left_on = 'subjects', right_on='subjects', how='right')
+        filenames = list(tmp['subjects'])
+        subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
+        print(f'------- Successfully created dataset ~ size subjects_id: {len(subject_ids)} size list_crops {len(list_crops)}')
+        return subset
+    except:
+        print('Error during creation of subset from list')
+
+
+
+
+def create_anomaly_set(config,subjects_ids):
+    """
+    Creates a dataset subset from files in a folder.
     
-    for i, file_name in enumerate(subject_files):
-        subject_id = split_filename(file_name)  #We get the subject ID
-        subject_ids.append(subject_id)
-        if file_name.endswith('.nii.gz'):
-            list_crops.append([nib.load(f'{folder_path}/{file_name}').get_fdata()])
+    Args:
+        folder_path (str): Path to the folder containing subjects data.
+        subject_files (list): List with the name of the files to load from folder_path.
     
-    #print("--- %s seconds ser ---" % (time.time() - start_time_ser))
+    Returns:
+        subset: Dataset corresponding to the subset of subjects.
+    """
+    #print("~~~ Creating dataset from folder ~~~")
     
-    #start_time_par = time.time()
-    #subject_ids, list_crops = parallel_process_files(subject_files, folder_path, num_workers=4)
-    #print("--- %s seconds par---" % (time.time() - start_time_par))
-    '''
-    print('Checking if lists are equal',subject_ids_1==subject_ids)
-    all_true = all(np.array_equal(list_crops_1[i], list_crops[i]) for i in range(len(list_crops_1)))
-    print("All comparisons are True" if all_true else "Not all comparisons are True")
-    '''
-    # Create the dataframe with subject IDs and their respective crops
-    dict_sub_crop = dict(zip(subject_ids, list_crops))
-    tmp = pd.DataFrame.from_dict(dict_sub_crop)
-    #We are almost there
-    tmp = tmp.T
-    tmp.index.astype('str')
-    ''' Just as a reminder
-    a = {'A':[123],'B':[245],'C':[678]}
-    tmp = pd.DataFrame.from_dict(a)
-    print(tmp,'\n',tmp.T)
-    tmp = tmp.T
-    print([tmp.index[k] for k in range(len(tmp))])
-    Output:
-         A    B    C
-        0  123  245  678 
-            0
-        A  123
-        B  245
-        C  678
-        ['A', 'B', 'C']
-        ** Process exited - Return Code: 0 **
-        Press Enter to exit terminal
-    '''
-    #Here we get a list with the ID of the subjects
-    tmp['subjects'] = [tmp.index[k] for k in range(len(tmp))]
-    tmp = tmp.merge(tmp['subjects'], left_on = 'subjects', right_on='subjects', how='right')
-    filenames = list(tmp['subjects'])
-    subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
-    #print('------- Successfully created dataset subset')
-    return subset
+    #start_time_ser = time.time()
+    try:
+        list_crops = []
+        subject_ids = []
+        # Load data for each subject file
+        
+        for i, sub in enumerate(subjects_ids):
+            subject_id = split_filename(sub)  #We get the subject ID
+            subject_ids.append(subject_id)
+            list_crops.append([nib.load(f'{config.path_crops}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_{config.referential}.nii.gz').get_fdata()])
+        #print("--- %s seconds ser ---" % (time.time() - start_time_ser))
+        
+        #start_time_par = time.time()
+        #subject_ids, list_crops = parallel_process_files(subject_files, folder_path, num_workers=4)
+        #print("--- %s seconds par---" % (time.time() - start_time_par))
+        '''
+        print('Checking if lists are equal',subject_ids_1==subject_ids)
+        all_true = all(np.array_equal(list_crops_1[i], list_crops[i]) for i in range(len(list_crops_1)))
+        print("All comparisons are True" if all_true else "Not all comparisons are True")
+        '''
+        # Create the dataframe with subject IDs and their respective crops
+        dict_sub_crop = dict(zip(subject_ids, list_crops))
+        tmp = pd.DataFrame.from_dict(dict_sub_crop)
+        #We are almost there
+        tmp = tmp.T
+        tmp.index.astype('str')
+        ''' Just as a reminder
+        a = {'A':[123],'B':[245],'C':[678]}
+        tmp = pd.DataFrame.from_dict(a)
+        print(tmp,'\n',tmp.T)
+        tmp = tmp.T
+        print([tmp.index[k] for k in range(len(tmp))])
+        Output:
+            A    B    C
+            0  123  245  678 
+                0
+            A  123
+            B  245
+            C  678
+            ['A', 'B', 'C']
+            ** Process exited - Return Code: 0 **
+            Press Enter to exit terminal
+        '''
+        #Here we get a list with the ID of the subjects
+        tmp['subjects'] = [tmp.index[k] for k in range(len(tmp))]
+        tmp = tmp.merge(tmp['subjects'], left_on = 'subjects', right_on='subjects', how='right')
+        filenames = list(tmp['subjects'])
+        subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
+        #print('------- Successfully created dataset subset')
+        return subset
+    except:
+        print('Error during creation of subset from list')
+
+
+def get_subjects_by_removed_number(config, number):
+    subjects = []
+
+    # regex pattern
+    if config.Anomaly == 'Underconnectivity':
+        pattern = re.compile(
+            rf"sub-(\d+)_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_removed_{number}_{config.referential}_crop\.nii\.gz$"
+        )
+
+    elif config.Anomaly == 'Overconnectivity':
+        pattern = re.compile(
+            rf"sub-(\d+)_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{number}_{config.referential}_crop\.nii\.gz$"
+        )
+
+    for file in os.listdir(config.path_anom):
+        match = pattern.match(file)
+        if match:
+            subjects.append(match.group(1))  # Extract subject ID
+
+    return subjects
+
+def create_subset_for_anomaly(config,anomaly_ids,nbun):
+    """
+    Creates a dataset subset from files in a folder.
+    
+    Args:
+        folder_path (str): Path to the folder containing subjects data.
+        subject_files (list): List with the name of the files to load from folder_path.
+    
+    Returns:
+        subset: Dataset corresponding to the subset of subjects.
+    """
+    #print("~~~ Creating dataset from folder ~~~")
+    
+    #start_time_ser = time.time()
+    try:
+
+        #subject_ids_filtered = list(set(get_subjects_by_removed_number(config, nbun)) & set(anomaly_ids))
+        #print(f'{len(anomaly_ids)},{subject_ids_filtered}')
+
+        list_crops = []
+        subject_ids = []
+        # Load data for each subject file
+        
+        
+        for i, sub in enumerate(anomaly_ids):
+            subject_id = split_filename(sub)  #We get the subject ID
+            
+            if config.Anomaly == 'Underconnectivity':
+                if os.path.exists(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_removed_{nbun}_{config.referential}_crop.nii.gz'):
+                    subject_ids.append(subject_id)
+                    list_crops.append([nib.load(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_removed_{nbun}_{config.referential}_crop.nii.gz').get_fdata()])
+
+            if config.Anomaly == 'Overconnectivity':
+                if os.path.exists(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{nbun}_{config.referential}_crop.nii.gz'):
+                    subject_ids.append(subject_id)
+                    list_crops.append([nib.load(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{nbun}_{config.referential}_crop.nii.gz').get_fdata()])
+        #print("--- %s seconds ser ---" % (time.time() - start_time_ser))
+        print('Final subjects id anomaly',len(subject_ids))
+        #start_time_par = time.time()
+        #subject_ids, list_crops = parallel_process_files(subject_files, folder_path, num_workers=4)
+        #print("--- %s seconds par---" % (time.time() - start_time_par))
+        '''
+        print('Checking if lists are equal',subject_ids_1==subject_ids)
+        all_true = all(np.array_equal(list_crops_1[i], list_crops[i]) for i in range(len(list_crops_1)))
+        print("All comparisons are True" if all_true else "Not all comparisons are True")
+        '''
+        # Create the dataframe with subject IDs and their respective crops
+        dict_sub_crop = dict(zip(subject_ids, list_crops))
+        tmp = pd.DataFrame.from_dict(dict_sub_crop)
+        #We are almost there
+        tmp = tmp.T
+        tmp.index.astype('str')
+        ''' Just as a reminder
+        a = {'A':[123],'B':[245],'C':[678]}
+        tmp = pd.DataFrame.from_dict(a)
+        print(tmp,'\n',tmp.T)
+        tmp = tmp.T
+        print([tmp.index[k] for k in range(len(tmp))])
+        Output:
+            A    B    C
+            0  123  245  678 
+                0
+            A  123
+            B  245
+            C  678
+            ['A', 'B', 'C']
+            ** Process exited - Return Code: 0 **
+            Press Enter to exit terminal
+        '''
+        #Here we get a list with the ID of the subjects
+        tmp['subjects'] = [tmp.index[k] for k in range(len(tmp))]
+        tmp = tmp.merge(tmp['subjects'], left_on = 'subjects', right_on='subjects', how='right')
+        filenames = list(tmp['subjects'])
+        subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
+        #print('------- Successfully created dataset subset')
+        return subset
+    except:
+        print('Error during creation of subset from list')

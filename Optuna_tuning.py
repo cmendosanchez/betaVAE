@@ -67,7 +67,7 @@ from optuna.samplers import RandomSampler
 from concurrent.futures import ProcessPoolExecutor as Pool
 from functools import partial
 from optuna.samplers import TPESampler
-
+from colors import bcolors
 def adjust_in_shape(config):
     dims=[]
     for idx in range(1, 4):
@@ -83,14 +83,14 @@ now = datetime.now()
 optuna.logging.set_verbosity(optuna.logging.INFO)
 
 # This will be the objective function for Optuna optimization
-def objective(trial, config, dataset):
+def objective(trial, config):
     try:
         print(f"Running trial {trial.number=} in process {os.getpid()}")
         # Suggest hyperparameters with Optuna
         # Optuna will suggest a learning rate and batch size for each trial
         #LEARNING_RATE      = trial.suggest_float('LEARNING_RATE', 1e-6,1e-4,log=True)
-        LEARNING_RATE      = trial.suggest_categorical('LEARNING_RATE', [1e-5,1e-4])
-        BATCH_SIZE         = trial.suggest_categorical('BATCH_SIZE', [16,32])
+        LEARNING_RATE      = trial.suggest_categorical('LEARNING_RATE', [2e-4])
+        BATCH_SIZE         = trial.suggest_categorical('BATCH_SIZE', [64])
         N_EPOCH            = trial.suggest_categorical('N_EPOCH', [6,12,18,24,30]) 
         #N_EPOCH            = trial.suggest_categorical('N_EPOCH', [3])
         LATENT_DIMENSIONS  = trial.suggest_categorical('LATENT_DIMENSIONS', [32,64,128,256,512,1024])
@@ -125,7 +125,7 @@ def objective(trial, config, dataset):
             OmegaConf.save(config, f)
         
         print(""" Train model for given configuration """)
-        final_loss_val = train_vae_optuna(config, dataset, trial,root_dir=config.save_dir)
+        final_loss_val = train_vae_optuna(config, trial,root_dir=config.save_dir)
 
         torch.cuda.empty_cache()
         return final_loss_val
@@ -135,18 +135,19 @@ def objective(trial, config, dataset):
         raise optuna.exceptions.TrialPruned() 
     
 
-def Run_optuna_optimization(config,path_crops,trials_per_worker):
+def Run_optuna_optimization(config,trials_per_worker):
     # Here, we access the dataset directly in shared memory
     try:
         print('Run optimization')
         #print(f'~~~ Arguments \nconfig:{config} \npath_crops:{path_crops}\ntrials_per_worker:{trials_per_worker}')
         pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
+        study = optuna.create_study(direction='minimize',sampler=TPESampler())
         #study = optuna.create_study(direction='minimize',sampler=TPESampler(),study_name="journal_storage_multiprocess",pruner=pruner,
         #                            storage=JournalStorage(JournalFileBackend(file_path=f"{config.optuna_folder}/journal_gpu_prio_12.log")),load_if_exists=True)
-        study = optuna.create_study(direction='minimize',sampler=TPESampler(),study_name="example2_study",pruner=pruner,storage="mysql://gaia:Optima1Pass!@rosette:3306/example2",load_if_exists=True)
+        #study = optuna.create_study(direction='minimize',sampler=TPESampler(),study_name="example2_study",pruner=pruner,storage="mysql://gaia:Optima1Pass!@rosette:3306/example2",load_if_exists=True)
 
  
-        study.optimize(lambda trial: objective(trial,config,path_crops), n_trials=trials_per_worker)
+        study.optimize(lambda trial: objective(trial,config), n_trials=trials_per_worker)
     except Exception as e:
         print(f"Run optimization failed with error: {e}")
 
@@ -154,7 +155,9 @@ def Run_optuna_optimization(config,path_crops,trials_per_worker):
 def train(config):
     start_time = time.time()
 
-    PATH_CROPS_               = config.path_crops
+    print(f'{bcolors.GREEN}{bcolors.UNDERLINE}Launching Optuna_tuning.py{bcolors.RESET}')
+    print(f'{bcolors.YELLOW}Config:{config}{bcolors.RESET}')
+
     STUDY_FOLDER_             = config.optuna_folder
     OPTUNA_WORKERS_            = int(config.optuna_workers)
     OPTUNA_TRIALS_PER_WORKER_ = int(config.optuna_trials_per_worker)
@@ -162,16 +165,17 @@ def train(config):
     if not os.path.exists(STUDY_FOLDER_):
         os.makedirs(STUDY_FOLDER_,exist_ok=True)
 
-    print(""" Load data and generate torch datasets within train """)
+    print("Load data and generate torch datasets within train")
     config.in_shape = adjust_in_shape(config)
 
     print('~~~~~~ @ Running Optuna Framework @ ~~~~~~')
-    with Pool(max_workers=OPTUNA_WORKERS_) as pool:
-        pool.map(Run_optuna_optimization, [config]*OPTUNA_WORKERS_,[PATH_CROPS_]*OPTUNA_WORKERS_,[OPTUNA_TRIALS_PER_WORKER_]*OPTUNA_WORKERS_)
+    #with Pool(max_workers=OPTUNA_WORKERS_) as pool:
+    #    pool.map(Run_optuna_optimization, [config]*OPTUNA_WORKERS_,[PATH_CROPS_]*OPTUNA_WORKERS_,[OPTUNA_TRIALS_PER_WORKER_]*OPTUNA_WORKERS_)
 
+    Run_optuna_optimization(config,OPTUNA_TRIALS_PER_WORKER_)
     #Run_optuna_optimization(config,PATH_CROPS_,OPTUNA_TRIALS_PER_WORKER_)
     print("--- Optuna optimization finish in %s seconds ---" % (time.time() - start_time))
-    
+     
 
 if __name__ == '__main__':
     train()

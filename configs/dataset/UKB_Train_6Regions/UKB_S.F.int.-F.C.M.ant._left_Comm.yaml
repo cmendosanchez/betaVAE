@@ -1,0 +1,15 @@
+# @package _global_
+dataset_name: UKB_S.F.int.-F.C.M.ant._left_Comm
+in_shape: [1, 31, 109, 103]
+Train_list: ${dataset_folder}/DataSplit_DL/train.tsv
+Rcon_val_list: ${dataset_folder}/DataSplit_DL/val_rconerror.tsv
+Class_val_list: null
+Anomaly: null
+Criteria: Comm
+Region: S.F.int.-F.C.M.ant._left
+Database: UKB
+path_crops: ${dataset_folder}/crops/S.F.int.-F.C.M.ant._left/Comm
+path_anom: null
+minl: 0
+maxl: 250
+referential: icbm09c

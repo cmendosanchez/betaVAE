@@ -47,9 +47,17 @@ from beta_vae import *
 from utils.pytorchtools import EarlyStopping
 from postprocess import plot_loss
 import time
-from load_data import create_subset_from_list
+from load_data import create_subset_from_list, create_subset_for_anomaly
 import subprocess
 import csv
+from colors import bcolors
+from General_utils import read_one_column_tsv
+from sklearn.model_selection import StratifiedKFold
+from sklearn import svm
+from sklearn.metrics import roc_curve, roc_auc_score,auc
+from scipy import stats
+import pickle 
+from itertools import chain
 
 def train_vae(config, trainloader, valloader, root_dir=None):
     """ Trains beta-VAE for a given hyperparameter configuration
@@ -98,7 +106,6 @@ def train_vae(config, trainloader, valloader, root_dir=None):
         epoch_steps = 0
         for inputs, path in trainloader:
             optimizer.zero_grad()
-
             inputs = Variable(inputs).to(device, dtype=torch.float32)
             output, z, logvar = vae(inputs)
 
@@ -132,7 +139,7 @@ def train_vae(config, trainloader, valloader, root_dir=None):
         elif config.loss == 'MSE':
             images = [inputs[0][0][10][:][:], output[0][0][10][:][:]] #For CrossEntroy -> images = [inputs[0][0][10][:][:], output[0][10][:][:]]
 
-        grid = torchvision.utils.make_grid(images)
+        #grid = torchvision.utils.make_grid(images)
         '''
         writer.add_image('inputs', images[0].unsqueeze(0), epoch)
         writer.add_image('output', images[1].unsqueeze(0), epoch)
@@ -243,7 +250,11 @@ def shuffle_and_batch(data, batch_size=32):
     random.shuffle(data)  # Shuffle the data
     return [data[i:i+batch_size] for i in range(0, len(data), batch_size)]
 
-def train_vae_optuna(config, dataset, trial,root_dir=None):
+def linear_weights(n):
+    weights = np.arange(n, 0, -1)   # n, n-1, ..., 1
+    return weights / weights.sum()
+
+def train_vae_optuna(config, trial,root_dir=None):
     """ Trains beta-VAE for a given hyperparameter configuration
     Args:
         config: instance of class Config
@@ -254,7 +265,6 @@ def train_vae_optuna(config, dataset, trial,root_dir=None):
         vae: trained model
         final_loss_val
     """
-    print('~~~ Dataset:',dataset)
     start_time = time.time()
     torch.manual_seed(5)
     #writer = SummaryWriter(log_dir= config.save_dir+'logs/',comment="")
@@ -265,7 +275,7 @@ def train_vae_optuna(config, dataset, trial,root_dir=None):
         device = "cuda:0"
     vae.to(device)
     #summary(vae, list(config.in_shape))
-    print(config)
+    print(f'{bcolors.MAGENTA}train_vae_optuna() \n Config:\n{config}{bcolors.RESET}')
     if config.loss == 'CrossEntropy':
         print('Using Cross Entropy Loss, reduction=sum')
         weights = [1, 2]
@@ -277,17 +287,16 @@ def train_vae_optuna(config, dataset, trial,root_dir=None):
         criterion = nn.MSELoss(reduction='sum')
 
     optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
-    #early_stopping = EarlyStopping(patience=10,delta=0.1, verbose=True, root_dir=root_dir,save_model=False)
 
-    list_loss_train, list_loss_val = [], []
+    list_loss_train, list_val_recon_loss, = [], []
+    
+    train_subjects      = read_one_column_tsv(config.Train_list)
+    n_train = int(len(train_subjects) * config.sub_perc)
+    train_subjects = train_subjects[:n_train]
 
-    #Attemp of lazy loading
-    print('Lazy loading')
-    subject_files = [f for f in sorted(os.listdir(dataset)) if f.endswith(('.nii.gz'))][0:config.nsamples]
-    # Split into 80% and 20%
-    split_index = int(0.8 * len(subject_files))
-    train_subjects = subject_files[:split_index]  # 80% data
-    validation_subjects = subject_files[split_index:]   # 20% data
+    validation_subjects = read_one_column_tsv(config.Rcon_val_list)
+    n_val = int(len(validation_subjects) * config.sub_perc)
+    validation_subjects = train_subjects[:n_val]
 
     # Open the file for writing
     csv_train = f'{config.save_dir}train_list.csv'
@@ -301,77 +310,62 @@ def train_vae_optuna(config, dataset, trial,root_dir=None):
     print(f"Data written to {csv_val}")
     print(f'Nsubjects Train: {len(train_subjects)} Validation:{len(validation_subjects)}')
 
-    #set_train = create_subset_from_list(config,dataset,train_subjects)
-    set_val = create_subset_from_list(config,dataset,validation_subjects)
+    set_train = create_subset_from_list(config,train_subjects)
+    set_val   = create_subset_from_list(config,validation_subjects)
+
     start_loading = time.time()
-    #trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=4, shuffle=True)
+    trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=12, shuffle=True)
     valloader = torch.utils.data.DataLoader(set_val,batch_size=1,num_workers=4, shuffle=False)
-    print("-- -Create val data loader  %s seconds ---" % (time.time() - start_loading))
-
+    print(f"{bcolors.MAGENTA}-- -Created trainloader/valloader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
+    
     for epoch in range(config.nb_epoch):
-        print(f'~~ Starting epoch {epoch}')
         start_time_epoch = time.time()
+        print(f'{bcolors.RED}{bcolors.UNDERLINE}~~ Starting epoch {epoch}{bcolors.RESET}')
         #Defined epoch losses
-        running_loss = 0.0
-        recon_loss = 0.0
-        kl_loss = 0.0
-        epoch_steps = 0
-        #Shuffle and batch. Load 4096 crops in memory
-        shuffled_batches = shuffle_and_batch(train_subjects, 2048)
-        for idx_batch,batch in enumerate(shuffled_batches):
-            #print('Create subset from list')
-            #start_loading = time.time()
-            set_ = create_subset_from_list(config,dataset,batch)
-            #print(f'epoch {epoch} set {idx_batch} ready')
-            #print("--- %s seconds ---" % (time.time() - start_loading))
-            trainloader = torch.utils.data.DataLoader(set_,batch_size=config.batch_size,num_workers=4, shuffle=False)
-            for inputs, path in trainloader: #Training
-                optimizer.zero_grad()
-                inputs = Variable(inputs).to(device, dtype=torch.float32)
-                output, z, logvar = vae(inputs)
-                #print('tensor shape',inputs.shape,output.shape)
-                if config.loss == 'CrossEntropy':
-                    target = torch.squeeze(inputs, dim=1).long()
-                    partial_recon_loss, partial_kl, loss = vae_loss(output, target, z,
-                                            logvar, criterion,
-                                            kl_weight=config.kl) 
-                    output = torch.argmax(output, dim=1) 
-                
-                elif config.loss== 'MSE':
-                    partial_recon_loss, partial_kl, loss = vae_loss(output, inputs, z,
-                                            logvar, criterion,
-                                            kl_weight=config.kl) 
-                loss.backward()
-                optimizer.step()
+        train_recon_loss   = 0.0
+        train_kl_loss      = 0.0
+        train_running_loss = 0.0
 
-                #Update errors
-                running_loss += loss.item()
-                recon_loss += partial_recon_loss
-                kl_loss += partial_kl
-                epoch_steps += 1
+        for inputs, path in trainloader: #Training
+            optimizer.zero_grad()
+            inputs = Variable(inputs).to(device, dtype=torch.float32)
+            output, z, logvar = vae(inputs)
+            #print('tensor shape',inputs.shape,output.shape)
+            if config.loss == 'CrossEntropy':
+                target = torch.squeeze(inputs, dim=1).long()
+                partial_recon_loss, partial_kl_loss, partial_loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl) 
+                output = torch.argmax(output, dim=1) 
+            
+            elif config.loss== 'MSE':
+                partial_recon_loss, partial_kl_loss, partial_loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) 
 
-                del inputs, output
+            partial_loss.backward()
+            optimizer.step()
 
-            del set_, trainloader
+            #Update errors
+            train_recon_loss    += partial_recon_loss
+            train_kl_loss       += partial_kl_loss
+            train_running_loss  += partial_loss.item()
+            #epoch_steps   += 1
+
         
         print(f'--- %s seconds epoch --- {time.time() - start_time_epoch}')
 
-        running_loss = running_loss / epoch_steps
-        recon_loss = recon_loss / epoch_steps
-        kl_loss = kl_loss / epoch_steps
+        train_recon_loss      /=  len(train_subjects)
+        train_kl_loss         /=  len(train_subjects)
+        train_running_loss    /=  len(train_subjects)
 
-        print("[%d] KL loss: %.2e" % (epoch + 1, kl_loss))
-        print("[%d] recon loss: %.2e" % (epoch + 1, recon_loss))
-        print("[%d] loss: %.2e" % (epoch + 1,running_loss))
+        print(f"{bcolors.GREEN}[{epoch+1}] Train Recon loss: {train_recon_loss}  {bcolors.RESET}")
+        print(f"{bcolors.GREEN}[{epoch+1}] Train KL loss: {train_kl_loss}        {bcolors.RESET}")
+        print(f"{bcolors.GREEN}[{epoch+1}] Train loss: {train_running_loss}      {bcolors.RESET}")
 
         #Save epoch loss
-        list_loss_train.append(running_loss)
+        list_loss_train.append(train_running_loss)
 
         # Validation losses
-        val_loss = 0.0
-        recon_loss_val = 0.0
-        kl_val = 0.0
-        val_steps = 0
+        val_recon_loss   = 0.0
+        val_kl_loss      = 0.0
+        val_running_loss = 0.0
 
         vae.eval() #Eval mode
 
@@ -382,58 +376,148 @@ def train_vae_optuna(config, dataset, trial,root_dir=None):
                 #print('tensor shape',inputs.shape,output.shape)
                 if config.loss == 'CrossEntropy':
                     target = torch.squeeze(inputs, dim=1).long()
-                    partial_recon_loss_val, partial_kl_val, loss = vae_loss(output, target,  
-                                            z, logvar, criterion,
-                                            kl_weight=config.kl)
+                    partial_recon_loss_val, partial_kl_loss_val, partial_loss_val = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
                     output = torch.argmax(output, dim=1)
 
                 elif config.loss == 'MSE':
-                    partial_recon_loss_val, partial_kl_val, loss = vae_loss(output, inputs,  
-                                            z, logvar, criterion,
-                                            kl_weight=config.kl)
-                #Update losses for each sample
-                val_loss += loss.cpu().numpy()
-                recon_loss_val += partial_recon_loss_val.cpu().numpy()
-                kl_val += partial_kl_val
-                val_steps += 1
-                #del inputs,output
-        #Average
-        valid_loss = val_loss / val_steps
-        recon_loss_val = recon_loss_val / val_steps
-        kl_val = kl_val / val_steps
-        
+                    partial_recon_loss_val, partial_kl_loss_val, partial_loss_val = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl)
 
+                #Update losses for each sample
+                val_recon_loss    += partial_recon_loss_val.cpu().numpy()
+                val_kl_loss       += partial_kl_loss_val
+                val_running_loss  += partial_loss_val.item()
+
+        #Average
+        val_recon_loss     /=  len(validation_subjects)
+        val_kl_loss        /=  len(validation_subjects)
+        val_running_loss   /=  len(validation_subjects)
+        
         # If loss is NaN, prune the trial
-        if np.isnan(recon_loss_val):
+        if np.isnan(val_recon_loss):
             print(f"NaN encountered at epoch {epoch}")
             raise optuna.exceptions.TrialPruned()
 
         #Report to Optuna
-        trial.report(recon_loss_val, epoch)
+        trial.report(val_recon_loss, epoch)
         # If Optuna determines that the trial should be pruned, raise an exception to stop training early
         if trial.should_prune():
             raise optuna.exceptions.TrialPruned()  # This will stop the trial early if it is underperforming
         
 
         if epoch == config.nb_epoch-1:
-            #print('numpy shape',np.array(np.squeeze(inputs[0]).cpu().detach().numpy()).shape,np.array(np.squeeze(output[0]).cpu().detach().numpy()).shape)
             np.save(f'{config.save_dir}input.npy', np.array(np.squeeze(inputs[0]).cpu().detach().numpy()))
             np.save(f'{config.save_dir}output.npy',np.array(np.squeeze(output[0]).cpu().detach().numpy()))
 
 
         # prints on the terminal
-        print("[%d] KL validation loss: %.2e" % (epoch + 1, kl_val))
-        print("[%d] recon validation loss: %.2e" % (epoch + 1, recon_loss_val))
-        print("[%d] validation loss: %.2e" % (epoch + 1, valid_loss))
+        print(f"{bcolors.YELLOW}[{epoch+1}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
+        print(f"{bcolors.YELLOW}[{epoch+1}] Val KL loss: {val_kl_loss}        {bcolors.RESET}")
+        print(f"{bcolors.YELLOW}[{epoch+1}] Val loss: {val_running_loss}      {bcolors.RESET}")
 
-        list_loss_val.append(recon_loss_val)
-        print("")
+        list_val_recon_loss.append(val_recon_loss)
         torch.cuda.empty_cache()
     
-    np.save(f'{config.save_dir}train_loss.npy', np.asarray(list_loss_train))
-    np.save(f'{config.save_dir}val_loss.npy', np.asarray(list_loss_val))
+        if config.Train_with_anomaly == True:
+            print(f'{bcolors.BG_RED}Launching Normal/Anomaly classification{bcolors.RESET}')
+            # Shuffle in-place
+            class_subjects       = read_one_column_tsv(config.Class_val_list)
+            random.shuffle(class_subjects)
+            # Split
+            mid = int(len(class_subjects) // 2)
+            normal_group = class_subjects[:mid]
+            normal_subset = create_subset_from_list(config, normal_group)
+            normal_loader = torch.utils.data.DataLoader(normal_subset, batch_size=32, num_workers=4, shuffle=False)
+            embeddings_normal = []
+            for inputs, path in normal_loader:
+                with torch.no_grad():
+                    inputs = Variable(inputs).to(device, dtype=torch.float32)
+                    output, z, logvar = vae(inputs)
+                    embeddings_normal.append(z.cpu().numpy())
+                    """ if config.loss == 'CrossEntropy':
+                        target = torch.squeeze(inputs, dim=1).long()
+                        partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
+                        output = torch.argmax(output, dim=1)
 
-    final_loss_val = list_loss_val[-1:]
-    print(f"Finished train Ndimensions {config.n} Beta {config.kl} Total Subjects {config.nsamples} --- %s seconds --- {time.time() - start_time}")
-    return final_loss_val[0]
+                    elif config.loss == 'MSE':
+                        partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) """
+                        
+            embeddings_normal = np.vstack(embeddings_normal)
+            y_normal = np.asarray([0]*len(normal_group)).reshape(-1)
+            print('Normal group shape', embeddings_normal.shape, y_normal.shape)
+
+            anomaly_group = class_subjects[mid:]
+            aucs_list = []
+            ###
+            with open(f'/neurospin/dico/cmendoza/Runs/17_PhD_2026/Output/Stats_Anomaly/{config.Database}/{config.Database}_{config.Region}_{config.Anomaly}_{config.Criteria}.pkl', 'rb') as file:
+                results = pickle.load(file)
+
+            data   = [x for x in results if not isinstance(x, tuple)]
+            flat = list(chain.from_iterable(data))
+            df = pd.DataFrame(flat)
+            if df.empty:
+                continue
+
+            max_bundles = df['Bundles'].max()
+            auc_weights = linear_weights(max_bundles)
+            print(f'Nbundles: {max_bundles} weights:{auc_weights}')
+
+            for nbun in range(1,max_bundles+1):
+                embeddings_anomaly = []
+                print(f'Nbundles {nbun}')
+                anomaly_subset = create_subset_for_anomaly(config,anomaly_group,nbun)
+                anomloader = torch.utils.data.DataLoader(anomaly_subset,batch_size=32,num_workers=4, shuffle=False)
+                for inputs, path in anomloader:
+                    with torch.no_grad():
+                        inputs = Variable(inputs).to(device, dtype=torch.float32)
+                        output, z, logvar = vae(inputs)
+                        embeddings_anomaly.append(z.cpu().numpy())
+                        #print(z.cpu().numpy().shape)
+                        """ embeddings_anomaly.append(z.cpu().numpy().reshape(-1))
+                        if config.loss == 'CrossEntropy':
+                            target = torch.squeeze(inputs, dim=1).long()
+                            partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, target,  
+                                                    z, logvar, criterion,
+                                                    kl_weight=config.kl)
+                            output = torch.argmax(output, dim=1)
+
+                        elif config.loss == 'MSE':
+                            partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs,  
+                                                    z, logvar, criterion,
+                                                    kl_weight=config.kl)
+                    anom_loss+= partial_recon_loss_anom.cpu().numpy() """
+                
+                #print(f'Recon error anom partial {anom_loss/len(anomaly)}')
+                
+                embeddings_anomaly = np.vstack(embeddings_anomaly)
+                y_anomaly = np.asarray([1]*len(anomaly_group)).reshape(-1)
+                #print(embeddings_normal,embeddings_anomaly.shape,embeddings_normal.shape)
+
+                X = np.vstack((embeddings_normal, embeddings_anomaly))
+                y = np.concatenate((y_normal, y_anomaly))
+
+                kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+                aucs = []
+
+                for i,(train_index, test_index) in enumerate(kf.split(X, y)):
+                    X_train, X_test = X[train_index], X[test_index]
+                    y_train, y_test = y[train_index], y[test_index]
+                    model_svm = svm.SVC(probability=True, kernel='linear', random_state=42,C=0.01)
+                    model_svm.fit(X_train, y_train)
+                    y_prob = model_svm.predict_proba(X_test)[:,1]
+                    roc_auc = roc_auc_score(y_test, y_prob)
+                    aucs.append(roc_auc)
+
+                aucs_list.append(np.mean(aucs))
+                print(aucs_list)   
+
+            weighted_aucs = np.asarray(aucs_list) * auc_weights
+            print(f'weighted aucs: {weighted_aucs} final auc : {np.sum(weighted_aucs)}')
+
+
+    #np.save(f'{config.save_dir}train_loss.npy', np.asarray(list_loss_train))
+    #np.save(f'{config.save_dir}val_loss.npy', np.asarray(list_val_recon_loss))
+
+    final_loss_val = list_val_recon_loss[-1]
+    print(f"Finished train Ndimensions {config.n} Beta {config.kl} Total Subjects {config.nsamples} --- %s seconds --- {time.time() - start_time}") 
+    return final_loss_val
 

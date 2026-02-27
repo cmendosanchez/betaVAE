@@ -1,0 +1,15 @@
+# @package _global_
+dataset_name: UKB_S.T.s._left_DWM
+in_shape: [1, 49, 109, 99]
+Train_list: ${dataset_folder}/DataSplit_DL/train.tsv
+Rcon_val_list: ${dataset_folder}/DataSplit_DL/val_rconerror.tsv
+Class_val_list: null
+Anomaly: null
+Criteria: DWM
+Region: S.T.s._left
+Database: UKB
+path_crops: ${dataset_folder}/crops/S.T.s._left/DWM
+path_anom: null
+minl: 80
+maxl: 250
+referential: icbm09c
