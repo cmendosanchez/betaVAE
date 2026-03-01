@@ -52,6 +52,8 @@ from copy import deepcopy
 import threading
 from General_utils import adjust_in_shape
 from concurrent.futures import ProcessPoolExecutor as Pool
+from optuna.storages import JournalStorage
+from optuna.storages.journal import JournalFileBackend
 
 def is_range(x):
     return isinstance(x, (list, ListConfig))
@@ -174,10 +176,12 @@ def Run_optuna_optimization(config):
     # Here, we access the dataset directly in shared memory
     try:
         print('Run optimization')
-        storage_name = f"sqlite:///{config.optuna_folder}/study.db"
+        #storage_name = f"sqlite:///{config.optuna_folder}/study.db"
+        study_name="journal_storage_multiprocess"
+        storage_name = JournalStorage(JournalFileBackend(file_path=f"{config.optuna_folder}/journal.log"))
         pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
         sampler = optuna.samplers.TPESampler(seed=42)
-        study = optuna.create_study(study_name="main_study",direction='minimize',
+        study = optuna.create_study(study_name=study_name,direction='minimize',
                                     storage=storage_name,sampler=sampler,pruner=pruner,
                                     load_if_exists=True)
         if config.optuna_enqueue_trial == True:
