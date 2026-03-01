@@ -188,7 +188,7 @@ def Run_optuna_optimization(config):
             if len(study.trials) == 0:
                 study.enqueue_trial({
                     "Learning Rate": 1e-4,
-                    "Batch size": 64,
+                    "Batch size": 32,
                     "Epochs": 10,
                     "Percentage of subjects": 0.1})
         study.optimize(lambda trial: objective(trial,config), n_trials=config.optuna_ntrials)
