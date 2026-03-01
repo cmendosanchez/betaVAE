@@ -1,0 +1,45 @@
+kl: None
+depth: 3
+'n': None
+batch_size: None
+nb_epoch: None
+lr: None
+loss: MSE
+preproc: LogMinMax
+sub_perc: None
+dataset_name: UKB_S.C.-sylv._right_SWM
+in_shape:
+- 1
+- 83
+- 67
+- 97
+Train_list: ${dataset_folder}/DataSplit_DL/train.tsv
+Rcon_val_list: ${dataset_folder}/DataSplit_DL/val_rconerror.tsv
+Class_val_list: null
+Anomaly: null
+Criteria: SWM
+Region: S.C.-sylv._right
+Database: UKB
+path_crops: ${dataset_folder}/crops/S.C.-sylv._right/SWM
+path_anom: null
+minl: 0
+maxl: 80
+referential: icbm09c
+save_dir: /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Output
+optuna_folder: /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/OptunaResults/FakeAnom/UKB_S.C.-sylv._right_SWM
+Train_with_anomaly: false
+optuna_lr:
+- 1.0e-05
+- 0.01
+optuna_batch_size:
+- 16
+- 64
+optuna_epoch:
+- 5
+- 30
+optuna_ndim: 64
+optuna_beta: 1
+optuna_sub_perc: 0.1
+dataset_folder: /neurospin/dico/cmendoza/Runs/17_PhD_2026/Output
+optuna_enqueue_trial: true
+optuna_ntrials: 1

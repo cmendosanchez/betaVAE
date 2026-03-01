@@ -94,12 +94,12 @@ def main():
                     f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
                     f"+Train_with_anomaly=False "
                     f"+optuna_lr=[1e-5,1e-2] "
-                    f"+optuna_batch_size=[8,64] "
+                    f"+optuna_batch_size=64 "
                     f"+optuna_epoch=[5,30] "
                     f"+optuna_ndim=64 "
                     f"+optuna_beta=1 "
-                    f"+optuna_sub_perc=[0.10,0.20] "
-                    f"+optuna_ntrials=2 "
+                    f"+optuna_sub_perc=0.1 "
+                    f"+optuna_ntrials=5 "
                     f"+optuna_enqueue_trial=True "
                     f"+dataset_folder={dataset_folder}"
                 )
@@ -111,7 +111,7 @@ def main():
                 #SBATCH --nodes=1
                 #SBATCH --ntasks-per-node=1
                 #SBATCH --gres=gpu:1
-                #SBATCH --cpus-per-task=14
+                #SBATCH --cpus-per-task=26
                 #SBATCH --hint=nomultithread
                 #SBATCH --time=20:00:00
                 #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/{job_name}%j.out
@@ -125,7 +125,6 @@ def main():
                 lscpu
                 free -h
 
-                echo $SLURM_MEM_PER_NODE
                 echo $SLURM_MEM_PER_CPU
                 echo $SLURM_CPUS_PER_TASK
 

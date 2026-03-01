@@ -610,3 +610,15 @@ def write_one_column_tsv(filename,data):
     with open(filename, "w", encoding="utf-8") as f:
         for item in data:
             f.write(f"{item}\n")
+
+
+
+def adjust_in_shape(config):
+    dims=[]
+    for idx in range(1, 4):
+        dim = config.in_shape[idx]
+        r = dim%(2**config.depth)
+        if r!=0:
+            dim+=(2**config.depth-r)
+        dims.append(dim)
+    return((1, dims[0]+4, dims[1], dims[2]))

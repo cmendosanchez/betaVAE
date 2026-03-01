@@ -47,19 +47,11 @@ from train import train_vae_optuna
 from utils.config import process_config
 import optuna
 from optuna.pruners import MedianPruner
-from optuna.samplers import TPESampler
 from colors import bcolors
 from copy import deepcopy
-
-def adjust_in_shape(config):
-    dims=[]
-    for idx in range(1, 4):
-        dim = config.in_shape[idx]
-        r = dim%(2**config.depth)
-        if r!=0:
-            dim+=(2**config.depth-r)
-        dims.append(dim)
-    return((1, dims[0]+4, dims[1], dims[2]))
+import threading
+from General_utils import adjust_in_shape
+from concurrent.futures import ProcessPoolExecutor as Pool
 
 def is_range(x):
     return isinstance(x, (list, ListConfig))
@@ -75,13 +67,14 @@ optuna.logging.set_verbosity(optuna.logging.INFO)
 # This will be the objective function for Optuna optimization
 def objective(trial, config):
     try:
+        print(f"{bcolors.BG_BLUE}{bcolors.YELLOW}Running trial {trial.number=} in {threading.current_thread().name}{bcolors.RESET}")
         config = deepcopy(config)
         # Suggest hyperparameters with Optuna
         # Optuna will suggest a learning rate and batch size for each trial
         # ---- LEARNING RATE (float, log scale) ----
         if is_range(config.optuna_lr):
             low, high = validate_range(config.optuna_lr, "optuna_lr")
-            LEARNING_RATE = trial.suggest_float("LEARNING_RATE", low, high, log=True)
+            LEARNING_RATE = trial.suggest_float("Learning Rate", low, high, log=True)
         elif isinstance(config.optuna_lr, (float, int)):
             LEARNING_RATE = float(config.optuna_lr)
         else:
@@ -90,7 +83,7 @@ def objective(trial, config):
         # ---- BATCH SIZE (int) ----
         if is_range(config.optuna_batch_size):
             low, high = validate_range(config.optuna_batch_size, "optuna_batch_size")
-            BATCH_SIZE = trial.suggest_int("BATCH_SIZE", int(low), int(high))
+            BATCH_SIZE = trial.suggest_int("Batch size", int(low), int(high))
         elif isinstance(config.optuna_batch_size, int):
             BATCH_SIZE = config.optuna_batch_size
         else:
@@ -99,7 +92,7 @@ def objective(trial, config):
         # ---- EPOCHS (int) ----
         if is_range(config.optuna_epoch):
             low, high = validate_range(config.optuna_epoch, "optuna_epoch")
-            N_EPOCH = trial.suggest_int("N_EPOCH", int(low), int(high))
+            N_EPOCH = trial.suggest_int("Epochs", int(low), int(high))
         elif isinstance(config.optuna_epoch, int):
             N_EPOCH = config.optuna_epoch
         else:
@@ -109,7 +102,7 @@ def objective(trial, config):
         if is_range(config.optuna_ndim):
             low, high = validate_range(config.optuna_ndim, "optuna_ndim")
             LATENT_DIMENSIONS = trial.suggest_int(
-                "LATENT_DIMENSIONS", int(low), int(high)
+                "Dimensions", int(low), int(high)
             )
         elif isinstance(config.optuna_ndim, int):
             LATENT_DIMENSIONS = config.optuna_ndim
@@ -119,7 +112,7 @@ def objective(trial, config):
         # ---- BETA (float) ----
         if is_range(config.optuna_beta):
             low, high = validate_range(config.optuna_beta, "optuna_beta")
-            BETA = trial.suggest_float("BETA", float(low), float(high))
+            BETA = trial.suggest_float("Beta", float(low), float(high))
         elif isinstance(config.optuna_beta, (float, int)):
             BETA = float(config.optuna_beta)
         else:
@@ -128,7 +121,7 @@ def objective(trial, config):
         # ---- SUB_PERC (float) ----
         if is_range(config.optuna_sub_perc):
             low, high = validate_range(config.optuna_sub_perc, "optuna_sub_perc")
-            SUB_PERC = trial.suggest_float("SUB_PERC", float(low), float(high))
+            SUB_PERC = trial.suggest_float("Percentage of subjects", float(low), float(high))
         elif isinstance(config.optuna_sub_perc, (float, int)):
             SUB_PERC = float(config.optuna_sub_perc)
         else:
@@ -184,14 +177,16 @@ def Run_optuna_optimization(config):
         storage_name = f"sqlite:///{config.optuna_folder}/study.db"
         pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
         sampler = optuna.samplers.TPESampler(seed=42)
-        study = optuna.create_study(study_name="main_study",direction='minimize',storage=storage_name,sampler=sampler,pruner=pruner,load_if_exists=True)
+        study = optuna.create_study(study_name="main_study",direction='minimize',
+                                    storage=storage_name,sampler=sampler,pruner=pruner,
+                                    load_if_exists=True)
         if config.optuna_enqueue_trial == True:
             if len(study.trials) == 0:
                 study.enqueue_trial({
-                    "LEARNING_RATE": 2e-4,
-                    "BATCH_SIZE": 64,
-                    "N_EPOCH": 10,
-                    "SUB_PERC": 0.1})
+                    "Learning Rate": 1e-4,
+                    "Batch size": 64,
+                    "Epochs": 10,
+                    "Percentage of subjects": 0.1})
         study.optimize(lambda trial: objective(trial,config), n_trials=config.optuna_ntrials)
 
     except optuna.TrialPruned:
@@ -212,7 +207,10 @@ def train(config):
     config.in_shape = adjust_in_shape(config)
 
     print(f'{bcolors.CYAN}~~~~~~ @ Running Optuna Framework @ ~~~~~~{bcolors.RESET}')
-    Run_optuna_optimization(config)
+    #Run_optuna_optimization(config)
+    with Pool(max_workers=2) as pool:
+        pool.map(Run_optuna_optimization, [config]*2)
+
     print("--- Optuna optimization finish in %s seconds ---" % (time.time() - start_time))
      
 if __name__ == '__main__':
