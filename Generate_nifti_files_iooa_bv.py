@@ -3,8 +3,6 @@ import os
 import numpy as np
 from soma import aims
 from subprocess import call
-from nilearn.surface import vol_to_surf
-from nilearn import surface, image
 import pandas as pd
 # Initialize the parser
 def create_parser():

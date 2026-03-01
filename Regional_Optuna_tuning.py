@@ -212,8 +212,9 @@ def train(config):
 
     print(f'{bcolors.CYAN}~~~~~~ @ Running Optuna Framework @ ~~~~~~{bcolors.RESET}')
     #Run_optuna_optimization(config)
-    with Pool(max_workers=2) as pool:
-        pool.map(Run_optuna_optimization, [config]*2)
+    nworkers = 2
+    with Pool(max_workers=nworkers) as pool:
+        pool.map(Run_optuna_optimization, [config]*nworkers)
 
     print("--- Optuna optimization finish in %s seconds ---" % (time.time() - start_time))
      

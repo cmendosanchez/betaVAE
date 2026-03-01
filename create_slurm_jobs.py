@@ -96,8 +96,8 @@ def main():
                     f"+optuna_lr=[1e-5,1e-2] "
                     f"+optuna_batch_size=[8,32] "
                     f"+optuna_epoch=[5,30] "
-                    f"+optuna_ndim=64 "
-                    f"+optuna_beta=1 "
+                    f"+optuna_ndim=[16, 32, 64, 128, 256] "
+                    f"+optuna_beta=[1, 32, 64, 128, 256] "
                     f"+optuna_sub_perc=0.1 "
                     f"+optuna_ntrials=5 "
                     f"+optuna_enqueue_trial=True "
@@ -107,7 +107,8 @@ def main():
                 script = textwrap.dedent(f"""\
                 #!/bin/bash
                 #SBATCH --job-name={job_name}
-                #SBATCH -C v100-32g
+                ##SBATCH -C v100-32g
+                #SBATCH -C h100
                 #SBATCH --nodes=1
                 #SBATCH --ntasks-per-node=1
                 #SBATCH --gres=gpu:1
@@ -116,9 +117,11 @@ def main():
                 #SBATCH --time=20:00:00
                 #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/{job_name}%j.out
                 #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/{job_name}%j.out
-                #SBATCH -A miu@v100
+                ##SBATCH -A miu@v100
+                #SBATCH -A miu@h100
 
                 module purge
+                module load arch/h100
                 module load pytorch-gpu/py3/2.4.0
 
                 nvidia-smi
