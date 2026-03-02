@@ -23,7 +23,16 @@ MyDumper.add_representer(list, represent_inline_list)
 # -----------------------------
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Create YAML dataset configs for betaVAE sulci crops"
+        description="Create YAML dataset configs for betaVAE sulci crops.",
+    epilog="""
+    Example:
+    python3 create_yaml_datasets.py \
+        --regions S.C.-sylv._left S.C.-sylv._right \
+                S.T.s._left S.T.s._right \
+                S.F.int.-F.C.M.ant._left S.F.int.-F.C.M.ant._right \
+        --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/dataset/UKB_Train_6Regions
+    """,
+        formatter_class=argparse.RawTextHelpFormatter
     )
 
     parser.add_argument(
