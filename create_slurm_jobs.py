@@ -94,13 +94,13 @@ def main():
                     f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
                     f"+Train_with_anomaly=False "
                     f"+optuna_lr=[1e-5,1e-2] "
-                    f"+optuna_batch_size=[8,64] "
+                    f"+optuna_batch_size=[8,32] "
                     f"+optuna_epoch=[5,30] "
                     f"+optuna_ndim=256 "
                     f"+optuna_beta=1 "
                     f"+optuna_sub_perc=0.10 "
                     f"+optuna_ntrials=5 "
-                    f"+optuna_enqueue_trial=True "
+                    f"+optuna_enqueue_trial=False "
                     f"+dataset_folder={dataset_folder}"
                 )
 
