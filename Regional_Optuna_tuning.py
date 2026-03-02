@@ -212,7 +212,7 @@ def train(config):
 
     print(f'{bcolors.CYAN}~~~~~~ @ Running Optuna Framework @ ~~~~~~{bcolors.RESET}')
     #Run_optuna_optimization(config)
-    nworkers = 2
+    nworkers = 5
     with Pool(max_workers=nworkers) as pool:
         pool.map(Run_optuna_optimization, [config]*nworkers)
 
