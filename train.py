@@ -428,11 +428,12 @@ def train_vae_optuna(config, trial,root_dir=None):
         list_val_recon_loss.append(val_recon_loss)
         torch.cuda.empty_cache()
     
-        if config.Train_with_anomaly == True:
+        #if config.Train_with_anomaly == True:
+        if True:
             print(f'{bcolors.BG_RED}Launching Normal/Anomaly classification{bcolors.RESET}')
             # Shuffle in-place
             class_subjects       = read_one_column_tsv(config.Class_val_list)
-            random.shuffle(class_subjects)
+            #random.shuffle(class_subjects)
             # Split
             mid = int(len(class_subjects) // 2)
             normal_group = class_subjects[:mid]
@@ -454,7 +455,7 @@ def train_vae_optuna(config, trial,root_dir=None):
                         
             embeddings_normal = np.vstack(embeddings_normal)
             y_normal = np.asarray([0]*len(normal_group)).reshape(-1)
-            print('Normal group shape', embeddings_normal.shape, y_normal.shape)
+            #print('Normal group shape', embeddings_normal.shape, y_normal.shape)
 
             anomaly_group = class_subjects[mid:]
             aucs_list = []
@@ -470,7 +471,7 @@ def train_vae_optuna(config, trial,root_dir=None):
 
             max_bundles = df['Bundles'].max()
             auc_weights = linear_weights(max_bundles)
-            print(f'Nbundles: {max_bundles} weights:{auc_weights}')
+            #print(f'Nbundles: {max_bundles} weights:{auc_weights}')
 
             for nbun in range(1,max_bundles+1):
                 embeddings_anomaly = []
@@ -522,13 +523,13 @@ def train_vae_optuna(config, trial,root_dir=None):
                 print(aucs_list)   
 
             weighted_aucs = np.asarray(aucs_list) * auc_weights
-            print(f'weighted aucs: {weighted_aucs} final auc : {np.sum(weighted_aucs)}')
-
+            #print(f'weighted aucs: {weighted_aucs} final auc : {np.sum(weighted_aucs)}')
+            print(f"{bcolors.MAGENTA}[{epoch+1}] AUC: {weighted_aucs}      {bcolors.RESET}")
 
     #np.save(f'{config.save_dir}train_loss.npy', np.asarray(list_loss_train))
     #np.save(f'{config.save_dir}val_loss.npy', np.asarray(list_val_recon_loss))
 
     final_loss_val = list_val_recon_loss[-1]
     print(f"{bcolors.BG_GREEN}Finished Optuna Trial in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 
-    return final_loss_val
+    return final_loss_val, np.sum(weighted_aucs)
 

@@ -182,7 +182,7 @@ def Run_optuna_optimization(config):
         storage_name = JournalStorage(JournalFileBackend(file_path=f"{config.optuna_folder}/journal.log"))
         pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
         sampler = optuna.samplers.TPESampler()
-        study = optuna.create_study(study_name=study_name,direction='minimize',
+        study = optuna.create_study(study_name=study_name,direction=['minimize','maximize'],
                                     storage=storage_name,sampler=sampler,pruner=pruner,
                                     load_if_exists=True)
         if config.optuna_enqueue_trial == True:
