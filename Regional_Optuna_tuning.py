@@ -55,30 +55,6 @@ from concurrent.futures import ProcessPoolExecutor as Pool
 from optuna.storages import JournalStorage
 from optuna.storages.journal import JournalFileBackend
 
-OPTUNA_EARLY_STOPING = 10
-
-class EarlyStoppingExceeded(optuna.exceptions.OptunaError):
-    early_stop = OPTUNA_EARLY_STOPING
-    early_stop_count = 0
-    best_score = None
-
-def early_stopping_opt(study, trial):
-    if EarlyStoppingExceeded.best_score == None:
-      EarlyStoppingExceeded.best_score = study.best_value
-
-    if study.best_value < EarlyStoppingExceeded.best_score:
-        EarlyStoppingExceeded.best_score = study.best_value
-        EarlyStoppingExceeded.early_stop_count = 0
-    else:
-      if EarlyStoppingExceeded.early_stop_count > EarlyStoppingExceeded.early_stop:
-            EarlyStoppingExceeded.early_stop_count = 0
-            best_score = None
-            raise EarlyStoppingExceeded()
-      else:
-            EarlyStoppingExceeded.early_stop_count=EarlyStoppingExceeded.early_stop_count+1
-    print(f'{bcolors.BLUE}EarlyStop counter: {EarlyStoppingExceeded.early_stop_count}, Best score: {study.best_value} and {EarlyStoppingExceeded.best_score}{bcolors.RESET}')
-    return
-
 
 def is_range(x):
     return isinstance(x, (list, ListConfig))
