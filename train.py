@@ -37,7 +37,6 @@
 
 import numpy as np
 import pandas as pd
-import torchvision
 #from torchsummary import summary
 #from torch.utils.tensorboard import SummaryWriter
 import torch.nn as nn
@@ -48,14 +47,12 @@ from utils.pytorchtools import EarlyStopping
 from postprocess import plot_loss
 import time
 from load_data import create_subset_from_list, create_subset_for_anomaly
-import subprocess
-import csv
 from colors import bcolors
 from General_utils import read_one_column_tsv
 from sklearn.model_selection import StratifiedKFold
 from sklearn import svm
-from sklearn.metrics import roc_curve, roc_auc_score,auc
-from scipy import stats
+from sklearn.metrics import  roc_auc_score
+import nibabel as nib
 import pickle 
 from itertools import chain
 
@@ -317,7 +314,7 @@ def train_vae_optuna(config, trial,root_dir=None):
     set_val   = create_subset_from_list(config,validation_subjects)
 
     start_loading = time.time()
-    trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=12, shuffle=True)
+    trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=6, shuffle=True)
     valloader = torch.utils.data.DataLoader(set_val,batch_size=1,num_workers=4, shuffle=False)
     print(f"{bcolors.MAGENTA}-- -Created trainloader/valloader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
     
@@ -408,9 +405,15 @@ def train_vae_optuna(config, trial,root_dir=None):
         
 
         if epoch == config.nb_epoch-1:
-            np.save(f'{config.save_dir}input.npy', np.array(np.squeeze(inputs[0]).cpu().detach().numpy()))
-            np.save(f'{config.save_dir}output.npy',np.array(np.squeeze(output[0]).cpu().detach().numpy()))
-
+            #np.save(f'{config.save_dir}input.npy', np.array(np.squeeze(inputs[0]).cpu().detach().numpy()))
+            #np.save(f'{config.save_dir}output.npy',np.array(np.squeeze(output[0]).cpu().detach().numpy()))
+            # Define affine (identity if you don't know it)
+            affine = np.eye(4)
+            # Create NIfTI image
+            nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
+            nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
+            nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
+            nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
 
         # prints on the terminal
         print(f"{bcolors.YELLOW}[{epoch+1}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
