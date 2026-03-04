@@ -295,6 +295,7 @@ def train_vae_optuna(config, trial,root_dir=None):
     #train_subjects = train_subjects[:n_train]
 
     validation_subjects = read_one_column_tsv(config.Rcon_val_list)
+    print(f'Validation subs: {len(validation_subjects)}')
     #n_val = int(len(validation_subjects) * config.sub_perc)
     #validation_subjects = train_subjects[:n_val]
 
