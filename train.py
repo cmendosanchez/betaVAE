@@ -403,10 +403,10 @@ def train_vae_optuna(config, trial,root_dir=None):
             raise optuna.exceptions.TrialPruned()
 
         #Report to Optuna
-        trial.report(val_recon_loss, epoch)
+        #trial.report(val_recon_loss, epoch)
         # If Optuna determines that the trial should be pruned, raise an exception to stop training early
-        if trial.should_prune():
-            raise optuna.exceptions.TrialPruned()  # This will stop the trial early if it is underperforming
+        #if trial.should_prune():
+        #    raise optuna.exceptions.TrialPruned()  # This will stop the trial early if it is underperforming
         
 
         if epoch == config.nb_epoch-1:
