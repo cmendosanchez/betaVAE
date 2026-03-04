@@ -192,7 +192,7 @@ def Run_optuna_optimization(config):
                     "Batch size": 32,
                     "Epochs": 10,
                     "Percentage of subjects": 0.1})
-        study.optimize(lambda trial: objective(trial,config), n_trials=config.optuna_ntrials, callbacks=[early_stopping_opt])
+        study.optimize(lambda trial: objective(trial,config), n_trials=config.optuna_ntrials)
 
     except optuna.TrialPruned:
         pass
