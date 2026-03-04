@@ -321,8 +321,8 @@ def train_vae_optuna(config, trial,root_dir=None):
     for epoch in range(config.nb_epoch):
         start_time_epoch = time.time()
         print(f'{bcolors.RED}{bcolors.UNDERLINE}~~ Starting epoch {epoch}{bcolors.RESET}')
-        n_train = int(len(all_train_subjects) * config.sub_perc)
-        train_subjects = random.sample(all_train_subjects, n_train)
+        n_train = int(len(train_subjects) * config.sub_perc)
+        train_subjects = random.sample(train_subjects, n_train)
         set_train = create_subset_from_list(config,train_subjects)
         trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=6, shuffle=True)
 
