@@ -455,7 +455,7 @@ def create_subset_for_anomaly(config,anomaly_ids,nbun):
                     subject_ids.append(subject_id)
                     list_crops.append([nib.load(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{nbun}_{config.referential}_crop.nii.gz').get_fdata()])
         #print("--- %s seconds ser ---" % (time.time() - start_time_ser))
-        print('Final subjects id anomaly',len(subject_ids))
+        #print('Final subjects id anomaly',len(subject_ids))
         #start_time_par = time.time()
         #subject_ids, list_crops = parallel_process_files(subject_files, folder_path, num_workers=4)
         #print("--- %s seconds par---" % (time.time() - start_time_par))
