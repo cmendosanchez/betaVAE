@@ -5,6 +5,11 @@ import nibabel as nib
 from tqdm import tqdm
 from colors import bcolors
 
+#Examples:
+#python3 create_yaml_datasets.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left  --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/dataset/UKB_Train_6Regions_with_anom --anomalies Underconnectivity Overconnectivity
+#python3 create_yaml_datasets.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left  --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/dataset/UKB_Train_6Regions --anomalies None
+
+
 # -----------------------------
 # YAML Dumper (inline lists)
 # -----------------------------
@@ -55,6 +60,13 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--anomalies",
+        nargs="+",
+        default=['None'],
+        help="List of anomalies"
+    )
+
+    parser.add_argument(
         "--databases",
         nargs="+",
         default=["UKB"],
@@ -76,14 +88,15 @@ def parse_args():
 def main():
     args = parse_args()
 
-    region_list = args.regions
-    yaml_folder = args.output
+    region_list      = args.regions
+    yaml_folder      = args.output
     Path_sulci_masks = args.mask_path
-    databases = args.databases
-    modes = args.modes
+    databases        = args.databases
+    anomalies        = args.anomalies
+    modes            = args.modes
 
     os.makedirs(yaml_folder, exist_ok=True)
-    for anom in ['Underconnectivity','Overconnectivity']:
+    for anom in anomalies:
         for database in databases:
             for region in region_list:
 
@@ -110,14 +123,17 @@ def main():
                     elif mode == "Comm":
                         minl, maxl = 0, 250
                     else:
-                        raise ValueError(f"Unknown mode: {mode}")
+                        raise ValueError(f"Unknown mode: {mode} ")
 
                     print(
                         f"{bcolors.CYAN}Creating Dataset for "
-                        f"{database} {region} {mode}{bcolors.RESET}"
+                        f"{database} {region} {mode} {anom}{bcolors.RESET}"
                     )
 
-                    dataset_name = f"{database}_{region}_{mode}_{anom}"
+                    if anom!= 'None':
+                        dataset_name = f"{database}_{region}_{mode}_{anom}"
+                    else:
+                        dataset_name = f"{database}_{region}_{mode}"
 
                     config = {
                         "dataset_name"   : dataset_name,

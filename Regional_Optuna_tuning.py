@@ -189,13 +189,7 @@ def Run_optuna_optimization(config):
         study = optuna.create_study(study_name=study_name,directions=['minimize','maximize'],
                                     storage=storage_name,sampler=sampler,
                                     load_if_exists=True)
-        if config.optuna_enqueue_trial == True:
-            if len(study.trials) == 0:
-                study.enqueue_trial({
-                    "Learning Rate": 1e-4,
-                    "Batch size": 32,
-                    "Epochs": 10,
-                    "Percentage of subjects": 0.1})
+        
         study.optimize(lambda trial: objective(trial,config), n_trials=config.optuna_ntrials)
 
     except optuna.TrialPruned:

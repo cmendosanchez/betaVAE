@@ -4,6 +4,16 @@ import textwrap
 from colors import bcolors
 from datetime import datetime
 
+def format_range(values):
+    """
+    If one value -> return single value as string
+    If multiple values -> return [min,max] without spaces
+    """
+    if len(values) == 1:
+        return str(values[0])
+    else:
+        return f"[{min(values)},{max(values)}]"
+
 # -----------------------------
 # Argument parser
 # -----------------------------
@@ -61,6 +71,77 @@ def parse_args():
         help="Training tag (e.g. 6Regions, 3Regions...)"
     )
 
+    parser.add_argument(
+        "--lr",
+        nargs="+",
+        default=[1e-5,1e-2],
+        type=float,
+        help="Learning rate"
+    )
+
+    parser.add_argument(
+        "--batch_size",
+        nargs="+",
+        default=[8,32],
+        type=int,
+        help="Batch size"
+    )
+
+    parser.add_argument(
+        "--epochs",
+        nargs="+",
+        default=[5,30],
+        type=int,
+        help="Nulber of epochs"
+    )
+
+    parser.add_argument(
+        "--ndims",
+        nargs="+",
+        default=[32,256],
+        type=int,
+        help="Number of latent dimensions"
+    )
+
+    parser.add_argument(
+        "--beta",
+        nargs="+",
+        default=[0.1,100],
+        type=float,
+        help="Beta"
+    )
+
+    parser.add_argument(
+    "--sub_perc",
+    type=float,
+    default=0.05,
+    help="Subject percentage (default: 0.05)"
+    )
+
+    parser.add_argument(
+    "--ntrials",
+    type=int,
+    default=10,
+    help="Number of optuna trials (default: 10)"
+    )
+
+
+    parser.add_argument(
+        "--anom",
+        nargs="+",
+        default=['None'],
+        help="Modes to use (default: SWM DWM Comm)"
+    )
+
+    parser.add_argument(
+        "--train_with_anom",
+        type=str,
+        default='False',
+        help="Train with anom (default: False)"
+    )
+
+
+
     return parser.parse_args()
 
 
@@ -71,21 +152,33 @@ def main():
 
     args = parse_args()
 
-    region_list = args.regions
-    databases = args.databases
-    modes = args.modes
-    output = args.output
+    region_list    = args.regions
+    databases      = args.databases
+    modes          = args.modes
+    output         = args.output
     dataset_folder = args.dataset_folder
-    train_tag = args.train_tag
+    train_tag      = args.train_tag
+
+    lr          = args.lr
+    batch_size  = args.batch_size
+    epochs      = args.epochs
+    ndims       = args.ndims
+    beta        = args.beta
+    anoms       = args.anom
+    ntrials     = args.ntrials
+    sub_perc    = args.sub_perc
+    train_with_anom = args.train_with_anom
 
     os.makedirs(output, exist_ok=True)
 
-    for anom in ['Underconnectivity','Overconnectivity']:
+    for anom in anoms:
         for database in databases:
             for region in region_list:
                 for mode in modes:
-
-                    config_name = f"{database}_{region}_{mode}_{anom}"
+                    if anom != 'None':
+                        config_name = f"{database}_{region}_{mode}_{anom}"
+                    else:
+                        config_name = f"{database}_{region}_{mode}"
                     #job_name = f'{config_name}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}'
                     job_name = f'{config_name}'
                     print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
@@ -94,15 +187,14 @@ def main():
                         f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
                         f"+dataset=UKB_Train_{train_tag}/{config_name} "
                         f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
-                        f"+Train_with_anomaly=True "
-                        f"+optuna_lr=[1e-5,1e-2] "
-                        f"+optuna_batch_size=[8,32] "
-                        f"+optuna_epoch=[5,30] "
-                        f"+optuna_ndim=[32,256] "
-                        f"+optuna_beta=[0.5,100] "
-                        f"+optuna_sub_perc=0.05 "
-                        f"+optuna_ntrials=20 "
-                        f"+optuna_enqueue_trial=False "
+                        f"+Train_with_anomaly={train_with_anom} "
+                        f"+optuna_lr={format_range(lr)} "
+                        f"+optuna_batch_size={format_range(batch_size)} "
+                        f"+optuna_epoch={format_range(epochs)} "
+                        f"+optuna_ndim={format_range(ndims)} "
+                        f"+optuna_beta={format_range(beta)} "
+                        f"+optuna_sub_perc={sub_perc} "
+                        f"+optuna_ntrials={ntrials} "
                         f"+dataset_folder={dataset_folder}"
                     )
 
