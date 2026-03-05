@@ -131,7 +131,7 @@ def main():
                         "Database"   : database,
                         "path_crops" : f"${{dataset_folder}}/crops/{region}/{mode}",
                         "path_anom"  : f"${{dataset_folder}}/FakeAnomaly_crops/{database}/{region}/{mode}/{anom}",
-                        "path_stats" : f"${{dataset_folder}}/{database}/{database}_{region}_{anom}_{mode}.pkl",
+                        "path_stats" : f"${{dataset_folder}}/Stats_Anomaly/{database}/{database}_{region}_{anom}_{mode}.pkl",
                         "minl": minl,
                         "maxl": maxl,
                         "referential": "icbm09c",
