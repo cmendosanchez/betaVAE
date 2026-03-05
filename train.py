@@ -291,7 +291,7 @@ def train_vae_optuna(config, trial,root_dir=None):
     list_loss_train, list_val_recon_loss, = [], []
     
     train_subjects      = read_one_column_tsv(config.Train_list)
-    n_train = int(len(train_subjects) * config.sub_perc)
+    n_train = int(len(train_subjects) * 0.4)
     #train_subjects = train_subjects[:n_train]
 
     validation_subjects = read_one_column_tsv(config.Rcon_val_list)
