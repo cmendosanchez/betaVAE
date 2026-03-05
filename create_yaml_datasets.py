@@ -83,62 +83,62 @@ def main():
     modes = args.modes
 
     os.makedirs(yaml_folder, exist_ok=True)
+    for anom in ['Underconnectivity','Overconnectivity']:
+        for database in databases:
+            for region in region_list:
 
-    for database in databases:
-        for region in region_list:
-
-            if "left" in region:
-                hemi = "L"
-            elif "right" in region:
-                hemi = "R"
-            else:
-                raise ValueError(f"Cannot infer hemisphere from region: {region}")
-
-            region_base = region.replace("_left", "").replace("_right", "")
-            mask_path = (
-                f"{Path_sulci_masks}/{region_base}/"
-                f"{hemi}mask_skeleton_1mm_crop.nii.gz"
-            )
-
-            dims = nib.load(mask_path).get_fdata().shape
-
-            for mode in modes:
-                if mode == "SWM":
-                    minl, maxl = 0, 80
-                elif mode == "DWM":
-                    minl, maxl = 80, 250
-                elif mode == "Comm":
-                    minl, maxl = 0, 250
+                if "left" in region:
+                    hemi = "L"
+                elif "right" in region:
+                    hemi = "R"
                 else:
-                    raise ValueError(f"Unknown mode: {mode}")
+                    raise ValueError(f"Cannot infer hemisphere from region: {region}")
 
-                print(
-                    f"{bcolors.CYAN}Creating Dataset for "
-                    f"{database} {region} {mode}{bcolors.RESET}"
+                region_base = region.replace("_left", "").replace("_right", "")
+                mask_path = (
+                    f"{Path_sulci_masks}/{region_base}/"
+                    f"{hemi}mask_skeleton_1mm_crop.nii.gz"
                 )
 
-                dataset_name = f"{database}_{region}_{mode}"
+                dims = nib.load(mask_path).get_fdata().shape
 
-                config = {
-                    "dataset_name": dataset_name,
-                    "in_shape": [1, dims[0], dims[1], dims[2]],
-                    "Train_list": "${dataset_folder}/DataSplit_DL/train.tsv",
-                    "Rcon_val_list": "${dataset_folder}/DataSplit_DL/val_rconerror.tsv",
-                    "Class_val_list": None,
-                    "Anomaly": None,
-                    "Criteria": mode,
-                    "Region": region,
-                    "Database": database,
-                    "path_crops": f"${{dataset_folder}}/crops/{region}/{mode}",
-                    "path_anom": None,
-                    "minl": minl,
-                    "maxl": maxl,
-                    "referential": "icbm09c",
-                }
+                for mode in modes:
+                    if mode == "SWM":
+                        minl, maxl = 0, 80
+                    elif mode == "DWM":
+                        minl, maxl = 80, 250
+                    elif mode == "Comm":
+                        minl, maxl = 0, 250
+                    else:
+                        raise ValueError(f"Unknown mode: {mode}")
 
-                with open(f"{yaml_folder}/{dataset_name}.yaml", "w") as f:
-                    f.write("# @package _global_\n")
-                    yaml.dump(config, f, sort_keys=False, Dumper=MyDumper)
+                    print(
+                        f"{bcolors.CYAN}Creating Dataset for "
+                        f"{database} {region} {mode}{bcolors.RESET}"
+                    )
+
+                    dataset_name = f"{database}_{region}_{mode}_{anom}"
+
+                    config = {
+                        "dataset_name": dataset_name,
+                        "in_shape": [1, dims[0], dims[1], dims[2]],
+                        "Train_list": "${dataset_folder}/DataSplit_DL/train.tsv",
+                        "Rcon_val_list": "${dataset_folder}/DataSplit_DL/val_rconerror.tsv",
+                        "Class_val_list": "${dataset_folder}/DataSplit_DL/val_anorm.tsv",
+                        "Anomaly": anom,
+                        "Criteria": mode,
+                        "Region": region,
+                        "Database": database,
+                        "path_crops": f"${{dataset_folder}}/crops/{region}/{mode}",
+                        "path_anom":  f"${{dataset_folder}}/FakeAnomaly_crops/{database}/{region}/{mode}/{anom}",
+                        "minl": minl,
+                        "maxl": maxl,
+                        "referential": "icbm09c",
+                    }
+
+                    with open(f"{yaml_folder}/{dataset_name}.yaml", "w") as f:
+                        f.write("# @package _global_\n")
+                        yaml.dump(config, f, sort_keys=False, Dumper=MyDumper)
 
 if __name__ == "__main__":
     main()

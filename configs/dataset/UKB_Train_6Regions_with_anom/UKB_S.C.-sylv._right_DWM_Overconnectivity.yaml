@@ -1,0 +1,15 @@
+# @package _global_
+dataset_name: UKB_S.C.-sylv._right_DWM_Overconnectivity
+in_shape: [1, 83, 67, 97]
+Train_list: ${dataset_folder}/DataSplit_DL/train.tsv
+Rcon_val_list: ${dataset_folder}/DataSplit_DL/val_rconerror.tsv
+Class_val_list: ${dataset_folder}/DataSplit_DL/val_anorm.tsv
+Anomaly: Overconnectivity
+Criteria: DWM
+Region: S.C.-sylv._right
+Database: UKB
+path_crops: ${dataset_folder}/crops/S.C.-sylv._right/DWM
+path_anom: ${dataset_folder}/FakeAnomaly_crops/UKB/S.C.-sylv._right/DWM/Overconnectivity
+minl: 80
+maxl: 250
+referential: icbm09c

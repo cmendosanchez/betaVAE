@@ -1,0 +1,15 @@
+# @package _global_
+dataset_name: UKB_S.C.-sylv._left_Comm_Underconnectivity
+in_shape: [1, 75, 71, 97]
+Train_list: ${dataset_folder}/DataSplit_DL/train.tsv
+Rcon_val_list: ${dataset_folder}/DataSplit_DL/val_rconerror.tsv
+Class_val_list: ${dataset_folder}/DataSplit_DL/val_anorm.tsv
+Anomaly: Underconnectivity
+Criteria: Comm
+Region: S.C.-sylv._left
+Database: UKB
+path_crops: ${dataset_folder}/crops/S.C.-sylv._left/Comm
+path_anom: ${dataset_folder}/FakeAnomaly_crops/UKB/S.C.-sylv._left/Comm/Underconnectivity
+minl: 0
+maxl: 250
+referential: icbm09c

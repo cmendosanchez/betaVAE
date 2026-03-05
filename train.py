@@ -429,7 +429,7 @@ def train_vae_optuna(config, trial,root_dir=None):
         torch.cuda.empty_cache()
     
         #if config.Train_with_anomaly == True:
-        if True:
+        if False:
             print(f'{bcolors.BG_RED}Launching Normal/Anomaly classification{bcolors.RESET}')
             # Shuffle in-place
             class_subjects       = read_one_column_tsv(config.Class_val_list)
