@@ -181,14 +181,20 @@ def Run_optuna_optimization(config):
         study_name="journal_storage_multiprocess"
         storage_name = JournalStorage(JournalFileBackend(file_path=f"{config.optuna_folder}/journal.log"))
         pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
-        #sampler = optuna.samplers.TPESampler()
-        sampler = optuna.samplers.NSGAIISampler()
+        sampler = optuna.samplers.TPESampler()
+        #sampler = optuna.samplers.NSGAIISampler()
         #study = optuna.create_study(study_name=study_name,directions=['minimize','maximize'],
                                     #storage=storage_name,sampler=sampler,pruner=pruner,
                                     #load_if_exists=True)
-        study = optuna.create_study(study_name=study_name,directions=['minimize','maximize'],
-                                    storage=storage_name,sampler=sampler,
-                                    load_if_exists=True)
+        if config.Anomaly==None:
+            print('Minimizing Reconstruction Error')
+            study = optuna.create_study(study_name=study_name,directions=['minimize'],
+                                        storage=storage_name,sampler=sampler,
+                                        load_if_exists=True)
+        else:
+            study = optuna.create_study(study_name=study_name,directions=['maximize'],
+                                        storage=storage_name,sampler=sampler,
+                                        load_if_exists=True)
         
         study.optimize(lambda trial: objective(trial,config), n_trials=config.optuna_ntrials)
 

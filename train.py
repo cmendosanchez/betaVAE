@@ -291,7 +291,7 @@ def train_vae_optuna(config, trial,root_dir=None):
     list_loss_train, list_val_recon_loss, = [], []
     
     train_subjects      = read_one_column_tsv(config.Train_list)
-    n_train = int(len(train_subjects) * 0.4)
+    n_train = int(len(train_subjects) * config.sub_perc)
     #train_subjects = train_subjects[:n_train]
 
     validation_subjects = read_one_column_tsv(config.Rcon_val_list)
@@ -523,12 +523,12 @@ def train_vae_optuna(config, trial,root_dir=None):
 
             weighted_aucs = np.asarray(aucs_list) * auc_weights
             #print(f'weighted aucs: {weighted_aucs} final auc : {np.sum(weighted_aucs)}')
-        print(f"{bcolors.MAGENTA}[{epoch+1}] AUC: {np.sum(weighted_aucs)}      {bcolors.RESET}")
+        #print(f"{bcolors.MAGENTA}[{epoch+1}] AUC: {np.sum(weighted_aucs)}      {bcolors.RESET}")
 
     #np.save(f'{config.save_dir}train_loss.npy', np.asarray(list_loss_train))
     #np.save(f'{config.save_dir}val_loss.npy', np.asarray(list_val_recon_loss))
 
     final_loss_val = list_val_recon_loss[-1]
     print(f"{bcolors.BG_GREEN}Finished Optuna Trial in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 
-    return final_loss_val, np.sum(weighted_aucs)
+    return final_loss_val
 
