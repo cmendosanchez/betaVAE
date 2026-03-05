@@ -80,67 +80,69 @@ def main():
 
     os.makedirs(output, exist_ok=True)
 
-    for database in databases:
-        for region in region_list:
-            for mode in modes:
+    for anom in ['Underconnectivity','Overconnectivity']:
+        for database in databases:
+            for region in region_list:
+                for mode in modes:
 
-                config_name = f"{database}_{region}_{mode}"
-                job_name = f'{config_name}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}'
-                print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
-                python_call = (
-                    f"python3 Regional_Optuna_tuning.py "
-                    f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
-                    f"+dataset=UKB_Train_{train_tag}/{config_name} "
-                    f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
-                    f"+Train_with_anomaly=True "
-                    f"+optuna_lr=[1e-5,1e-2] "
-                    f"+optuna_batch_size=[8,32] "
-                    f"+optuna_epoch=[5,30] "
-                    f"+optuna_ndim=256 "
-                    f"+optuna_beta=1 "
-                    f"+optuna_sub_perc=0.05 "
-                    f"+optuna_ntrials=20 "
-                    f"+optuna_enqueue_trial=False "
-                    f"+dataset_folder={dataset_folder}"
-                )
+                    config_name = f"{database}_{region}_{mode}_{anom}"
+                    #job_name = f'{config_name}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}'
+                    job_name = f'{config_name}'
+                    print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
+                    python_call = (
+                        f"python3 Regional_Optuna_tuning.py "
+                        f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
+                        f"+dataset=UKB_Train_{train_tag}/{config_name} "
+                        f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
+                        f"+Train_with_anomaly=True "
+                        f"+optuna_lr=[1e-5,1e-2] "
+                        f"+optuna_batch_size=[8,32] "
+                        f"+optuna_epoch=[5,30] "
+                        f"+optuna_ndim=256 "
+                        f"+optuna_beta=1 "
+                        f"+optuna_sub_perc=0.05 "
+                        f"+optuna_ntrials=20 "
+                        f"+optuna_enqueue_trial=False "
+                        f"+dataset_folder={dataset_folder}"
+                    )
 
-                script = textwrap.dedent(f"""\
-                #!/bin/bash
-                #SBATCH --job-name={job_name}
-                ##SBATCH -C v100-32g
-                #SBATCH -C h100
-                #SBATCH --nodes=1
-                #SBATCH --ntasks-per-node=1
-                #SBATCH --gres=gpu:1
-                #SBATCH --cpus-per-task=96
-                #SBATCH --hint=nomultithread
-                #SBATCH --time=20:00:00
-                #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/{job_name}%j.out
-                #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/{job_name}%j.out
-                ##SBATCH -A miu@v100
-                #SBATCH -A miu@h100
+                    script = textwrap.dedent(f"""\
+                    #!/bin/bash
+                    #SBATCH --job-name={job_name}
+                    ##SBATCH -C v100-32g
+                    #SBATCH -C h100
+                    #SBATCH --nodes=1
+                    #SBATCH --ntasks-per-node=1
+                    #SBATCH --gres=gpu:1
+                    #SBATCH --cpus-per-task=96
+                    #SBATCH --hint=nomultithread
+                    #SBATCH --time=20:00:00
+                    #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/{job_name}%j.out
+                    #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/{job_name}%j.out
+                    ##SBATCH -A miu@v100
+                    #SBATCH -A miu@h100
 
-                module purge
-                module load arch/h100
-                module load pytorch-gpu/py3/2.8.0
+                    module purge
+                    module load arch/h100
+                    module load pytorch-gpu/py3/2.8.0
 
-                nvidia-smi
-                lscpu
-                free -h
+                    nvidia-smi
+                    lscpu
+                    free -h
 
-                echo $SLURM_MEM_PER_CPU
-                echo $SLURM_CPUS_PER_TASK
+                    echo $SLURM_MEM_PER_CPU
+                    echo $SLURM_CPUS_PER_TASK
 
-                set -x
+                    set -x
 
-                cd $WORK
-                cd PhD_2026/betaVAE
+                    cd $WORK
+                    cd PhD_2026/betaVAE
 
-                {python_call}
-                """)
+                    {python_call}
+                    """)
 
-                with open(f"{output}/{job_name}.slurm", "w") as f:
-                    f.write(script)
+                    with open(f"{output}/{job_name}.slurm", "w") as f:
+                        f.write(script)
 
 
 if __name__ == "__main__":
