@@ -10,7 +10,7 @@ Region: S.F.int.-F.C.M.ant._right
 Database: UKB
 path_crops: ${dataset_folder}/crops/S.F.int.-F.C.M.ant._right/Comm
 path_anom: ${dataset_folder}/FakeAnomaly_crops/UKB/S.F.int.-F.C.M.ant._right/Comm/Underconnectivity
-path_stats: ${dataset_folder}/UKB/UKB_S.F.int.-F.C.M.ant._right_Underconnectivity_Comm.pkl
+path_stats: ${dataset_folder}/Stats_Anomaly/UKB/UKB_S.F.int.-F.C.M.ant._right_Underconnectivity_Comm.pkl
 minl: 0
 maxl: 250
 referential: icbm09c

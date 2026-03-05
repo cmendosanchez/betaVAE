@@ -10,7 +10,7 @@ Region: S.C.-sylv._right
 Database: UKB
 path_crops: ${dataset_folder}/crops/S.C.-sylv._right/Comm
 path_anom: ${dataset_folder}/FakeAnomaly_crops/UKB/S.C.-sylv._right/Comm/Overconnectivity
-path_stats: ${dataset_folder}/UKB/UKB_S.C.-sylv._right_Overconnectivity_Comm.pkl
+path_stats: ${dataset_folder}/Stats_Anomaly/UKB/UKB_S.C.-sylv._right_Overconnectivity_Comm.pkl
 minl: 0
 maxl: 250
 referential: icbm09c
