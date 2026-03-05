@@ -92,7 +92,7 @@ def main():
                     f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
                     f"+dataset=UKB_Train_{train_tag}/{config_name} "
                     f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
-                    f"+Train_with_anomaly=False "
+                    f"+Train_with_anomaly=True "
                     f"+optuna_lr=[1e-5,1e-2] "
                     f"+optuna_batch_size=[8,32] "
                     f"+optuna_epoch=[5,30] "

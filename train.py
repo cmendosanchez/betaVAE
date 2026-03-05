@@ -428,8 +428,7 @@ def train_vae_optuna(config, trial,root_dir=None):
         list_val_recon_loss.append(val_recon_loss)
         torch.cuda.empty_cache()
     
-        #if config.Train_with_anomaly == True:
-        if False:
+        if config.Train_with_anomaly == True:
             print(f'{bcolors.BG_RED}Launching Normal/Anomaly classification{bcolors.RESET}')
             # Shuffle in-place
             class_subjects       = read_one_column_tsv(config.Class_val_list)
@@ -460,7 +459,7 @@ def train_vae_optuna(config, trial,root_dir=None):
             anomaly_group = class_subjects[mid:]
             aucs_list = []
             ###
-            with open(f'/neurospin/dico/cmendoza/Runs/17_PhD_2026/Output/Stats_Anomaly/{config.Database}/{config.Database}_{config.Region}_{config.Anomaly}_{config.Criteria}.pkl', 'rb') as file:
+            with open(config.path_stats, 'rb') as file:
                 results = pickle.load(file)
 
             data   = [x for x in results if not isinstance(x, tuple)]

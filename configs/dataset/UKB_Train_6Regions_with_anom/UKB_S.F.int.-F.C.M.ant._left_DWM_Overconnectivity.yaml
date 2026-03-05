@@ -10,6 +10,7 @@ Region: S.F.int.-F.C.M.ant._left
 Database: UKB
 path_crops: ${dataset_folder}/crops/S.F.int.-F.C.M.ant._left/DWM
 path_anom: ${dataset_folder}/FakeAnomaly_crops/UKB/S.F.int.-F.C.M.ant._left/DWM/Overconnectivity
+path_stats: ${dataset_folder}/UKB/UKB_S.F.int.-F.C.M.ant._left_Overconnectivity_DWM.pkl
 minl: 80
 maxl: 250
 referential: icbm09c
