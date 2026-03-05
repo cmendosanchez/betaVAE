@@ -519,11 +519,11 @@ def train_vae_optuna(config, trial,root_dir=None):
                     aucs.append(roc_auc)
 
                 aucs_list.append(np.mean(aucs))
-                print(aucs_list)   
+                #print(aucs_list)   
 
             weighted_aucs = np.asarray(aucs_list) * auc_weights
             #print(f'weighted aucs: {weighted_aucs} final auc : {np.sum(weighted_aucs)}')
-            print(f"{bcolors.MAGENTA}[{epoch+1}] AUC: {np.sum(weighted_aucs)}      {bcolors.RESET}")
+            #print(f"{bcolors.MAGENTA}[{epoch+1}] AUC: {np.sum(weighted_aucs)}      {bcolors.RESET}")
 
     #np.save(f'{config.save_dir}train_loss.npy', np.asarray(list_loss_train))
     #np.save(f'{config.save_dir}val_loss.npy', np.asarray(list_val_recon_loss))

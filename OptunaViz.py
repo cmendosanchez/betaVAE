@@ -61,7 +61,7 @@ def main():
         storage=storage,
     )
 
-    # --- Optimization history ---
+    """ # --- Optimization history ---
     fig = plot_optimization_history(study)
     fig.write_image(os.path.join(args.outdir, "optimization_history.png"))
 
@@ -85,16 +85,22 @@ def main():
         fig.write_image(os.path.join(args.outdir, "intermediate_values.png"))
     except ValueError:
         print("No intermediate values found, skipping.")
-
+ """
     print(f"Figures saved in: {args.outdir}")
-    best_trial = study.best_trial
+    best_trial = study.best_trials
 
     print("\n=== BEST TRIAL ===")
-    print(f"Trial number: {best_trial.number}")
+    """ print(f"Trial number: {best_trial.number}")
     print(f"Best value: {best_trial.value}")
     print("Best parameters:")
     for k, v in best_trial.params.items():
-        print(f"  {k}: {v}")
+        print(f"  {k}: {v}")"""
+    for trial in study.best_trials:
+        print(f"\nTrial number: {trial.number}")
+        print(f"Objective values: {trial.values}")  # tuple
+        print("Parameters:")
+        for k, v in trial.params.items():
+            print(f"  {k}: {v}")
 
 if __name__ == "__main__":
     main()
