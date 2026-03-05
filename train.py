@@ -474,7 +474,7 @@ def train_vae_optuna(config, trial,root_dir=None):
 
             for nbun in range(1,max_bundles+1):
                 embeddings_anomaly = []
-                print(f'Nbundles {nbun}')
+                #print(f'Nbundles {nbun}')
                 anomaly_subset = create_subset_for_anomaly(config,anomaly_group,nbun)
                 anomloader = torch.utils.data.DataLoader(anomaly_subset,batch_size=32,num_workers=4, shuffle=False)
                 for inputs, path in anomloader:
@@ -523,7 +523,7 @@ def train_vae_optuna(config, trial,root_dir=None):
 
             weighted_aucs = np.asarray(aucs_list) * auc_weights
             #print(f'weighted aucs: {weighted_aucs} final auc : {np.sum(weighted_aucs)}')
-            print(f"{bcolors.MAGENTA}[{epoch+1}] AUC: {weighted_aucs}      {bcolors.RESET}")
+            print(f"{bcolors.MAGENTA}[{epoch+1}] AUC: {np.sum(weighted_aucs)}      {bcolors.RESET}")
 
     #np.save(f'{config.save_dir}train_loss.npy', np.asarray(list_loss_train))
     #np.save(f'{config.save_dir}val_loss.npy', np.asarray(list_val_recon_loss))
