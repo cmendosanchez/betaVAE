@@ -121,6 +121,7 @@ def objective(trial, config):
         else:
             raise TypeError("optuna_beta must be float or [low, high]")
 
+        
         # ---- SUB_PERC (float) ----
         if is_range(config.optuna_sub_perc):
             low, high = validate_range(config.optuna_sub_perc, "optuna_sub_perc")
@@ -136,6 +137,8 @@ def objective(trial, config):
         config.n          = LATENT_DIMENSIONS
         config.kl         = BETA
         config.sub_perc   = SUB_PERC
+        config.nb_epoch   = int(config.optuna_epoch)
+
         config.weight_decay = WEIGHT_DECAY
 
         # Configuration step
