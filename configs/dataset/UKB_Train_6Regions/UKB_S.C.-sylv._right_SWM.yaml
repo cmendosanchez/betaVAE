@@ -4,7 +4,7 @@ in_shape: [1, 83, 67, 97]
 Train_list: ${dataset_folder}/DataSplit_DL/train.tsv
 Rcon_val_list: ${dataset_folder}/DataSplit_DL/val_rconerror.tsv
 Class_val_list: ${dataset_folder}/DataSplit_DL/val_anorm.tsv
-Anomaly: None
+Anomaly: null
 Criteria: SWM
 Region: S.C.-sylv._right
 Database: UKB

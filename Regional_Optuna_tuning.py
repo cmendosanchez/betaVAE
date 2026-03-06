@@ -46,7 +46,7 @@ from datetime import datetime
 from train import train_vae_optuna
 from utils.config import process_config
 import optuna
-from optuna.pruners import MedianPruner
+from optuna.pruners import PatientPruner, MedianPruner
 from colors import bcolors
 from copy import deepcopy
 import threading
@@ -83,6 +83,15 @@ def objective(trial, config):
         else:
             raise TypeError("optuna_lr must be float or [low, high]")
 
+        # ---- WEIGHT DECAY (float, log scale) ----
+        if is_range(config.optuna_weight_decay):
+            low, high = validate_range(config.optuna_weight_decay, "optuna_weight_decay")
+            WEIGHT_DECAY = trial.suggest_float("Weight decay", low, high, log=True)
+        elif isinstance(config.optuna_weight_decay, (float, int)):
+            WEIGHT_DECAY = float(config.optuna_weight_decay)
+        else:
+            raise TypeError("optuna_lr must be float or [low, high]")
+
         # ---- BATCH SIZE (int) ----
         if is_range(config.optuna_batch_size):
             low, high = validate_range(config.optuna_batch_size, "optuna_batch_size")
@@ -91,15 +100,6 @@ def objective(trial, config):
             BATCH_SIZE = config.optuna_batch_size
         else:
             raise TypeError("optuna_batch_size must be int or [low, high]")
-
-        # ---- EPOCHS (int) ----
-        if is_range(config.optuna_epoch):
-            low, high = validate_range(config.optuna_epoch, "optuna_epoch")
-            N_EPOCH = trial.suggest_int("Epochs", int(low), int(high))
-        elif isinstance(config.optuna_epoch, int):
-            N_EPOCH = config.optuna_epoch
-        else:
-            raise TypeError("optuna_epoch must be int or [low, high]")
 
         # ---- LATENT DIMENSIONS (int) ----
         if is_range(config.optuna_ndim):
@@ -131,12 +131,12 @@ def objective(trial, config):
             raise TypeError("optuna_sub_perc must be float or [low, high]")
 
         # ---- Assign back to config ----
-        config.lr = LEARNING_RATE
+        config.lr         = LEARNING_RATE
         config.batch_size = BATCH_SIZE
-        config.nb_epoch = N_EPOCH
-        config.n = LATENT_DIMENSIONS
-        config.kl = BETA
-        config.sub_perc = SUB_PERC
+        config.n          = LATENT_DIMENSIONS
+        config.kl         = BETA
+        config.sub_perc   = SUB_PERC
+        config.weight_decay = WEIGHT_DECAY
 
         # Configuration step
         config = process_config(config)
@@ -180,19 +180,23 @@ def Run_optuna_optimization(config):
         #storage_name = f"sqlite:///{config.optuna_folder}/study.db"
         study_name="journal_storage_multiprocess"
         storage_name = JournalStorage(JournalFileBackend(file_path=f"{config.optuna_folder}/journal.log"))
-        pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
-        sampler = optuna.samplers.TPESampler()
+        
         #sampler = optuna.samplers.NSGAIISampler()
         #study = optuna.create_study(study_name=study_name,directions=['minimize','maximize'],
                                     #storage=storage_name,sampler=sampler,pruner=pruner,
                                     #load_if_exists=True)
-        if config.Anomaly==None:
-            print('Minimizing Reconstruction Error')
+        if config.Anomaly == None:
+            print(f'{bcolors.YELLOW}Minimizing Reconstruction Error{bcolors.RESET}')
+            #pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
+            purner = PatientPruner(MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1), patience=3, delta = 100)
+            sampler = optuna.samplers.TPESampler()
             study = optuna.create_study(study_name=study_name,directions=['minimize'],
                                         storage=storage_name,sampler=sampler,
-                                        load_if_exists=True)
+                                        pruner=pruner,load_if_exists=True)
         else:
-            study = optuna.create_study(study_name=study_name,directions=['maximize'],
+            print(f'{bcolors.YELLOW}Minimizing Reconstruction Error and Maximizing AUC{bcolors.RESET}')
+            sampler = optuna.samplers.NSGAIISampler()
+            study = optuna.create_study(study_name=study_name,directions=['minimize','maximize'],
                                         storage=storage_name,sampler=sampler,
                                         load_if_exists=True)
         
@@ -217,7 +221,7 @@ def train(config):
 
     print(f'{bcolors.CYAN}~~~~~~ @ Running Optuna Framework @ ~~~~~~{bcolors.RESET}')
     #Run_optuna_optimization(config)
-    nworkers = 5
+    nworkers = config.optuna_nworkers
     with Pool(max_workers=nworkers) as pool:
         pool.map(Run_optuna_optimization, [config]*nworkers)
 

@@ -4,6 +4,11 @@ import textwrap
 from colors import bcolors
 from datetime import datetime
 
+#EXAMPLE
+#python create_slurm_jobs.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/slurm_files/Train_6Regions --train_tag 6Regions --dataset_folder /lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions --ndims=256 --beta=1 --anom=None --train_with_anom=False
+#
+
+
 def format_range(values):
     """
     If one value -> return single value as string
@@ -80,6 +85,14 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--weight_decay",
+        nargs="+",
+        default=[1e-7, 1e-2],
+        type=float,
+        help="weight_decay"
+    )
+
+    parser.add_argument(
         "--batch_size",
         nargs="+",
         default=[8,32],
@@ -90,7 +103,7 @@ def parse_args():
     parser.add_argument(
         "--epochs",
         nargs="+",
-        default=[5,30],
+        default=[30],
         type=int,
         help="Nulber of epochs"
     )
@@ -125,22 +138,12 @@ def parse_args():
     help="Number of optuna trials (default: 10)"
     )
 
-
     parser.add_argument(
         "--anom",
         nargs="+",
         default=['None'],
         help="Modes to use (default: SWM DWM Comm)"
     )
-
-    parser.add_argument(
-        "--train_with_anom",
-        type=str,
-        default='False',
-        help="Train with anom (default: False)"
-    )
-
-
 
     return parser.parse_args()
 
@@ -158,6 +161,7 @@ def main():
     output         = args.output
     dataset_folder = args.dataset_folder
     train_tag      = args.train_tag
+    weight_decay   = args.weight_decay
 
     lr          = args.lr
     batch_size  = args.batch_size
@@ -167,7 +171,6 @@ def main():
     anoms       = args.anom
     ntrials     = args.ntrials
     sub_perc    = args.sub_perc
-    train_with_anom = args.train_with_anom
 
     os.makedirs(output, exist_ok=True)
 
@@ -187,7 +190,6 @@ def main():
                         f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
                         f"+dataset=UKB_Train_{train_tag}/{config_name} "
                         f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
-                        f"+Train_with_anomaly={train_with_anom} "
                         f"+optuna_lr={format_range(lr)} "
                         f"+optuna_batch_size={format_range(batch_size)} "
                         f"+optuna_epoch={format_range(epochs)} "
@@ -195,6 +197,7 @@ def main():
                         f"+optuna_beta={format_range(beta)} "
                         f"+optuna_sub_perc={sub_perc} "
                         f"+optuna_ntrials={ntrials} "
+                        f"+optuna_weight_decay={format_range(weight_decay)} "
                         f"+dataset_folder={dataset_folder}"
                     )
 

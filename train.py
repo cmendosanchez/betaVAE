@@ -269,6 +269,8 @@ def train_vae_optuna(config, trial,root_dir=None):
 
     #writer = SummaryWriter(log_dir= config.save_dir+'logs/',comment="")
     lr = config.lr
+    weight_decay= config.weight_decay
+    
     vae = VAE(config.in_shape, config.n, depth=config.depth, loss_selected=config.loss)
     device = "cpu"
     if torch.cuda.is_available():
@@ -286,10 +288,12 @@ def train_vae_optuna(config, trial,root_dir=None):
         print('Using Mean Square Error Loss, reduction=sum')
         criterion = nn.MSELoss(reduction='sum')
 
-    optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
+    #optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
+    optimizer = torch.optim.AdamW(vae.parameters(), lr=lr, weight_decay=weight_decay)
 
     list_loss_train, list_val_recon_loss, = [], []
-    
+    list_aucs = []
+
     train_subjects      = read_one_column_tsv(config.Train_list)
     n_train = int(len(train_subjects) * config.sub_perc)
     #train_subjects = train_subjects[:n_train]
@@ -428,7 +432,7 @@ def train_vae_optuna(config, trial,root_dir=None):
         list_val_recon_loss.append(val_recon_loss)
         torch.cuda.empty_cache()
     
-        if config.Train_with_anomaly == True:
+        if config.Anomaly != None:
             print(f'{bcolors.BG_RED}Launching Normal/Anomaly classification{bcolors.RESET}')
             # Shuffle in-place
             class_subjects       = read_one_column_tsv(config.Class_val_list)
@@ -522,13 +526,18 @@ def train_vae_optuna(config, trial,root_dir=None):
                 #print(aucs_list)   
 
             weighted_aucs = np.asarray(aucs_list) * auc_weights
-            #print(f'weighted aucs: {weighted_aucs} final auc : {np.sum(weighted_aucs)}')
-        #print(f"{bcolors.MAGENTA}[{epoch+1}] AUC: {np.sum(weighted_aucs)}      {bcolors.RESET}")
+            epoch_auc = np.sum(weighted_aucs)
+            list_aucs.append(epoch_auc)
+            print(f"{bcolors.MAGENTA}[{epoch+1}] AUC: {epoch_auc}      {bcolors.RESET}")
 
     #np.save(f'{config.save_dir}train_loss.npy', np.asarray(list_loss_train))
     #np.save(f'{config.save_dir}val_loss.npy', np.asarray(list_val_recon_loss))
 
     final_loss_val = list_val_recon_loss[-1]
+    final_auc      = list_aucs[-1]
     print(f"{bcolors.BG_GREEN}Finished Optuna Trial in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 
-    return final_loss_val
+    if config.Anomaly == 'Overconnectivity' or config.Anomaly == 'Underconnectivity':
+        return final_loss_val
+    else:
+        return final_loss_val, final_auc
 

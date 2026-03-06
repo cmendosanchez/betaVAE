@@ -7,8 +7,17 @@ from colors import bcolors
 
 #Examples:
 #python3 create_yaml_datasets.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left  --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/dataset/UKB_Train_6Regions_with_anom --anomalies Underconnectivity Overconnectivity
-#python3 create_yaml_datasets.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left  --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/dataset/UKB_Train_6Regions --anomalies None
+#python3 create_yaml_datasets.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left  --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/dataset/UKB_Train_6Regions 
 
+def format_range(values):
+    """
+    If one value -> return single value as string
+    If multiple values -> return [min,max] without spaces
+    """
+    if len(values) == 1:
+        return str(values[0])
+    else:
+        return f"[{min(values)},{max(values)}]"
 
 # -----------------------------
 # YAML Dumper (inline lists)
@@ -62,7 +71,7 @@ def parse_args():
     parser.add_argument(
         "--anomalies",
         nargs="+",
-        default=['None'],
+        default=[None],
         help="List of anomalies"
     )
 
@@ -94,6 +103,7 @@ def main():
     databases        = args.databases
     anomalies        = args.anomalies
     modes            = args.modes
+
 
     os.makedirs(yaml_folder, exist_ok=True)
     for anom in anomalies:
@@ -130,7 +140,7 @@ def main():
                         f"{database} {region} {mode} {anom}{bcolors.RESET}"
                     )
 
-                    if anom!= 'None':
+                    if anom != None:
                         dataset_name = f"{database}_{region}_{mode}_{anom}"
                     else:
                         dataset_name = f"{database}_{region}_{mode}"
