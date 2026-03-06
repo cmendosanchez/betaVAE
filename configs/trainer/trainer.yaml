@@ -5,3 +5,4 @@ lr: None #2e-4 for CrossEntropy
 loss: 'MSE'
 preproc: 'LogMinMax'
 sub_perc: None
+weight_decay: None
