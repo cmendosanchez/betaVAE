@@ -90,7 +90,7 @@ def objective(trial, config):
         elif isinstance(config.optuna_weight_decay, (float, int)):
             WEIGHT_DECAY = float(config.optuna_weight_decay)
         else:
-            raise TypeError("optuna_lr must be float or [low, high]")
+            raise TypeError("optuna_weight_decay must be float or [low, high]")
 
         # ---- BATCH SIZE (int) ----
         if is_range(config.optuna_batch_size):
