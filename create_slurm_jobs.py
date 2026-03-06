@@ -139,6 +139,13 @@ def parse_args():
     )
 
     parser.add_argument(
+    "--nworkers",
+    type=int,
+    default=5,
+    help="Number of optuna workers(default: 5)"
+    )
+
+    parser.add_argument(
         "--anom",
         nargs="+",
         default=['None'],
@@ -171,6 +178,7 @@ def main():
     anoms       = args.anom
     ntrials     = args.ntrials
     sub_perc    = args.sub_perc
+    nworkers    = args.nworkers
 
     os.makedirs(output, exist_ok=True)
 
@@ -197,6 +205,7 @@ def main():
                         f"+optuna_beta={format_range(beta)} "
                         f"+optuna_sub_perc={sub_perc} "
                         f"+optuna_ntrials={ntrials} "
+                        f"+optuna_nworkers={nworkers} "
                         f"+optuna_weight_decay={format_range(weight_decay)} "
                         f"+dataset_folder={dataset_folder}"
                     )
