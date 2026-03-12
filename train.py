@@ -315,7 +315,7 @@ def train_vae_optuna(config, trial,root_dir=None):
     print(f"Data written to {csv_val}")
     print(f'Nsubjects Train: {len(train_subjects)} Validation:{len(validation_subjects)}')
 
-    #set_train = create_subset_from_list(config,train_subjects)
+    set_train = create_subset_from_list(config,train_subjects)
     set_val   = create_subset_from_list(config,validation_subjects)
 
     start_loading = time.time()
