@@ -531,11 +531,11 @@ def train_vae_optuna(config, trial,root_dir=None):
     #np.save(f'{config.save_dir}train_loss.npy', np.asarray(list_loss_train))
     #np.save(f'{config.save_dir}val_loss.npy', np.asarray(list_val_recon_loss))
 
-    final_loss_val = list_val_recon_loss[-1]
-    final_auc      = list_aucs[-1]
+    #final_loss_val = list_val_recon_loss[-1]
+    #final_auc      = list_aucs[-1]
     print(f"{bcolors.BG_GREEN}Finished Optuna Trial in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 
     if config.Anomaly == 'Overconnectivity' or config.Anomaly == 'Underconnectivity':
-        return final_loss_val
+        return list_aucs[-1]
     else:
-        return final_loss_val, final_auc
+        return list_val_recon_loss[-1]
 
