@@ -376,39 +376,45 @@ def train_vae_optuna(config, trial,root_dir=None):
 
         vae.eval() #Eval mode
 
-        for inputs, path in valloader:
-            with torch.no_grad():
-                inputs = Variable(inputs).to(device, dtype=torch.float32)
-                output, z, logvar = vae(inputs)
-                #print('tensor shape',inputs.shape,output.shape)
-                if config.loss == 'CrossEntropy':
-                    target = torch.squeeze(inputs, dim=1).long()
-                    partial_recon_loss_val, partial_kl_loss_val, partial_loss_val = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
-                    output = torch.argmax(output, dim=1)
+        if config.Anomaly == None:
+            for inputs, path in valloader:
+                with torch.no_grad():
+                    inputs = Variable(inputs).to(device, dtype=torch.float32)
+                    output, z, logvar = vae(inputs)
+                    #print('tensor shape',inputs.shape,output.shape)
+                    if config.loss == 'CrossEntropy':
+                        target = torch.squeeze(inputs, dim=1).long()
+                        partial_recon_loss_val, partial_kl_loss_val, partial_loss_val = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
+                        output = torch.argmax(output, dim=1)
 
-                elif config.loss == 'MSE':
-                    partial_recon_loss_val, partial_kl_loss_val, partial_loss_val = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl)
+                    elif config.loss == 'MSE':
+                        partial_recon_loss_val, partial_kl_loss_val, partial_loss_val = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl)
 
-                #Update losses for each sample
-                val_recon_loss    += partial_recon_loss_val.cpu().numpy()
-                val_kl_loss       += partial_kl_loss_val
-                val_running_loss  += partial_loss_val.item()
+                    #Update losses for each sample
+                    val_recon_loss    += partial_recon_loss_val.cpu().numpy()
+                    val_kl_loss       += partial_kl_loss_val
+                    val_running_loss  += partial_loss_val.item()
 
-        #Average
-        val_recon_loss     /=  len(validation_subjects)
-        val_kl_loss        /=  len(validation_subjects)
-        val_running_loss   /=  len(validation_subjects)
-        
-        # If loss is NaN, prune the trial
-        if np.isnan(val_recon_loss):
-            print(f"NaN encountered at epoch {epoch}")
-            raise optuna.exceptions.TrialPruned()
+            #Average
+            val_recon_loss     /=  len(validation_subjects)
+            val_kl_loss        /=  len(validation_subjects)
+            val_running_loss   /=  len(validation_subjects)
+            
+            # If loss is NaN, prune the trial
+            if np.isnan(val_recon_loss):
+                print(f"NaN encountered at epoch {epoch}")
+                raise optuna.exceptions.TrialPruned()
 
-        #Report to Optuna
-        #trial.report(val_recon_loss, epoch)
-        # If Optuna determines that the trial should be pruned, raise an exception to stop training early
-        #if trial.should_prune():
-        #    raise optuna.exceptions.TrialPruned()  # This will stop the trial early if it is underperforming
+            #Report to Optuna
+            trial.report(val_recon_loss, epoch)
+            # If Optuna determines that the trial should be pruned, raise an exception to stop training early
+            if trial.should_prune():
+                affine = np.eye(4)
+                nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
+                nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
+                nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
+                nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+                raise optuna.exceptions.TrialPruned()  # This will stop the trial early if it is underperforming
         
 
         if epoch == config.nb_epoch-1:

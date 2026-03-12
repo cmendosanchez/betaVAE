@@ -193,7 +193,7 @@ def Run_optuna_optimization(config):
             #pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
             #pruner = PatientPruner(MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1), patience=1, min_delta  = 100)
             #pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
-            pruner = PatientPruner(patience=3, min_delta  = 100)
+            pruner = PatientPruner(wrapped_pruner=None,patience=3, min_delta  = 100)
 
             sampler = optuna.samplers.TPESampler()
             study = optuna.create_study(study_name=study_name,directions=['minimize'],
