@@ -296,12 +296,12 @@ def train_vae_optuna(config, trial,root_dir=None):
 
     train_subjects      = read_one_column_tsv(config.Train_list)
     n_train = int(len(train_subjects) * config.sub_perc)
-    #train_subjects = train_subjects[:n_train]
+    train_subjects = train_subjects[:n_train]
 
     validation_subjects = read_one_column_tsv(config.Rcon_val_list)
     print(f'Validation subs: {len(validation_subjects)}')
-    #n_val = int(len(validation_subjects) * config.sub_perc)
-    #validation_subjects = train_subjects[:n_val]
+    n_val = int(len(validation_subjects) * config.sub_perc)
+    validation_subjects = validation_subjects[:n_val]
 
     # Open the file for writing
     csv_train = f'{config.save_dir}train_list.csv'
@@ -319,16 +319,14 @@ def train_vae_optuna(config, trial,root_dir=None):
     set_val   = create_subset_from_list(config,validation_subjects)
 
     start_loading = time.time()
-    #trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=6, shuffle=True)
+    trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=6, shuffle=True)
     valloader = torch.utils.data.DataLoader(set_val,batch_size=32,num_workers=4, shuffle=False)
     print(f"{bcolors.MAGENTA}-- -Created trainloader/valloader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
     
     for epoch in range(config.nb_epoch):
         start_time_epoch = time.time()
         print(f'{bcolors.RED}{bcolors.UNDERLINE}~~ Starting epoch {epoch}{bcolors.RESET}')
-        train_subset = random.sample(train_subjects, n_train)
-        set_train = create_subset_from_list(config,train_subset)
-        trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=6, shuffle=True)
+
 
         #Defined epoch losses
         train_recon_loss   = 0.0

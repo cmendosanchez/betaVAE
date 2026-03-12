@@ -197,7 +197,7 @@ def Run_optuna_optimization(config):
                                         storage=storage_name,sampler=sampler,
                                         pruner=pruner,load_if_exists=True)
         else:
-            print(f'{bcolors.YELLOW}Minimizing Reconstruction Error and Maximizing AUC{bcolors.RESET}')
+            print(f'{bcolors.YELLOW}Maximizing AUC{bcolors.RESET}')
             sampler = optuna.samplers.NSGAIISampler()
             study = optuna.create_study(study_name=study_name,directions=['minimize','maximize'],
                                         storage=storage_name,sampler=sampler,
