@@ -68,6 +68,13 @@ from concurrent.futures import ProcessPoolExecutor as Pool
 from functools import partial
 from optuna.samplers import TPESampler
 from colors import bcolors
+
+def print_best_trial(study, trial):
+    print(
+        f"{bcolors.CYAN}Trial {trial.number} value: {trial.value} | "
+        f"Best value so far: {study.best_value} | "
+        f"Best params: {study.best_params}{bcolors.RESET}")
+
 def adjust_in_shape(config):
     dims=[]
     for idx in range(1, 4):
@@ -145,9 +152,7 @@ def Run_optuna_optimization(config,trials_per_worker):
         #study = optuna.create_study(direction='minimize',sampler=TPESampler(),study_name="journal_storage_multiprocess",pruner=pruner,
         #                            storage=JournalStorage(JournalFileBackend(file_path=f"{config.optuna_folder}/journal_gpu_prio_12.log")),load_if_exists=True)
         #study = optuna.create_study(direction='minimize',sampler=TPESampler(),study_name="example2_study",pruner=pruner,storage="mysql://gaia:Optima1Pass!@rosette:3306/example2",load_if_exists=True)
-
- 
-        study.optimize(lambda trial: objective(trial,config), n_trials=trials_per_worker)
+        study.optimize(lambda trial: objective(trial,config), n_trials=trials_per_worker, callbacks=[print_best_trial])
     except Exception as e:
         print(f"Run optimization failed with error: {e}")
 
@@ -158,9 +163,9 @@ def train(config):
     print(f'{bcolors.GREEN}{bcolors.UNDERLINE}Launching Optuna_tuning.py{bcolors.RESET}')
     print(f'{bcolors.YELLOW}Config:{config}{bcolors.RESET}')
 
-    STUDY_FOLDER_             = config.optuna_folder
+    STUDY_FOLDER_              = config.optuna_folder
     OPTUNA_WORKERS_            = int(config.optuna_workers)
-    OPTUNA_TRIALS_PER_WORKER_ = int(config.optuna_trials_per_worker)
+    OPTUNA_TRIALS_PER_WORKER_  = int(config.optuna_trials_per_worker)
     
     if not os.path.exists(STUDY_FOLDER_):
         os.makedirs(STUDY_FOLDER_,exist_ok=True)
