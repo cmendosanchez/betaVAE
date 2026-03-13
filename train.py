@@ -55,6 +55,7 @@ from sklearn.metrics import  roc_auc_score
 import nibabel as nib
 import pickle 
 from itertools import chain
+from utils.tools import EarlyStopping
 
 def train_vae(config, trainloader, valloader, root_dir=None):
     """ Trains beta-VAE for a given hyperparameter configuration
@@ -290,6 +291,8 @@ def train_vae_optuna(config, trial,root_dir=None):
 
     #optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
     optimizer = torch.optim.AdamW(vae.parameters(), lr=lr, weight_decay=weight_decay)
+    early_stopping = EarlyStopping(patience=3, delta=200, verbose=True)
+
 
     list_loss_train, list_val_recon_loss, = [], []
     list_aucs = []
@@ -401,21 +404,25 @@ def train_vae_optuna(config, trial,root_dir=None):
             val_running_loss   /=  len(validation_subjects)
             
             # If loss is NaN, prune the trial
-            if np.isnan(val_recon_loss):
-                print(f"NaN encountered at epoch {epoch}")
+            if not np.isfinite(val_recon_loss):
+                print(f"NaN/Inf encountered at epoch {epoch}")
                 raise optuna.exceptions.TrialPruned()
 
-            #Report to Optuna
             trial.report(val_recon_loss, epoch)
-            # If Optuna determines that the trial should be pruned, raise an exception to stop training early
+            list_val_recon_loss.append(val_recon_loss)
+
             if trial.should_prune():
+                raise optuna.exceptions.TrialPruned()
+
+            early_stopping.check_early_stop(val_recon_loss)
+
+            if early_stopping.stop_training:
                 affine = np.eye(4)
                 nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
                 nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
                 nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
                 nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
-                raise optuna.exceptions.TrialPruned()  # This will stop the trial early if it is underperforming
-        
+                break
 
         if epoch == config.nb_epoch-1:
             #np.save(f'{config.save_dir}input.npy', np.array(np.squeeze(inputs[0]).cpu().detach().numpy()))
@@ -561,5 +568,5 @@ def train_vae_optuna(config, trial,root_dir=None):
     if config.Anomaly == 'Overconnectivity' or config.Anomaly == 'Underconnectivity':
         return list_aucs[-1]
     else:
-        return list_val_recon_loss[-1]
+        return min(list_val_recon_loss)
 
