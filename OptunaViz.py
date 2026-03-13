@@ -9,7 +9,9 @@ from optuna.visualization import (
     plot_contour,
     plot_parallel_coordinate,
     plot_intermediate_values,
+    plot_timeline
 )
+from optuna.importance import get_param_importances
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -69,10 +71,13 @@ def main():
     fig = plot_param_importances(study)
     fig.write_image(os.path.join(args.outdir, "param_importance.png"))
 
+    # --- Get the two most important parameters ---
+    importances = get_param_importances(study)
+    top_params = list(importances.keys())[:2]
+
     # --- Contour plot (top 2 parameters) ---
-    if len(study.best_params) >= 2:
-        params = list(study.best_params.keys())[:2]
-        fig = plot_contour(study, params=params)
+    if len(top_params) >= 2:
+        fig = plot_contour(study, params=top_params)
         fig.write_image(os.path.join(args.outdir, "contour.png"))
 
     # --- Parallel coordinate ---
@@ -86,6 +91,9 @@ def main():
     except ValueError:
         print("No intermediate values found, skipping.")
 
+    # --- Timeline ---
+    fig = plot_timeline(study)
+    fig.write_image(os.path.join(args.outdir, "timeline.png"))
 
     print(f"Figures saved in: {args.outdir}")
     best_trial = study.best_trials
