@@ -55,12 +55,6 @@ from concurrent.futures import ProcessPoolExecutor as Pool
 from optuna.storages import JournalStorage
 from optuna.storages.journal import JournalFileBackend
 
-def print_best_trial(study, trial):
-    print(
-        f"{bcolors.CYAN}Trial {trial.number} value: {trial.value} | "
-        f"Best value so far: {study.best_value} | "
-        f"Best params: {study.best_params}{bcolors.RESET}")
-
 def is_range(x):
     return isinstance(x, (list, ListConfig))
 
@@ -188,11 +182,7 @@ def Run_optuna_optimization(config):
         #storage_name = f"sqlite:///{config.optuna_folder}/study.db"
         study_name="journal_storage_multiprocess"
         storage_name = JournalStorage(JournalFileBackend(file_path=f"{config.optuna_folder}/journal.log"))
-        
-        #sampler = optuna.samplers.NSGAIISampler()
-        #study = optuna.create_study(study_name=study_name,directions=['minimize','maximize'],
-                                    #storage=storage_name,sampler=sampler,pruner=pruner,
-                                    #load_if_exists=True)
+
         if config.Anomaly == None:
             print(f'{bcolors.YELLOW}Minimizing Reconstruction Error{bcolors.RESET}')
             #pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
@@ -206,12 +196,13 @@ def Run_optuna_optimization(config):
                                         pruner=pruner,load_if_exists=True)
         else:
             print(f'{bcolors.YELLOW}Maximizing AUC{bcolors.RESET}')
-            sampler = optuna.samplers.NSGAIISampler()
+            sampler = optuna.samplers.TPESampler()
+            pruner = PatientPruner(wrapped_pruner=None, patience=3, min_delta  = 0.02)
             study = optuna.create_study(study_name=study_name,directions=['maximize'],
                                         storage=storage_name,sampler=sampler,
-                                        load_if_exists=True)
+                                        pruner=pruner,load_if_exists=True)
         
-        study.optimize(lambda trial: objective(trial,config), n_trials=config.optuna_ntrials, callbacks=[print_best_trial])
+        study.optimize(lambda trial: objective(trial,config), n_trials=config.optuna_ntrials)
 
     except optuna.TrialPruned:
         pass

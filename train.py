@@ -531,8 +531,26 @@ def train_vae_optuna(config, trial,root_dir=None):
 
             weighted_aucs = np.asarray(aucs_list) * auc_weights
             epoch_auc = np.sum(weighted_aucs)
+            # If loss is NaN, prune the trial
+            if np.isnan(epoch_auc):
+                print(f"NaN encountered at epoch {epoch}")
+                raise optuna.exceptions.TrialPruned()
+
+            #Report to Optuna
+            trial.report(epoch_auc, epoch)
+            # If Optuna determines that the trial should be pruned, raise an exception to stop training early
+            if trial.should_prune():
+                affine = np.eye(4)
+                nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
+                nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
+                nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
+                nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+                raise optuna.exceptions.TrialPruned()  # 
+
+
             list_aucs.append(epoch_auc)
             print(f"{bcolors.MAGENTA}[{epoch+1}] AUC: {epoch_auc}      {bcolors.RESET}")
+
 
     #np.save(f'{config.save_dir}train_loss.npy', np.asarray(list_loss_train))
     #np.save(f'{config.save_dir}val_loss.npy', np.asarray(list_val_recon_loss))
