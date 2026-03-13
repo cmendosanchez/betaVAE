@@ -61,7 +61,7 @@ def main():
         storage=storage,
     )
 
-    """ # --- Optimization history ---
+    # --- Optimization history ---
     fig = plot_optimization_history(study)
     fig.write_image(os.path.join(args.outdir, "optimization_history.png"))
 
@@ -85,7 +85,8 @@ def main():
         fig.write_image(os.path.join(args.outdir, "intermediate_values.png"))
     except ValueError:
         print("No intermediate values found, skipping.")
- """
+
+
     print(f"Figures saved in: {args.outdir}")
     best_trial = study.best_trials
 
