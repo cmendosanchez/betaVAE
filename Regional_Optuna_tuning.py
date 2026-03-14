@@ -192,8 +192,8 @@ def Run_optuna_optimization(config):
                                         pruner=pruner,load_if_exists=True)
         else:
             print(f'{bcolors.YELLOW}Maximizing AUC{bcolors.RESET}')
+            pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
             sampler = optuna.samplers.TPESampler()
-            pruner = PatientPruner(wrapped_pruner=None, patience=3, min_delta  = 0.02)
             study = optuna.create_study(study_name=study_name,directions=['maximize'],
                                         storage=storage_name,sampler=sampler,
                                         pruner=pruner,load_if_exists=True)

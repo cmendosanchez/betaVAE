@@ -3,9 +3,11 @@ import argparse
 import textwrap
 from colors import bcolors
 from datetime import datetime
-
+from optuna.storages import JournalStorage
+from optuna.storages.journal import JournalFileBackend
+import optuna
 #EXAMPLE
-#python create_slurm_jobs.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/slurm_files/Train_6Regions_1 --train_tag 6Regions --dataset_folder /lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions --epochs 50 --ndims 16 256 --beta 1 --sub_perc 0.2 --ntrials 12 --nworkers 5 
+#python create_slurm_jobs_from_study.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left --optuna_study ../../../../OptunaResults --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/slurm_files/Train_6Regions_2 --train_tag 6Regions_with_anom --dataset_folder /lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions --epochs 50 --beta 0.01 10 --sub_perc 1.0 --ntrials 12 --nworkers 3 --anom Underconnectivity Overconnectivity
 
 
 def format_range(values):
@@ -44,6 +46,13 @@ def parse_args():
     )
 
     parser.add_argument(
+    "--optuna_study",
+    type=str,
+    default=10,
+    help="Path_to_optuna_study"
+    )
+
+    parser.add_argument(
         "--output",
         required=True,
         help="Output folder for slurm files"
@@ -76,49 +85,17 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--lr",
-        nargs="+",
-        default=[1e-5,1e-2],
-        type=float,
-        help="Learning rate"
-    )
-
-    parser.add_argument(
-        "--weight_decay",
-        nargs="+",
-        default=[1e-7, 1e-2],
-        type=float,
-        help="weight_decay"
-    )
-
-    parser.add_argument(
-        "--batch_size",
-        nargs="+",
-        default=[8,32],
-        type=int,
-        help="Batch size"
-    )
-
-    parser.add_argument(
         "--epochs",
         nargs="+",
-        default=[30],
+        default=[50],
         type=int,
-        help="Nulber of epochs"
-    )
-
-    parser.add_argument(
-        "--ndims",
-        nargs="+",
-        default=[32,256],
-        type=int,
-        help="Number of latent dimensions"
+        help="Number of epochs"
     )
 
     parser.add_argument(
         "--beta",
         nargs="+",
-        default=[0.1,100],
+        default=[0.01,10],
         type=float,
         help="Beta"
     )
@@ -148,7 +125,7 @@ def parse_args():
         "--anom",
         nargs="+",
         default=['None'],
-        help="Modes to use (default: SWM DWM Comm)"
+        help="Anom to to use (Underconnectivity/Overconnectivity)"
     )
 
     return parser.parse_args()
@@ -167,28 +144,41 @@ def main():
     output         = args.output
     dataset_folder = args.dataset_folder
     train_tag      = args.train_tag
-    weight_decay   = args.weight_decay
-
-    lr          = args.lr
-    batch_size  = args.batch_size
+    optuna_study   = args.optuna_study
     epochs      = args.epochs
-    ndims       = args.ndims
     beta        = args.beta
     anoms       = args.anom
     ntrials     = args.ntrials
     sub_perc    = args.sub_perc
     nworkers    = args.nworkers
 
+
+    
+
     os.makedirs(output, exist_ok=True)
 
     for anom in anoms:
         for database in databases:
             for region in region_list:
+
                 for mode in modes:
+
                     if anom != 'None':
                         config_name = f"{database}_{region}_{mode}_{anom}"
                     else:
                         config_name = f"{database}_{region}_{mode}"
+
+                     # Load study
+                    journal_path = os.path.join(f'{args.optuna_study}/{database}_{region}_{mode}', "journal.log")
+                    storage = JournalStorage(JournalFileBackend(journal_path))
+                    study_name="journal_storage_multiprocess"
+                    study = optuna.load_study(
+                        study_name=study_name,
+                        storage=storage)
+
+                    best_trial = study.best_trial
+                    Params = best_trial.params
+                    print(Params)
                     #job_name = f'{config_name}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}'
                     job_name = f'{config_name}'
                     print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
@@ -197,15 +187,15 @@ def main():
                         f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
                         f"+dataset=UKB_Train_{train_tag}/{config_name} "
                         f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
-                        f"+optuna_lr={format_range(lr)} "
-                        f"+optuna_batch_size={format_range(batch_size)} "
+                        f"+optuna_lr={Params['Learning Rate']} "
+                        f"+optuna_batch_size={Params['Batch size']} "
                         f"+optuna_epoch={format_range(epochs)} "
-                        f"+optuna_ndim={format_range(ndims)} "
+                        f"+optuna_ndim={Params['Dimensions']} "
                         f"+optuna_beta={format_range(beta)} "
                         f"+optuna_sub_perc={sub_perc} "
                         f"+optuna_ntrials={ntrials} "
                         f"+optuna_nworkers={nworkers} "
-                        f"+optuna_weight_decay={format_range(weight_decay)} "
+                        f"+optuna_weight_decay={Params['Weight decay']} "
                         f"+dataset_folder={dataset_folder}"
                     )
 

@@ -423,23 +423,25 @@ def train_vae_optuna(config, trial,root_dir=None):
                 nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
                 break
 
-        if epoch == config.nb_epoch-1:
-            #np.save(f'{config.save_dir}input.npy', np.array(np.squeeze(inputs[0]).cpu().detach().numpy()))
-            #np.save(f'{config.save_dir}output.npy',np.array(np.squeeze(output[0]).cpu().detach().numpy()))
-            # Define affine (identity if you don't know it)
-            affine = np.eye(4)
-            # Create NIfTI image
-            nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
-            nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
-            nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
-            nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
 
-        # prints on the terminal
-        print(f"{bcolors.YELLOW}[{epoch+1}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
-        print(f"{bcolors.YELLOW}[{epoch+1}] Val KL loss: {val_kl_loss}        {bcolors.RESET}")
-        print(f"{bcolors.YELLOW}[{epoch+1}] Val loss: {val_running_loss}      {bcolors.RESET}")
+            if epoch == config.nb_epoch-1:
+                #np.save(f'{config.save_dir}input.npy', np.array(np.squeeze(inputs[0]).cpu().detach().numpy()))
+                #np.save(f'{config.save_dir}output.npy',np.array(np.squeeze(output[0]).cpu().detach().numpy()))
+                # Define affine (identity if you don't know it)
+                affine = np.eye(4)
+                # Create NIfTI image
+                nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
+                nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
+                nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
+                nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
 
-        list_val_recon_loss.append(val_recon_loss)
+            # prints on the terminal
+            print(f"{bcolors.YELLOW}[{epoch+1}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
+            print(f"{bcolors.YELLOW}[{epoch+1}] Val KL loss: {val_kl_loss}        {bcolors.RESET}")
+            print(f"{bcolors.YELLOW}[{epoch+1}] Val loss: {val_running_loss}      {bcolors.RESET}")
+
+            list_val_recon_loss.append(val_recon_loss)
+
         torch.cuda.empty_cache()
     
         if config.Anomaly != None:
@@ -538,24 +540,29 @@ def train_vae_optuna(config, trial,root_dir=None):
             weighted_aucs = np.asarray(aucs_list) * auc_weights
             epoch_auc = np.sum(weighted_aucs)
             # If loss is NaN, prune the trial
-            if np.isnan(epoch_auc):
-                print(f"NaN encountered at epoch {epoch}")
+            print(f"{bcolors.MAGENTA}[{epoch+1}] AUC: {epoch_auc}      {bcolors.RESET}")
+            
+            if not np.isfinite(epoch_auc):
+                print(f"NaN/Inf encountered at epoch {epoch}")
                 raise optuna.exceptions.TrialPruned()
 
-            #Report to Optuna
             trial.report(epoch_auc, epoch)
-            # If Optuna determines that the trial should be pruned, raise an exception to stop training early
+            list_aucs.append(epoch_auc)
+
             if trial.should_prune():
+                raise optuna.exceptions.TrialPruned()
+
+            early_stopping.check_early_stop(epoch_auc)
+
+            if early_stopping.stop_training:
                 affine = np.eye(4)
                 nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
                 nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
                 nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
                 nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
-                raise optuna.exceptions.TrialPruned()  # 
+                break
 
-
-            list_aucs.append(epoch_auc)
-            print(f"{bcolors.MAGENTA}[{epoch+1}] AUC: {epoch_auc}      {bcolors.RESET}")
+            
 
 
     #np.save(f'{config.save_dir}train_loss.npy', np.asarray(list_loss_train))
@@ -565,7 +572,7 @@ def train_vae_optuna(config, trial,root_dir=None):
     #final_auc      = list_aucs[-1]
     print(f"{bcolors.BG_GREEN}Finished Optuna Trial in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 
     if config.Anomaly == 'Overconnectivity' or config.Anomaly == 'Underconnectivity':
-        return list_aucs[-1]
+        return max(list_aucs)
     else:
         return min(list_val_recon_loss)
 

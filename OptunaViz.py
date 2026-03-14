@@ -12,6 +12,7 @@ from optuna.visualization import (
     plot_timeline
 )
 from optuna.importance import get_param_importances
+from colors import bcolors
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -62,7 +63,7 @@ def main():
         study_name=study_name,
         storage=storage,
     )
-
+    
     # --- Optimization history ---
     fig = plot_optimization_history(study)
     fig.write_image(os.path.join(args.outdir, "optimization_history.png"))
@@ -104,12 +105,13 @@ def main():
     print("Best parameters:")
     for k, v in best_trial.params.items():
         print(f"  {k}: {v}")"""
+    print(f'{bcolors.GREEN}{args.folder}{bcolors.RESET}')
     for trial in study.best_trials:
         print(f"\nTrial number: {trial.number}")
         print(f"Objective values: {trial.values}")  # tuple
         print("Parameters:")
         for k, v in trial.params.items():
-            print(f"  {k}: {v}")
+            print(f"  {k}: {v}{bcolors.RESET}")
 
 if __name__ == "__main__":
     main()
