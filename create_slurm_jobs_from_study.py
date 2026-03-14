@@ -184,9 +184,9 @@ def main():
                     print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
                     python_call = (
                         f"python3 Regional_Optuna_tuning.py "
-                        f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
+                        f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults2/{job_name} "
                         f"+dataset=UKB_Train_{train_tag}/{config_name} "
-                        f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
+                        f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults2/{job_name} "
                         f"+optuna_lr={Params['Learning Rate']} "
                         f"+optuna_batch_size={Params['Batch size']} "
                         f"+optuna_epoch={format_range(epochs)} "
@@ -210,8 +210,8 @@ def main():
                     #SBATCH --cpus-per-task=96
                     #SBATCH --hint=nomultithread
                     #SBATCH --time=10:00:00
-                    #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/{job_name}%j.out
-                    #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/{job_name}%j.out
+                    #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults2/{job_name}/{job_name}%j.out
+                    #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults2/{job_name}/{job_name}%j.out
                     ##SBATCH -A miu@v100
                     #SBATCH -A miu@h100
 
