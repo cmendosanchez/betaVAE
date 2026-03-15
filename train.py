@@ -318,11 +318,15 @@ def train_vae_optuna(config, trial,root_dir=None):
     print(f'Nsubjects Train: {len(train_subjects)} Validation:{len(validation_subjects)}')
 
     set_train = create_subset_from_list(config,train_subjects)
-    set_val   = create_subset_from_list(config,validation_subjects)
+    
 
     start_loading = time.time()
     trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=6, shuffle=True)
-    valloader = torch.utils.data.DataLoader(set_val,batch_size=32,num_workers=4, shuffle=False)
+
+    if config.Anomaly == None:
+        set_val   = create_subset_from_list(config,validation_subjects)
+        valloader = torch.utils.data.DataLoader(set_val,batch_size=32,num_workers=4, shuffle=False)
+
     print(f"{bcolors.MAGENTA}-- -Created trainloader/valloader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
     
     for epoch in range(config.nb_epoch):
@@ -484,9 +488,10 @@ def train_vae_optuna(config, trial,root_dir=None):
             if df.empty:
                 continue
 
+            min_bundles = df['Bundles'].min()
             max_bundles = df['Bundles'].max()
             auc_weights = linear_weights(max_bundles)
-            #print(f'Nbundles: {max_bundles} weights:{auc_weights}')
+            print(f'max min bundles: {max_bundles} {min_bundles}')
 
             for nbun in range(1,max_bundles+1):
                 embeddings_anomaly = []
