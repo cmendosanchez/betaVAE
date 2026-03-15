@@ -528,7 +528,7 @@ def train_vae_optuna(config, trial,root_dir=None):
                 for i,(train_index, test_index) in enumerate(kf.split(X, y)):
                     X_train, X_test = X[train_index], X[test_index]
                     y_train, y_test = y[train_index], y[test_index]
-                    model_svm = svm.SVC(probability=True, kernel='linear', random_state=42,C=0.01)
+                    model_svm = svm.SVC(probability=True, kernel='linear', random_state=42, C=0.01)
                     model_svm.fit(X_train, y_train)
                     y_prob = model_svm.predict_proba(X_test)[:,1]
                     roc_auc = roc_auc_score(y_test, y_prob)
@@ -540,7 +540,7 @@ def train_vae_optuna(config, trial,root_dir=None):
             weighted_aucs = np.asarray(aucs_list) * auc_weights
             epoch_auc = np.sum(weighted_aucs)
             # If loss is NaN, prune the trial
-            print(f"{bcolors.MAGENTA}[{epoch+1}] AUC: {epoch_auc}      {bcolors.RESET}")
+            print(f"{bcolors.MAGENTA}[{epoch+1}] {aucs_list} {auc_weights} AUC: {epoch_auc} {bcolors.RESET}")
             
             if not np.isfinite(epoch_auc):
                 print(f"NaN/Inf encountered at epoch {epoch}")
