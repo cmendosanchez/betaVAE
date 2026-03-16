@@ -38,8 +38,9 @@ def main():
             print(params)
 
             best_params[region][mode] = params
-
-    print(best_params)
+            best_trial = study.best_trial
+            best_params[region][mode]['Step'] = best_trial.last_step
+            print(best_params,f'{bcolors.YELLOW}{best_trial.last_step}{bcolors.RESET}')
     rows = []
 
     for region in best_params:

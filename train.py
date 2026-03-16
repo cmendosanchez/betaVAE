@@ -324,7 +324,7 @@ def train_vae_optuna(config, trial,root_dir=None):
         print(f'Validation:{len(validation_subjects)}')
     
 
-    for epoch in range(config.nb_epoch):
+    for epoch in range(1,config.nb_epoch+1):
         start_time_epoch = time.time()
         print(f'{bcolors.RED}{bcolors.UNDERLINE}~~ Starting epoch {epoch}{bcolors.RESET}')
 
@@ -337,7 +337,7 @@ def train_vae_optuna(config, trial,root_dir=None):
             optimizer.zero_grad()
             inputs = Variable(inputs).to(device, dtype=torch.float32)
             output, z, logvar = vae(inputs)
-            #print('tensor shape',inputs.shape,output.shape)
+
             if config.loss == 'CrossEntropy':
                 target = torch.squeeze(inputs, dim=1).long()
                 partial_recon_loss, partial_kl_loss, partial_loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl) 
@@ -353,18 +353,16 @@ def train_vae_optuna(config, trial,root_dir=None):
             train_recon_loss    += partial_recon_loss
             train_kl_loss       += partial_kl_loss
             train_running_loss  += partial_loss.item()
-            #epoch_steps   += 1
 
-        
         print(f'--- %s seconds epoch --- {time.time() - start_time_epoch}')
 
         train_recon_loss      /=  len(train_subjects)
         train_kl_loss         /=  len(train_subjects)
         train_running_loss    /=  len(train_subjects)
 
-        print(f"{bcolors.GREEN}[{epoch+1}] Train Recon loss: {train_recon_loss}  {bcolors.RESET}")
-        print(f"{bcolors.GREEN}[{epoch+1}] Train KL loss: {train_kl_loss}        {bcolors.RESET}")
-        print(f"{bcolors.GREEN}[{epoch+1}] Train loss: {train_running_loss}      {bcolors.RESET}")
+        print(f"{bcolors.GREEN}[{epoch}] Train Recon loss: {train_recon_loss}  {bcolors.RESET}")
+        print(f"{bcolors.GREEN}[{epoch}] Train KL loss: {train_kl_loss}        {bcolors.RESET}")
+        print(f"{bcolors.GREEN}[{epoch}] Train loss: {train_running_loss}      {bcolors.RESET}")
 
         #Save epoch loss
         list_loss_train.append(train_running_loss)
@@ -411,7 +409,7 @@ def train_vae_optuna(config, trial,root_dir=None):
             if trial.should_prune():
                 raise optuna.exceptions.TrialPruned()
 
-            early_stopping.check_early_stop(val_recon_loss)
+            early_stopping.check_early_stop(val_loss, epoch)
 
             if early_stopping.stop_training:
                 affine = np.eye(4)
@@ -422,7 +420,7 @@ def train_vae_optuna(config, trial,root_dir=None):
                 break
 
 
-            if epoch == config.nb_epoch-1:
+            if epoch == config.nb_epoch:
                 affine = np.eye(4)
                 nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
                 nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
@@ -430,9 +428,9 @@ def train_vae_optuna(config, trial,root_dir=None):
                 nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
 
             # prints on the terminal
-            print(f"{bcolors.YELLOW}[{epoch+1}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
-            print(f"{bcolors.YELLOW}[{epoch+1}] Val KL loss: {val_kl_loss}        {bcolors.RESET}")
-            print(f"{bcolors.YELLOW}[{epoch+1}] Val loss: {val_running_loss}      {bcolors.RESET}")
+            print(f"{bcolors.YELLOW}[{epoch}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
+            print(f"{bcolors.YELLOW}[{epoch}] Val KL loss: {val_kl_loss}        {bcolors.RESET}")
+            print(f"{bcolors.YELLOW}[{epoch}] Val loss: {val_running_loss}      {bcolors.RESET}")
 
     
         elif config.Anomaly != None:
@@ -532,7 +530,7 @@ def train_vae_optuna(config, trial,root_dir=None):
             weighted_aucs = np.asarray(aucs_list) * auc_weights
             epoch_auc = np.sum(weighted_aucs)
             # If loss is NaN, prune the trial
-            print(f"{bcolors.MAGENTA}[{epoch+1}] {aucs_list} {auc_weights} AUC: {epoch_auc} {bcolors.RESET}")
+            print(f"{bcolors.MAGENTA}[{epoch}] {aucs_list} {auc_weights} AUC: {epoch_auc} {bcolors.RESET}")
             
             if not np.isfinite(epoch_auc):
                 print(f"NaN/Inf encountered at epoch {epoch}")
@@ -544,7 +542,7 @@ def train_vae_optuna(config, trial,root_dir=None):
             if trial.should_prune():
                 raise optuna.exceptions.TrialPruned()
 
-            early_stopping.check_early_stop(epoch_auc)
+            early_stopping.check_early_stop(val_loss, epoch)
 
             if early_stopping.stop_training:
                 affine = np.eye(4)

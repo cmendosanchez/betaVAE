@@ -102,7 +102,7 @@ def parse_args():
     parser.add_argument(
         "--epochs",
         nargs="+",
-        default=[30],
+        default=[50],
         type=int,
         help="Nulber of epochs"
     )
@@ -127,7 +127,7 @@ def parse_args():
     "--sub_perc",
     type=float,
     default=0.05,
-    help="Subject percentage (default: 0.05)"
+    help="Subjects percentage (default: 0.05)"
     )
 
     parser.add_argument(
@@ -141,7 +141,21 @@ def parse_args():
     "--nworkers",
     type=int,
     default=5,
-    help="Number of optuna workers(default: 5)"
+    help="Number of optuna workers (default: 5)"
+    )
+
+    parser.add_argument(
+    "--patience",
+    type=int,
+    default=5,
+    help="Patience for Early Stopping (default: 50)"
+    )
+
+    parser.add_argument(
+    "--delta",
+    type=float,
+    default=0,
+    help="Delta for Early Stopping (default: 0)"
     )
 
     parser.add_argument(
@@ -168,16 +182,17 @@ def main():
     dataset_folder = args.dataset_folder
     train_tag      = args.train_tag
     weight_decay   = args.weight_decay
-
-    lr          = args.lr
-    batch_size  = args.batch_size
-    epochs      = args.epochs
-    ndims       = args.ndims
-    beta        = args.beta
-    anoms       = args.anom
-    ntrials     = args.ntrials
-    sub_perc    = args.sub_perc
-    nworkers    = args.nworkers
+    lr             = args.lr
+    batch_size     = args.batch_size
+    epochs         = args.epochs
+    ndims          = args.ndims
+    beta           = args.beta
+    anoms          = args.anom
+    ntrials        = args.ntrials
+    sub_perc       = args.sub_perc
+    nworkers       = args.nworkers
+    patience       = args.patience
+    delta          = args.delta
 
     os.makedirs(output, exist_ok=True)
 
@@ -206,6 +221,8 @@ def main():
                         f"+optuna_ntrials={ntrials} "
                         f"+optuna_nworkers={nworkers} "
                         f"+optuna_weight_decay={format_range(weight_decay)} "
+                        f"+patience={patience} "
+                        f"+delta={delta} "
                         f"+dataset_folder={dataset_folder}"
                     )
 
@@ -219,7 +236,7 @@ def main():
                     #SBATCH --gres=gpu:1
                     #SBATCH --cpus-per-task=96
                     #SBATCH --hint=nomultithread
-                    #SBATCH --time=10:00:00
+                    #SBATCH --time=12:00:00
                     #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/{job_name}%j.out
                     #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/{job_name}%j.out
                     ##SBATCH -A miu@v100

@@ -25,16 +25,16 @@ def format_range(values):
 # -----------------------------
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Generate SLURM files for Regional Optuna tuning",
+    description="Generate SLURM files for Regional Optuna tuning",
     epilog="""
     Example:
-    python create_slurm_jobs.py \
-  --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left \
-  --output /neurospin/.../UKB_Train_3Regions_slurm_files \
-  --train_tag 3Regions \
-  --dataset_folder PhD_2026/Crops_3Regions
-    """,
-        formatter_class=argparse.RawTextHelpFormatter
+        python create_slurm_jobs.py \
+    --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left \
+    --output /neurospin/.../UKB_Train_3Regions_slurm_files \
+    --train_tag 3Regions \
+    --dataset_folder PhD_2026/Crops_3Regions
+        """,
+    formatter_class=argparse.RawTextHelpFormatter
     )
     
 
@@ -46,10 +46,10 @@ def parse_args():
     )
 
     parser.add_argument(
-    "--optuna_study",
-    type=str,
-    default=10,
-    help="Path_to_optuna_study"
+        "--optuna_study",
+        type=str,
+        default=10,
+        help="Path to_optuna_study"
     )
 
     parser.add_argument(
@@ -101,38 +101,38 @@ def parse_args():
     )
 
     parser.add_argument(
-    "--sub_perc",
-    type=float,
-    default=0.05,
-    help="Subject percentage (default: 0.05)"
+        "--sub_perc",
+        type=float,
+        default=0.05,
+        help="Subject percentage (default: 0.05)"
     )
 
     parser.add_argument(
-    "--ntrials",
-    type=int,
-    default=10,
-    help="Number of optuna trials (default: 10)"
+        "--ntrials",
+        type=int,
+        default=10,
+        help="Number of optuna trials (default: 10)"
     )
 
     parser.add_argument(
-    "--nworkers",
-    type=int,
-    default=5,
-    help="Number of optuna workers(default: 5)"
+        "--nworkers",
+        type=int,
+        default=5,
+        help="Number of optuna workers(default: 5)"
     )
 
     parser.add_argument(
-    "--patience",
-    type=int,
-    default=5,
-    help="Patience for Early Stopping (default: 50)"
+        "--patience",
+        type=int,
+        default=5,
+        help="Patience for Early Stopping (default: 50)"
     )
 
     parser.add_argument(
-    "--delta",
-    type=float,
-    default=5,
-    help="Delta for Early Stopping"
+        "--delta",
+        type=float,
+        default=5,
+        help="Delta for Early Stopping"
     )
 
     parser.add_argument(
@@ -167,8 +167,6 @@ def main():
     nworkers       = args.nworkers
     patience       = args.patience
     delta          = args.delta
-
-    
 
     os.makedirs(output, exist_ok=True)
 
