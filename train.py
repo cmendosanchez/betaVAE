@@ -312,7 +312,6 @@ def train_vae_optuna(config, trial,root_dir=None):
 
     if config.Anomaly == None:
         validation_subjects = read_one_column_tsv(config.Rcon_val_list)
-        print(f'Validation subs: {len(validation_subjects)}')
         n_val = int(len(validation_subjects) * config.sub_perc)
         validation_subjects = validation_subjects[:n_val]
         set_val   = create_subset_from_list(config,validation_subjects)

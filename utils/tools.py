@@ -16,7 +16,6 @@ class EarlyStopping:
                 self.best_loss = val_loss
             return
 
-        print(f'Epoch [{epoch}] Starting Early Stopping')
         if self.best_loss is None or val_loss < self.best_loss - self.delta:
             self.best_loss = val_loss
             self.no_improvement_count = 0
