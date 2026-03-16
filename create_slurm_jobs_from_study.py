@@ -122,6 +122,20 @@ def parse_args():
     )
 
     parser.add_argument(
+    "--patience",
+    type=int,
+    default=5,
+    help="Patience for Early Stopping (default: 50)"
+    )
+
+    parser.add_argument(
+    "--delta",
+    type=float,
+    default=5,
+    help="Delta for Early Stopping"
+    )
+
+    parser.add_argument(
         "--anom",
         nargs="+",
         default=['None'],
@@ -145,13 +159,14 @@ def main():
     dataset_folder = args.dataset_folder
     train_tag      = args.train_tag
     optuna_study   = args.optuna_study
-    epochs      = args.epochs
-    beta        = args.beta
-    anoms       = args.anom
-    ntrials     = args.ntrials
-    sub_perc    = args.sub_perc
-    nworkers    = args.nworkers
-
+    epochs         = args.epochs
+    beta           = args.beta
+    anoms          = args.anom
+    ntrials        = args.ntrials
+    sub_perc       = args.sub_perc
+    nworkers       = args.nworkers
+    patience       = args.patience
+    delta          = args.delta
 
     
 
@@ -196,6 +211,8 @@ def main():
                         f"+optuna_ntrials={ntrials} "
                         f"+optuna_nworkers={nworkers} "
                         f"+optuna_weight_decay={Params['Weight decay']} "
+                        f"+patience={patience} "
+                        f"+delta={delta} "
                         f"+dataset_folder={dataset_folder}"
                     )
 

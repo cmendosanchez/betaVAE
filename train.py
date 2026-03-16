@@ -277,6 +277,7 @@ def train_vae_optuna(config, trial,root_dir=None):
     if torch.cuda.is_available():
         device = "cuda:0"
     vae.to(device)
+
     #summary(vae, list(config.in_shape))
     print(f'{bcolors.MAGENTA}train_vae_optuna() \n Config:\n{config}{bcolors.RESET}')
     if config.loss == 'CrossEntropy':
@@ -291,7 +292,7 @@ def train_vae_optuna(config, trial,root_dir=None):
 
     #optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
     optimizer = torch.optim.AdamW(vae.parameters(), lr=lr, weight_decay=weight_decay)
-    early_stopping = EarlyStopping(patience=3, delta=150, verbose=True)
+    early_stopping = EarlyStopping(patience=config.patience, delta=config.delta, verbose=True)
 
     list_loss_train, list_val_recon_loss, = [], []
     list_aucs = []
@@ -319,7 +320,6 @@ def train_vae_optuna(config, trial,root_dir=None):
 
     set_train = create_subset_from_list(config,train_subjects)
     
-
     start_loading = time.time()
     trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=6, shuffle=True)
 
@@ -332,7 +332,6 @@ def train_vae_optuna(config, trial,root_dir=None):
     for epoch in range(config.nb_epoch):
         start_time_epoch = time.time()
         print(f'{bcolors.RED}{bcolors.UNDERLINE}~~ Starting epoch {epoch}{bcolors.RESET}')
-
 
         #Defined epoch losses
         train_recon_loss   = 0.0
@@ -567,12 +566,9 @@ def train_vae_optuna(config, trial,root_dir=None):
                 nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
                 break
 
-            
-
 
     #np.save(f'{config.save_dir}train_loss.npy', np.asarray(list_loss_train))
     #np.save(f'{config.save_dir}val_loss.npy', np.asarray(list_val_recon_loss))
-
     #final_loss_val = list_val_recon_loss[-1]
     #final_auc      = list_aucs[-1]
     print(f"{bcolors.BG_GREEN}Finished Optuna Trial in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 

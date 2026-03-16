@@ -6,3 +6,5 @@ loss: 'MSE'
 preproc: 'LogMinMax'
 sub_perc: None
 weight_decay: None
+patience: None
+delta: None
