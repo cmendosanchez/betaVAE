@@ -298,37 +298,32 @@ def train_vae_optuna(config, trial,root_dir=None):
     list_aucs = []
 
     train_subjects      = read_one_column_tsv(config.Train_list)
-    n_train = int(len(train_subjects) * config.sub_perc)
-    train_subjects = train_subjects[:n_train]
-
-    validation_subjects = read_one_column_tsv(config.Rcon_val_list)
-    print(f'Validation subs: {len(validation_subjects)}')
-    n_val = int(len(validation_subjects) * config.sub_perc)
-    validation_subjects = validation_subjects[:n_val]
-
-    # Open the file for writing
-    csv_train = f'{config.save_dir}train_list.csv'
-    csv_val = f'{config.save_dir}validation_list.csv' 
-    # Convert the list to a DataFrame (single column)
-    df_t = pd.DataFrame(train_subjects, columns=['Subject'])
-    df_v = pd.DataFrame(validation_subjects, columns=['Subject'])
+    n_train             = int(len(train_subjects) * config.sub_perc)
+    train_subjects      = train_subjects[:n_train]
+    csv_train           = f'{config.save_dir}train_list.csv'
+    df_t                = pd.DataFrame(train_subjects, columns=['Subject'])
     df_t.to_csv(csv_train, index=False)
-    df_v.to_csv(csv_val, index=False)
     print(f"Data written to {csv_train}")
-    print(f"Data written to {csv_val}")
-    print(f'Nsubjects Train: {len(train_subjects)} Validation:{len(validation_subjects)}')
-
+    print(f'Nsubjects Train: {len(train_subjects)}')
     set_train = create_subset_from_list(config,train_subjects)
-    
     start_loading = time.time()
     trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=6, shuffle=True)
+    print(f"{bcolors.MAGENTA}-- -Created trainloader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
 
     if config.Anomaly == None:
+        validation_subjects = read_one_column_tsv(config.Rcon_val_list)
+        print(f'Validation subs: {len(validation_subjects)}')
+        n_val = int(len(validation_subjects) * config.sub_perc)
+        validation_subjects = validation_subjects[:n_val]
         set_val   = create_subset_from_list(config,validation_subjects)
         valloader = torch.utils.data.DataLoader(set_val,batch_size=32,num_workers=4, shuffle=False)
-
-    print(f"{bcolors.MAGENTA}-- -Created trainloader/valloader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
+        csv_val = f'{config.save_dir}validation_list.csv'
+        df_v = pd.DataFrame(validation_subjects, columns=['Subject'])
+        df_v.to_csv(csv_val, index=False)
+        print(f"Data written to {csv_val}")
+        print(f'Validation:{len(validation_subjects)}')
     
+
     for epoch in range(config.nb_epoch):
         start_time_epoch = time.time()
         print(f'{bcolors.RED}{bcolors.UNDERLINE}~~ Starting epoch {epoch}{bcolors.RESET}')
@@ -428,11 +423,7 @@ def train_vae_optuna(config, trial,root_dir=None):
 
 
             if epoch == config.nb_epoch-1:
-                #np.save(f'{config.save_dir}input.npy', np.array(np.squeeze(inputs[0]).cpu().detach().numpy()))
-                #np.save(f'{config.save_dir}output.npy',np.array(np.squeeze(output[0]).cpu().detach().numpy()))
-                # Define affine (identity if you don't know it)
                 affine = np.eye(4)
-                # Create NIfTI image
                 nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
                 nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
                 nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
@@ -443,11 +434,8 @@ def train_vae_optuna(config, trial,root_dir=None):
             print(f"{bcolors.YELLOW}[{epoch+1}] Val KL loss: {val_kl_loss}        {bcolors.RESET}")
             print(f"{bcolors.YELLOW}[{epoch+1}] Val loss: {val_running_loss}      {bcolors.RESET}")
 
-            list_val_recon_loss.append(val_recon_loss)
-
-        torch.cuda.empty_cache()
     
-        if config.Anomaly != None:
+        elif config.Anomaly != None:
             print(f'{bcolors.BG_RED}Launching Normal/Anomaly classification{bcolors.RESET}')
             # Shuffle in-place
             class_subjects       = read_one_column_tsv(config.Class_val_list)
@@ -565,7 +553,8 @@ def train_vae_optuna(config, trial,root_dir=None):
                 nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
                 nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
                 break
-
+            
+        torch.cuda.empty_cache()      
 
     #np.save(f'{config.save_dir}train_loss.npy', np.asarray(list_loss_train))
     #np.save(f'{config.save_dir}val_loss.npy', np.asarray(list_val_recon_loss))
