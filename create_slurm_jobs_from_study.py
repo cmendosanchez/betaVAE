@@ -211,8 +211,8 @@ def main():
                         f"+optuna_ntrials={ntrials} "
                         f"+optuna_nworkers={nworkers} "
                         f"+optuna_weight_decay={Params['Weight decay']} "
-                        f"patience={patience} "
-                        f"delta={delta} "
+                        f"+patience={patience} "
+                        f"+delta={delta} "
                         f"+dataset_folder={dataset_folder}"
                     )
 
