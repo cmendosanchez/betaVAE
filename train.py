@@ -495,7 +495,7 @@ def train_vae_optuna(config, trial,root_dir=None):
             for key,val in resulting_auc.items():
                 trial.set_user_attr(key, val)
 
-
+        resulting_auc = get_AUC(config, vae, device,criterion)
         if epoch == config.nb_epoch:
             affine = np.eye(4)
             nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
