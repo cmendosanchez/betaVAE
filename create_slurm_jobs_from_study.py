@@ -93,6 +93,14 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--ndims",
+        nargs="+",
+        default=[32,256],
+        type=int,
+        help="Number of latent dimensions"
+    )
+
+    parser.add_argument(
         "--beta",
         nargs="+",
         default=[0.01,10],
@@ -161,6 +169,7 @@ def main():
     optuna_study   = args.optuna_study
     epochs         = args.epochs
     beta           = args.beta
+    ndims          = args.ndims
     anoms          = args.anom
     ntrials        = args.ntrials
     sub_perc       = args.sub_perc
@@ -203,7 +212,7 @@ def main():
                         f"+optuna_lr={Params['Learning Rate']} "
                         f"+optuna_batch_size={Params['Batch size']} "
                         f"+optuna_epoch={format_range(epochs)} "
-                        f"+optuna_ndim={Params['Dimensions']} "
+                        f"+optuna_ndim={format_range(ndims)} "
                         f"+optuna_beta={format_range(beta)} "
                         f"+optuna_sub_perc={sub_perc} "
                         f"+optuna_ntrials={ntrials} "

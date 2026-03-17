@@ -14,6 +14,8 @@ from optuna.visualization import (
 from optuna.importance import get_param_importances
 from colors import bcolors
 
+#for d in ../../../../OptunaResults/UKB_*; do     python3 OptunaViz.py "$d" --study-name journal_storage_multiprocess --outdir "$d"; done
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Generate Optuna plots from a journal.log file"

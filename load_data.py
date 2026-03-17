@@ -441,7 +441,7 @@ def create_subset_for_anomaly(config,anomaly_ids,nbun):
         subject_ids = []
         # Load data for each subject file
         
-        
+        nsubs = 0
         for i, sub in enumerate(anomaly_ids):
             subject_id = split_filename(sub)  #We get the subject ID
             
@@ -449,11 +449,12 @@ def create_subset_for_anomaly(config,anomaly_ids,nbun):
                 if os.path.exists(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_removed_{nbun}_{config.referential}_crop.nii.gz'):
                     subject_ids.append(subject_id)
                     list_crops.append([nib.load(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_removed_{nbun}_{config.referential}_crop.nii.gz').get_fdata()])
-
+                    nsubs+=1
             if config.Anomaly == 'Overconnectivity':
                 if os.path.exists(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{nbun}_{config.referential}_crop.nii.gz'):
                     subject_ids.append(subject_id)
                     list_crops.append([nib.load(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{nbun}_{config.referential}_crop.nii.gz').get_fdata()])
+                    nsubs+=1
         #print("--- %s seconds ser ---" % (time.time() - start_time_ser))
         #print('Final subjects id anomaly',len(subject_ids))
         #start_time_par = time.time()
@@ -493,6 +494,6 @@ def create_subset_for_anomaly(config,anomaly_ids,nbun):
         filenames = list(tmp['subjects'])
         subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
         #print('------- Successfully created dataset subset')
-        return subset
+        return subset, nsubs
     except:
         print('Error during creation of subset from list')

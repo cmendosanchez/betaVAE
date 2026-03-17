@@ -5,6 +5,8 @@ import pandas as pd
 from optuna.storages import JournalStorage
 from optuna.storages.journal import JournalFileBackend
 from colors import bcolors
+from optuna.trial import TrialState
+
 
 def main():
 
@@ -39,7 +41,19 @@ def main():
 
             best_params[region][mode] = params
             best_trial = study.best_trial
-            best_params[region][mode]['Step'] = best_trial.last_step
+            best_params[region][mode]['Step']  = best_trial.last_step
+            best_params[region][mode]['Value'] = best_trial.value
+            best_params[region][mode]['Trial'] =    study.best_trial.number
+            best_params[region][mode]['Status']                               = study.best_trial.state
+            n_completed = sum(t.state == TrialState.COMPLETE for t in study.trials)
+            best_params[region][mode]['Completed Trials']  = n_completed
+            values = [
+                t.params['Beta']
+                for t in study.trials
+                if 'Beta' in t.params
+            ]
+
+            print(f'{bcolors.CYAN}{values}{bcolors.RESET}')
             print(best_params,f'{bcolors.YELLOW}{best_trial.last_step}{bcolors.RESET}')
     rows = []
 

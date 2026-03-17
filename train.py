@@ -296,6 +296,7 @@ def train_vae_optuna(config, trial,root_dir=None):
 
     list_loss_train, list_val_recon_loss, = [], []
     list_aucs = []
+    list_anom_rcon = []
 
     train_subjects      = read_one_column_tsv(config.Train_list)
     n_train             = int(len(train_subjects) * config.sub_perc)
@@ -373,7 +374,8 @@ def train_vae_optuna(config, trial,root_dir=None):
 
         vae.eval() #Eval mode
 
-        if config.Anomaly == None:
+        #if config.Anomaly == None:
+        if True:
             for inputs, path in valloader:
                 with torch.no_grad():
                     inputs = Variable(inputs).to(device, dtype=torch.float32)
@@ -398,17 +400,18 @@ def train_vae_optuna(config, trial,root_dir=None):
             val_running_loss   /=  len(validation_subjects)
             
             # If loss is NaN, prune the trial
-            if not np.isfinite(val_recon_loss):
-                print(f"NaN/Inf encountered at epoch {epoch}")
-                raise optuna.exceptions.TrialPruned()
+            if config.Anomaly == None:
+                if not np.isfinite(val_recon_loss):
+                    print(f"NaN/Inf encountered at epoch {epoch}")
+                    raise optuna.exceptions.TrialPruned()
 
-            trial.report(val_recon_loss, epoch)
-            list_val_recon_loss.append(val_recon_loss)
+                trial.report(val_recon_loss, epoch)
+                list_val_recon_loss.append(val_recon_loss)
 
-            if trial.should_prune():
-                raise optuna.exceptions.TrialPruned()
+                if trial.should_prune():
+                    raise optuna.exceptions.TrialPruned()
 
-            early_stopping.check_early_stop(val_recon_loss, epoch)
+                early_stopping.check_early_stop(val_recon_loss, epoch)
 
             if early_stopping.stop_training:
                 affine = np.eye(4)
@@ -417,7 +420,6 @@ def train_vae_optuna(config, trial,root_dir=None):
                 nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
                 nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
                 break
-
 
             if epoch == config.nb_epoch:
                 affine = np.eye(4)
@@ -438,7 +440,7 @@ def train_vae_optuna(config, trial,root_dir=None):
             class_subjects       = read_one_column_tsv(config.Class_val_list)
             #random.shuffle(class_subjects)
             # Split
-            mid = int(len(class_subjects) // 2)
+            """ mid = int(len(class_subjects) // 2)
             normal_group = class_subjects[:mid]
             normal_subset = create_subset_from_list(config, normal_group)
             normal_loader = torch.utils.data.DataLoader(normal_subset, batch_size=32, num_workers=4, shuffle=False)
@@ -448,15 +450,15 @@ def train_vae_optuna(config, trial,root_dir=None):
                     inputs = Variable(inputs).to(device, dtype=torch.float32)
                     output, z, logvar = vae(inputs)
                     embeddings_normal.append(z.cpu().numpy())
-                    """ if config.loss == 'CrossEntropy':
+                    if config.loss == 'CrossEntropy':
                         target = torch.squeeze(inputs, dim=1).long()
                         partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
                         output = torch.argmax(output, dim=1)
 
                     elif config.loss == 'MSE':
-                        partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) """
+                        partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl)  """
                         
-            embeddings_normal = np.vstack(embeddings_normal)
+            """ embeddings_normal = np.vstack(embeddings_normal)
             y_normal = np.asarray([0]*len(normal_group)).reshape(-1)
             #print('Normal group shape', embeddings_normal.shape, y_normal.shape)
 
@@ -470,17 +472,20 @@ def train_vae_optuna(config, trial,root_dir=None):
             flat = list(chain.from_iterable(data))
             df = pd.DataFrame(flat)
             if df.empty:
-                continue
+                continue """
 
             min_bundles = df['Bundles'].min()
             max_bundles = df['Bundles'].max()
-            auc_weights = linear_weights(max_bundles)
+            errors_weights = linear_weights(max_bundles)
             print(f'max min bundles: {max_bundles} {min_bundles}')
-
+            errors_list = []
+            
             for nbun in range(1,max_bundles+1):
                 embeddings_anomaly = []
+                errors_anom = 0
                 #print(f'Nbundles {nbun}')
-                anomaly_subset = create_subset_for_anomaly(config,anomaly_group,nbun)
+                anomaly_subset, nsubjects = create_subset_for_anomaly(config,class_subjects,nbun)
+                print(f'Nbundles {nbun} Nsubjects {nsubjects}')
                 anomloader = torch.utils.data.DataLoader(anomaly_subset,batch_size=32,num_workers=4, shuffle=False)
                 for inputs, path in anomloader:
                     with torch.no_grad():
@@ -488,7 +493,8 @@ def train_vae_optuna(config, trial,root_dir=None):
                         output, z, logvar = vae(inputs)
                         embeddings_anomaly.append(z.cpu().numpy())
                         #print(z.cpu().numpy().shape)
-                        """ embeddings_anomaly.append(z.cpu().numpy().reshape(-1))
+                        #embeddings_anomaly.append(z.cpu().numpy().reshape(-1))
+
                         if config.loss == 'CrossEntropy':
                             target = torch.squeeze(inputs, dim=1).long()
                             partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, target,  
@@ -500,11 +506,14 @@ def train_vae_optuna(config, trial,root_dir=None):
                             partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs,  
                                                     z, logvar, criterion,
                                                     kl_weight=config.kl)
-                    anom_loss+= partial_recon_loss_anom.cpu().numpy() """
-                
+
+                    errors_anom += partial_recon_loss_anom.cpu().numpy() 
+
+                errors_anom /= nsubjects
+                errors_list.append(errors_anom)
                 #print(f'Recon error anom partial {anom_loss/len(anomaly)}')
                 
-                embeddings_anomaly = np.vstack(embeddings_anomaly)
+                """ embeddings_anomaly = np.vstack(embeddings_anomaly)
                 y_anomaly = np.asarray([1]*len(anomaly_group)).reshape(-1)
                 #print(embeddings_normal,embeddings_anomaly.shape,embeddings_normal.shape)
 
@@ -523,10 +532,10 @@ def train_vae_optuna(config, trial,root_dir=None):
                     roc_auc = roc_auc_score(y_test, y_prob)
                     aucs.append(roc_auc)
 
-                aucs_list.append(np.mean(aucs))
+                aucs_list.append(np.mean(aucs)) """
                 #print(aucs_list)   
 
-            weighted_aucs = np.asarray(aucs_list) * auc_weights
+            """ weighted_aucs = np.asarray(aucs_list) * auc_weights
             epoch_auc = np.sum(weighted_aucs)
             # If loss is NaN, prune the trial
             print(f"{bcolors.MAGENTA}[{epoch}] {aucs_list} {auc_weights} AUC: {epoch_auc} {bcolors.RESET}")
@@ -539,9 +548,23 @@ def train_vae_optuna(config, trial,root_dir=None):
             list_aucs.append(epoch_auc)
 
             if trial.should_prune():
+                raise optuna.exceptions.TrialPruned() """
+            weighted_errors  = np.asarray(errors_list) * errors_weights
+            epoch_error_anom = np.sum(weighted_errors)
+            # If loss is NaN, prune the trial
+            print(f"{bcolors.MAGENTA}[{epoch}] {error_list} {errors_weights} RconError Anom: {epoch_error_anom} RconError Val: {val_recon_loss}  {bcolors.RESET}")
+            proportion = epoch_error_anom/val_recon_loss
+
+            if not np.isfinite(proportion):
+                print(f"NaN/Inf encountered at epoch {epoch}")
                 raise optuna.exceptions.TrialPruned()
 
-            early_stopping.check_early_stop(epoch_auc, epoch)
+            trial.report(proportion, epoch)
+            list_anom_rcon.append(proportion)
+
+            if trial.should_prune():
+                raise optuna.exceptions.TrialPruned() 
+            early_stopping.check_early_stop(proportion, epoch)
 
             if early_stopping.stop_training:
                 affine = np.eye(4)
@@ -556,7 +579,7 @@ def train_vae_optuna(config, trial,root_dir=None):
 
     print(f"{bcolors.BG_GREEN}Finished Optuna Trial in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 
     if config.Anomaly == 'Overconnectivity' or config.Anomaly == 'Underconnectivity':
-        return max(list_aucs)
+        return min(list_aucs)
     else:
         return min(list_val_recon_loss)
 
