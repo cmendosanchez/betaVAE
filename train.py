@@ -434,7 +434,7 @@ def train_vae_optuna(config, trial,root_dir=None):
             print(f"{bcolors.YELLOW}[{epoch}] Val loss: {val_running_loss}      {bcolors.RESET}")
 
     
-        elif config.Anomaly != None:
+        if config.Anomaly != None:
             print(f'{bcolors.BG_RED}Launching Normal/Anomaly classification{bcolors.RESET}')
             # Shuffle in-place
             class_subjects       = read_one_column_tsv(config.Class_val_list)
