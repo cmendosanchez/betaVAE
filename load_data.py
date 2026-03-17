@@ -418,7 +418,7 @@ def get_subjects_by_removed_number(config, number):
 
     return subjects
 
-def create_subset_for_anomaly(config,anomaly_ids,nbun):
+def create_subset_for_anomaly(config,Anomaly,anomaly_ids,nbun):
     """
     Creates a dataset subset from files in a folder.
     
@@ -445,15 +445,16 @@ def create_subset_for_anomaly(config,anomaly_ids,nbun):
         for i, sub in enumerate(anomaly_ids):
             subject_id = split_filename(sub)  #We get the subject ID
             
-            if config.Anomaly == 'Underconnectivity':
-                if os.path.exists(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_removed_{nbun}_{config.referential}_crop.nii.gz'):
+            if Anomaly == 'Underconnectivity':
+                if os.path.exists(f'{config.path_anom}/{Anomaly}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_removed_{nbun}_{config.referential}_crop.nii.gz'):
                     subject_ids.append(subject_id)
-                    list_crops.append([nib.load(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_removed_{nbun}_{config.referential}_crop.nii.gz').get_fdata()])
+                    list_crops.append([nib.load(f'{config.path_anom}/{Anomaly}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_removed_{nbun}_{config.referential}_crop.nii.gz').get_fdata()])
                     nsubs+=1
-            if config.Anomaly == 'Overconnectivity':
+
+            if Anomaly == 'Overconnectivity':
                 if os.path.exists(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{nbun}_{config.referential}_crop.nii.gz'):
                     subject_ids.append(subject_id)
-                    list_crops.append([nib.load(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{nbun}_{config.referential}_crop.nii.gz').get_fdata()])
+                    list_crops.append([nib.load(f'{config.path_anom}/{Anomaly}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{nbun}_{config.referential}_crop.nii.gz').get_fdata()])
                     nsubs+=1
         #print("--- %s seconds ser ---" % (time.time() - start_time_ser))
         #print('Final subjects id anomaly',len(subject_ids))

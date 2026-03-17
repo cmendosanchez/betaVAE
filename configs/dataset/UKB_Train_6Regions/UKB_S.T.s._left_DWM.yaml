@@ -9,8 +9,8 @@ Criteria: DWM
 Region: S.T.s._left
 Database: UKB
 path_crops: ${dataset_folder}/crops/S.T.s._left/DWM
-path_anom: ${dataset_folder}/FakeAnomaly_crops/UKB/S.T.s._left/DWM/None
-path_stats: ${dataset_folder}/Stats_Anomaly/UKB/UKB_S.T.s._left_None_DWM.pkl
+path_anom: ${dataset_folder}/FakeAnomaly_crops/UKB/S.T.s._left/DWM/
+path_stats: ${dataset_folder}/Stats_Anomaly/UKB/UKB_S.T.s._left_
 minl: 80
 maxl: 250
 referential: icbm09c

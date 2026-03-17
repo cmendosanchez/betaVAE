@@ -254,81 +254,6 @@ def linear_weights(n):
     weights = np.arange(n, 0, -1)   # n, n-1, ..., 1
     return weights / weights.sum()
 
-def get_AUC(config, vae):
-    print(f'{bcolors.BG_RED}Launching Normal/Anomaly classification{bcolors.RESET}')
-    for anomaly in ['Underconnectivity','Overconnectivity']:
-        aucs_list = []
-        class_subjects       = read_one_column_tsv(config.Class_val_list)
-        mid = int(len(class_subjects) // 2)
-        normal_group = class_subjects[:mid]
-        normal_subset = create_subset_from_list(config, normal_group)
-        normal_loader = torch.utils.data.DataLoader(normal_subset, batch_size=32, num_workers=4, shuffle=False)
-        embeddings_normal = []
-        for inputs, path in normal_loader:
-            with torch.no_grad():
-                inputs = Variable(inputs).to(device, dtype=torch.float32)
-                output, z, logvar = vae(inputs)
-                embeddings_normal.append(z.cpu().numpy())
-                if config.loss == 'CrossEntropy':
-                    target = torch.squeeze(inputs, dim=1).long()
-                    partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
-                    output = torch.argmax(output, dim=1)
-
-                elif config.loss == 'MSE':
-                    partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) 
-        
-        embeddings_normal = np.vstack(embeddings_normal)
-        y_normal = np.asarray([0]*len(normal_group)).reshape(-1)
-        anomaly_group = class_subjects[mid:]
-
-        with open(f'{config.path_stats}_{Anomaly}_{mode}.pkl', 'rb') as file:
-            results = pickle.load(file)
-
-        data   = [x for x in results if not isinstance(x, tuple)]
-        flat = list(chain.from_iterable(data))
-        df = pd.DataFrame(flat)
-        if df.empty:
-            continue 
-
-        min_bundles = df['Bundles'].min()
-        max_bundles = df['Bundles'].max()
-        errors_weights = linear_weights(max_bundles)
-        print(f'max min bundles: {max_bundles} {min_bundles}')
-        
-        for nbun in range(1,max_bundles+1):
-            embeddings_anomaly = []
-            anomaly_subset, nsubjects = create_subset_for_anomaly(config,class_subjects,nbun)
-            print(f'Nbundles {nbun} Nsubjects {nsubjects}')
-            anomloader = torch.utils.data.DataLoader(anomaly_subset,batch_size=32,num_workers=4, shuffle=False)
-            for inputs, path in anomloader:
-                with torch.no_grad():
-                    inputs = Variable(inputs).to(device, dtype=torch.float32)
-                    output, z, logvar = vae(inputs)
-                    embeddings_anomaly.append(z.cpu().numpy())
-
-            embeddings_anomaly = np.vstack(embeddings_anomaly)
-            y_anomaly = np.asarray([1]*len(anomaly_group)).reshape(-1)
-
-            X = np.vstack((embeddings_normal, embeddings_anomaly))
-            y = np.concatenate((y_normal, y_anomaly))
-
-            kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-            aucs = []
-
-            for i,(train_index, test_index) in enumerate(kf.split(X, y)):
-                X_train, X_test = X[train_index], X[test_index]
-                y_train, y_test = y[train_index], y[test_index]
-                model_svm = svm.SVC(probability=True, kernel='linear', random_state=42, C=0.01)
-                model_svm.fit(X_train, y_train)
-                y_prob = model_svm.predict_proba(X_test)[:,1]
-                roc_auc = roc_auc_score(y_test, y_prob)
-                aucs.append(roc_auc)
-
-            aucs_list.append(np.mean(aucs))
-
-        weighted_aucs = np.asarray(aucs_list) * auc_weights
-        return np.sum(weighted_aucs)
-
 def train_vae_optuna(config, trial,root_dir=None):
     """ Trains beta-VAE for a given hyperparameter configuration
     Args:
@@ -386,6 +311,7 @@ def train_vae_optuna(config, trial,root_dir=None):
     trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=6, shuffle=True)
     print(f"{bcolors.MAGENTA}-- -Created trainloader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
 
+    #if config.Anomaly == None:
     validation_subjects = read_one_column_tsv(config.Rcon_val_list)
     n_val = int(len(validation_subjects) * config.sub_perc)
     validation_subjects = validation_subjects[:n_val]
@@ -397,10 +323,11 @@ def train_vae_optuna(config, trial,root_dir=None):
     print(f"Data written to {csv_val}")
     print(f'Validation:{len(validation_subjects)}')
     
-    vae.train()
+
     for epoch in range(1,config.nb_epoch+1):
         start_time_epoch = time.time()
         print(f'{bcolors.RED}{bcolors.UNDERLINE}~~ Starting epoch {epoch}{bcolors.RESET}')
+
         #Defined epoch losses
         train_recon_loss   = 0.0
         train_kl_loss      = 0.0
@@ -421,6 +348,7 @@ def train_vae_optuna(config, trial,root_dir=None):
 
             partial_loss.backward()
             optimizer.step()
+
             #Update errors
             train_recon_loss    += partial_recon_loss
             train_kl_loss       += partial_kl_loss
@@ -445,64 +373,214 @@ def train_vae_optuna(config, trial,root_dir=None):
         val_running_loss = 0.0
 
         vae.eval() #Eval mode
-        for inputs, path in valloader:
-            with torch.no_grad():
-                inputs = Variable(inputs).to(device, dtype=torch.float32)
-                output, z, logvar = vae(inputs)
-                #print('tensor shape',inputs.shape,output.shape)
-                if config.loss == 'CrossEntropy':
-                    target = torch.squeeze(inputs, dim=1).long()
-                    partial_recon_loss_val, partial_kl_loss_val, partial_loss_val = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
-                    output = torch.argmax(output, dim=1)
 
-                elif config.loss == 'MSE':
-                    partial_recon_loss_val, partial_kl_loss_val, partial_loss_val = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl)
+        #if config.Anomaly == None:
+        if True:
+            for inputs, path in valloader:
+                with torch.no_grad():
+                    inputs = Variable(inputs).to(device, dtype=torch.float32)
+                    output, z, logvar = vae(inputs)
+                    #print('tensor shape',inputs.shape,output.shape)
+                    if config.loss == 'CrossEntropy':
+                        target = torch.squeeze(inputs, dim=1).long()
+                        partial_recon_loss_val, partial_kl_loss_val, partial_loss_val = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
+                        output = torch.argmax(output, dim=1)
 
-                #Update losses for each sample
-                val_recon_loss    += partial_recon_loss_val.cpu().numpy()
-                val_kl_loss       += partial_kl_loss_val
-                val_running_loss  += partial_loss_val.item()
+                    elif config.loss == 'MSE':
+                        partial_recon_loss_val, partial_kl_loss_val, partial_loss_val = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl)
 
-        #Average
-        val_recon_loss     /=  len(validation_subjects)
-        val_kl_loss        /=  len(validation_subjects)
-        val_running_loss   /=  len(validation_subjects)
-        
-        if not np.isfinite(val_recon_loss):
-            print(f"NaN/Inf encountered at epoch {epoch}")
-            raise optuna.exceptions.TrialPruned()
+                    #Update losses for each sample
+                    val_recon_loss    += partial_recon_loss_val.cpu().numpy()
+                    val_kl_loss       += partial_kl_loss_val
+                    val_running_loss  += partial_loss_val.item()
 
-        trial.report(val_recon_loss, epoch)
-        list_val_recon_loss.append(val_recon_loss)
+            #Average
+            val_recon_loss     /=  len(validation_subjects)
+            val_kl_loss        /=  len(validation_subjects)
+            val_running_loss   /=  len(validation_subjects)
+            
+            # If loss is NaN, prune the trial
+            if config.Anomaly == None:
+                if not np.isfinite(val_recon_loss):
+                    print(f"NaN/Inf encountered at epoch {epoch}")
+                    raise optuna.exceptions.TrialPruned()
 
-        if trial.should_prune():
-            raise optuna.exceptions.TrialPruned()
+                trial.report(val_recon_loss, epoch)
+                list_val_recon_loss.append(val_recon_loss)
 
-        early_stopping.check_early_stop(val_recon_loss, epoch)
+                if trial.should_prune():
+                    raise optuna.exceptions.TrialPruned()
 
-        if early_stopping.stop_training:
-            affine = np.eye(4)
-            nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
-            nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
-            nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
-            nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
-            resulting_auc = get_AUC(config, vae)
+                early_stopping.check_early_stop(val_recon_loss, epoch)
 
-        if epoch == config.nb_epoch:
-            affine = np.eye(4)
-            nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
-            nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
-            nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
-            nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+            if early_stopping.stop_training:
+                affine = np.eye(4)
+                nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
+                nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
+                nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
+                nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+                break
 
-        # prints on the terminal
-        print(f"{bcolors.YELLOW}[{epoch}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
-        print(f"{bcolors.YELLOW}[{epoch}] Val KL loss: {val_kl_loss}        {bcolors.RESET}")
-        print(f"{bcolors.YELLOW}[{epoch}] Val loss: {val_running_loss}      {bcolors.RESET}")
+            if epoch == config.nb_epoch:
+                affine = np.eye(4)
+                nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
+                nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
+                nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
+                nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
 
+            # prints on the terminal
+            print(f"{bcolors.YELLOW}[{epoch}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
+            print(f"{bcolors.YELLOW}[{epoch}] Val KL loss: {val_kl_loss}        {bcolors.RESET}")
+            print(f"{bcolors.YELLOW}[{epoch}] Val loss: {val_running_loss}      {bcolors.RESET}")
+
+    
+        if config.Anomaly != None:
+            print(f'{bcolors.BG_RED}Launching Normal/Anomaly classification{bcolors.RESET}')
+            # Shuffle in-place
+            class_subjects       = read_one_column_tsv(config.Class_val_list)
+            #random.shuffle(class_subjects)
+            # Split
+            """ mid = int(len(class_subjects) // 2)
+            normal_group = class_subjects[:mid]
+            normal_subset = create_subset_from_list(config, normal_group)
+            normal_loader = torch.utils.data.DataLoader(normal_subset, batch_size=32, num_workers=4, shuffle=False)
+            embeddings_normal = []
+            for inputs, path in normal_loader:
+                with torch.no_grad():
+                    inputs = Variable(inputs).to(device, dtype=torch.float32)
+                    output, z, logvar = vae(inputs)
+                    embeddings_normal.append(z.cpu().numpy())
+                    if config.loss == 'CrossEntropy':
+                        target = torch.squeeze(inputs, dim=1).long()
+                        partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
+                        output = torch.argmax(output, dim=1)
+
+                    elif config.loss == 'MSE':
+                        partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl)  """
+                        
+            """ embeddings_normal = np.vstack(embeddings_normal)
+            y_normal = np.asarray([0]*len(normal_group)).reshape(-1)
+            #print('Normal group shape', embeddings_normal.shape, y_normal.shape)
+
+            anomaly_group = class_subjects[mid:]
+            aucs_list = []
+            ###
+            """
+            with open(config.path_stats, 'rb') as file:
+                results = pickle.load(file)
+
+            data   = [x for x in results if not isinstance(x, tuple)]
+            flat = list(chain.from_iterable(data))
+            df = pd.DataFrame(flat)
+            if df.empty:
+                continue """
+
+            min_bundles = df['Bundles'].min()
+            max_bundles = df['Bundles'].max()
+            errors_weights = linear_weights(max_bundles)
+            print(f'max min bundles: {max_bundles} {min_bundles}')
+            errors_list = []
+            
+            for nbun in range(1,max_bundles+1):
+                embeddings_anomaly = []
+                errors_anom = 0
+                #print(f'Nbundles {nbun}')
+                anomaly_subset, nsubjects = create_subset_for_anomaly(config,class_subjects,nbun)
+                print(f'Nbundles {nbun} Nsubjects {nsubjects}')
+                anomloader = torch.utils.data.DataLoader(anomaly_subset,batch_size=32,num_workers=4, shuffle=False)
+                for inputs, path in anomloader:
+                    with torch.no_grad():
+                        inputs = Variable(inputs).to(device, dtype=torch.float32)
+                        output, z, logvar = vae(inputs)
+                        embeddings_anomaly.append(z.cpu().numpy())
+                        #print(z.cpu().numpy().shape)
+                        #embeddings_anomaly.append(z.cpu().numpy().reshape(-1))
+
+                        if config.loss == 'CrossEntropy':
+                            target = torch.squeeze(inputs, dim=1).long()
+                            partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, target,  
+                                                    z, logvar, criterion,
+                                                    kl_weight=config.kl)
+                            output = torch.argmax(output, dim=1)
+
+                        elif config.loss == 'MSE':
+                            partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs,  
+                                                    z, logvar, criterion,
+                                                    kl_weight=config.kl)
+
+                    errors_anom += partial_recon_loss_anom.cpu().numpy() 
+
+                errors_anom /= nsubjects
+                errors_list.append(errors_anom)
+                #print(f'Recon error anom partial {anom_loss/len(anomaly)}')
+                
+                """ embeddings_anomaly = np.vstack(embeddings_anomaly)
+                y_anomaly = np.asarray([1]*len(anomaly_group)).reshape(-1)
+                #print(embeddings_normal,embeddings_anomaly.shape,embeddings_normal.shape)
+
+                X = np.vstack((embeddings_normal, embeddings_anomaly))
+                y = np.concatenate((y_normal, y_anomaly))
+
+                kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+                aucs = []
+
+                for i,(train_index, test_index) in enumerate(kf.split(X, y)):
+                    X_train, X_test = X[train_index], X[test_index]
+                    y_train, y_test = y[train_index], y[test_index]
+                    model_svm = svm.SVC(probability=True, kernel='linear', random_state=42, C=0.01)
+                    model_svm.fit(X_train, y_train)
+                    y_prob = model_svm.predict_proba(X_test)[:,1]
+                    roc_auc = roc_auc_score(y_test, y_prob)
+                    aucs.append(roc_auc)
+
+                aucs_list.append(np.mean(aucs)) """
+                #print(aucs_list)   
+
+            """ weighted_aucs = np.asarray(aucs_list) * auc_weights
+            epoch_auc = np.sum(weighted_aucs)
+            # If loss is NaN, prune the trial
+            print(f"{bcolors.MAGENTA}[{epoch}] {aucs_list} {auc_weights} AUC: {epoch_auc} {bcolors.RESET}")
+            
+            if not np.isfinite(epoch_auc):
+                print(f"NaN/Inf encountered at epoch {epoch}")
+                raise optuna.exceptions.TrialPruned()
+
+            trial.report(epoch_auc, epoch)
+            list_aucs.append(epoch_auc)
+
+            if trial.should_prune():
+                raise optuna.exceptions.TrialPruned() """
+            weighted_errors  = np.asarray(errors_list) * errors_weights
+            epoch_error_anom = np.sum(weighted_errors)
+            # If loss is NaN, prune the trial
+            print(f"{bcolors.MAGENTA}[{epoch}] {error_list} {errors_weights} RconError Anom: {epoch_error_anom} RconError Val: {val_recon_loss}  {bcolors.RESET}")
+            proportion = epoch_error_anom/val_recon_loss
+
+            if not np.isfinite(proportion):
+                print(f"NaN/Inf encountered at epoch {epoch}")
+                raise optuna.exceptions.TrialPruned()
+
+            trial.report(proportion, epoch)
+            list_anom_rcon.append(proportion)
+
+            if trial.should_prune():
+                raise optuna.exceptions.TrialPruned() 
+            early_stopping.check_early_stop(proportion, epoch)
+
+            if early_stopping.stop_training:
+                affine = np.eye(4)
+                nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
+                nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
+                nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
+                nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+                break
+            
         torch.cuda.empty_cache()      
-        vae.train()
+
 
     print(f"{bcolors.BG_GREEN}Finished Optuna Trial in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 
-    return min(list_val_recon_loss)
+    if config.Anomaly == 'Overconnectivity' or config.Anomaly == 'Underconnectivity':
+        return min(list_aucs)
+    else:
+        return min(list_val_recon_loss)
 

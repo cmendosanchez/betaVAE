@@ -9,8 +9,8 @@ Criteria: Comm
 Region: S.C.-sylv._right
 Database: UKB
 path_crops: ${dataset_folder}/crops/S.C.-sylv._right/Comm
-path_anom: ${dataset_folder}/FakeAnomaly_crops/UKB/S.C.-sylv._right/Comm/None
-path_stats: ${dataset_folder}/Stats_Anomaly/UKB/UKB_S.C.-sylv._right_None_Comm.pkl
+path_anom: ${dataset_folder}/FakeAnomaly_crops/UKB/S.C.-sylv._right/Comm/
+path_stats: ${dataset_folder}/Stats_Anomaly/UKB/UKB_S.C.-sylv._right_
 minl: 0
 maxl: 250
 referential: icbm09c
