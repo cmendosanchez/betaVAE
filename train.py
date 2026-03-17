@@ -282,7 +282,7 @@ def get_AUC(config, vae, device,criterion):
         y_normal = np.asarray([0]*len(normal_group)).reshape(-1)
         anomaly_group = class_subjects[mid:]
 
-        with open(f'{config.path_stats}_{Anomaly}_{config.Criteria}.pkl', 'rb') as file:
+        with open(f'{config.path_stats}{Anomaly}_{config.Criteria}.pkl', 'rb') as file:
             results = pickle.load(file)
 
         data   = [x for x in results if not isinstance(x, tuple)]
