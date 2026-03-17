@@ -254,8 +254,9 @@ def linear_weights(n):
     weights = np.arange(n, 0, -1)   # n, n-1, ..., 1
     return weights / weights.sum()
 
-def get_AUC(config, vae, device):
+def get_AUC(config, vae, device,criterion):
     print(f'{bcolors.BG_RED}Launching Normal/Anomaly classification{bcolors.RESET}')
+    results = {}
     for anomaly in ['Underconnectivity','Overconnectivity']:
         aucs_list = []
         class_subjects       = read_one_column_tsv(config.Class_val_list)
@@ -327,8 +328,10 @@ def get_AUC(config, vae, device):
             aucs_list.append(np.mean(aucs))
 
         weighted_aucs = np.asarray(aucs_list) * auc_weights
-        print(f'{bcolors.RED}Final AUC: {np.sum(weighted_aucs)}{bcolors.RESET}')
-        return np.sum(weighted_aucs)
+        results[Anomaly] = np.sum(weighted_aucs)
+        print(f'{bcolors.RED}Final AUC {Anomaly}: {np.sum(weighted_aucs)}{bcolors.RESET}')
+        
+    return results
 
 def train_vae_optuna(config, trial,root_dir=None):
     """ Trains beta-VAE for a given hyperparameter configuration
@@ -487,7 +490,11 @@ def train_vae_optuna(config, trial,root_dir=None):
             nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
             nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
             nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
-            resulting_auc = get_AUC(config, vae, device)
+            resulting_auc = get_AUC(config, vae, device,criterion)
+
+            for key,val in resulting_auc.items():
+                trial.set_user_attr(key, val)
+
 
         if epoch == config.nb_epoch:
             affine = np.eye(4)
