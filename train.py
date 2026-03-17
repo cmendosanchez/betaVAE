@@ -327,6 +327,7 @@ def get_AUC(config, vae):
             aucs_list.append(np.mean(aucs))
 
         weighted_aucs = np.asarray(aucs_list) * auc_weights
+        print(f'{bcolors.RED}Final AUC: {np.sum(weighted_aucs)}{bcolors.RESET}')
         return np.sum(weighted_aucs)
 
 def train_vae_optuna(config, trial,root_dir=None):
