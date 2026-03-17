@@ -311,17 +311,17 @@ def train_vae_optuna(config, trial,root_dir=None):
     trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=6, shuffle=True)
     print(f"{bcolors.MAGENTA}-- -Created trainloader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
 
-    if config.Anomaly == None:
-        validation_subjects = read_one_column_tsv(config.Rcon_val_list)
-        n_val = int(len(validation_subjects) * config.sub_perc)
-        validation_subjects = validation_subjects[:n_val]
-        set_val   = create_subset_from_list(config,validation_subjects)
-        valloader = torch.utils.data.DataLoader(set_val,batch_size=32,num_workers=4, shuffle=False)
-        csv_val = f'{config.save_dir}validation_list.csv'
-        df_v = pd.DataFrame(validation_subjects, columns=['Subject'])
-        df_v.to_csv(csv_val, index=False)
-        print(f"Data written to {csv_val}")
-        print(f'Validation:{len(validation_subjects)}')
+    #if config.Anomaly == None:
+    validation_subjects = read_one_column_tsv(config.Rcon_val_list)
+    n_val = int(len(validation_subjects) * config.sub_perc)
+    validation_subjects = validation_subjects[:n_val]
+    set_val   = create_subset_from_list(config,validation_subjects)
+    valloader = torch.utils.data.DataLoader(set_val,batch_size=32,num_workers=4, shuffle=False)
+    csv_val = f'{config.save_dir}validation_list.csv'
+    df_v = pd.DataFrame(validation_subjects, columns=['Subject'])
+    df_v.to_csv(csv_val, index=False)
+    print(f"Data written to {csv_val}")
+    print(f'Validation:{len(validation_subjects)}')
     
 
     for epoch in range(1,config.nb_epoch+1):
