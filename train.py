@@ -257,7 +257,7 @@ def linear_weights(n):
 def get_AUC(config, vae, device,criterion):
     print(f'{bcolors.BG_RED}Launching Normal/Anomaly classification{bcolors.RESET}')
     results = {}
-    for anomaly in ['Underconnectivity','Overconnectivity']:
+    for Anomaly in ['Underconnectivity','Overconnectivity']:
         aucs_list = []
         class_subjects       = read_one_column_tsv(config.Class_val_list)
         mid = int(len(class_subjects) // 2)
