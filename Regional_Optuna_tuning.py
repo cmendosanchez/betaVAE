@@ -98,11 +98,11 @@ def objective(trial, config):
             v = 1
             while v <= high:
                 if v >= low:
-                    values.append(v)
+                    batch_size_lists.append(v)
                 v *= 2
-            print(batch_size_list)
+            print('Batch size to try:', batch_size_list)
             LATENT_DIMENSIONS = trial.suggest_categorical("Batch size", batch_size_list)
-            
+
         elif isinstance(config.optuna_batch_size, int):
             BATCH_SIZE = config.optuna_batch_size
         else:
@@ -116,9 +116,9 @@ def objective(trial, config):
             v = 1
             while v <= high:
                 if v >= low:
-                    values.append(v)
+                    dim_list.append(v)
                 v *= 2
-            print(dim_list)
+            print('Dimensions to try',dim_list)
             LATENT_DIMENSIONS = trial.suggest_categorical("Dimensions", dim_list)
 
         elif isinstance(config.optuna_ndim, int):
