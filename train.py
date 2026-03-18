@@ -255,7 +255,7 @@ def linear_weights(n):
     return weights / weights.sum()
 
 def get_AUC(config, vae, device,criterion):
-    try;
+    try:
         print(f'{bcolors.BG_RED} Launching Normal/Anomaly classification {bcolors.RESET}')
         resulting_aucs  = {}
         individual_aucs = {'Underconnectivity_list' : [] , 'Overconnectivity_list' : [] }
@@ -338,7 +338,7 @@ def get_AUC(config, vae, device,criterion):
         print(f'{bcolors.RED}Final AUC: {resulting_aucs} {individual_aucs}{bcolors.RESET}')
         return resulting_aucs, individual_aucs
     except:
-        return np.nan, np.nan
+        return {'Exception':np.nan},{'Exception':np.nan}
 
 def train_vae_optuna(config, trial,root_dir=None):
     """ Trains beta-VAE for a given hyperparameter configuration
