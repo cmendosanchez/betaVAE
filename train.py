@@ -311,7 +311,7 @@ def get_AUC(config, vae, device,criterion):
                     embeddings_anomaly.append(z.cpu().numpy())
 
             embeddings_anomaly = np.vstack(embeddings_anomaly)
-            y_anomaly = np.asarray([1]*len(anomaly_group)).reshape(-1)
+            y_anomaly = np.asarray([1]*len(nsubjects)).reshape(-1)
 
             X = np.vstack((embeddings_normal, embeddings_anomaly))
             y = np.concatenate((y_normal, y_anomaly))
@@ -332,7 +332,7 @@ def get_AUC(config, vae, device,criterion):
             individual_aucs[Anomaly+'_list'].append((idx+1,v,auc_weights[idx]))
 
         weighted_aucs = np.asarray(aucs_list) * auc_weights
-        resulting_aucs[Anomaly] = np.sum(weighted_aucs)
+        resulting_aucs[Anomaly] = [np.sum(weighted_aucs),len(normal_group),len(anomaly_group)]
 
     print(f'{bcolors.RED}Final AUC: {resulting_aucs} {individual_aucs}{bcolors.RESET}')
     return resulting_aucs, individual_aucs

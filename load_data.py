@@ -322,7 +322,7 @@ def create_subset_from_list(config,subjects):
         tmp = tmp.merge(tmp['subjects'], left_on = 'subjects', right_on='subjects', how='right')
         filenames = list(tmp['subjects'])
         subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
-        #print(f'------- Successfully created dataset ~ size subjects_id: {len(subject_ids)} size list_crops {len(list_crops)}')
+        print(f'create_subset_from_list ---> Successfully created dataset ~ size subjects_id: {len(subject_ids)} size list_crops {len(list_crops)}')
         return subset
     except:
         print('Error during creation of subset from list')
