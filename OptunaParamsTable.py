@@ -47,20 +47,17 @@ def main():
             best_params[region][mode]['Status']                               = study.best_trial.state
             n_completed = sum(t.state == TrialState.COMPLETE for t in study.trials)
             best_params[region][mode]['Completed Trials']  = n_completed
-            values = [
-                t.params['Beta']
-                for t in study.trials
-                if 'Beta' in t.params
-            ]
-            print(f'{bcolors.CYAN}{values}{bcolors.RESET}')
+
             print(best_params,f'{bcolors.YELLOW}{best_trial.last_step}{bcolors.RESET}')
 
             # Ordenar trials por valor objetivo (mayor es mejor; usa reverse=False si minimizas)
             top_trials = sorted(study.trials, key=lambda t: t.value, reverse=True)[:5]
 
             for t in top_trials:
-                val = t.user_attrs.get("Overconnectivity")
-                print(f"{bcolors.YELLOW}Trial {t.number} | value = {t.value} | Overconnectivity AUC = {val}{bcolors.RESET}")
+                over_auc = t.user_attrs.get("Overconnectivity")
+                under_auc = t.user_attrs.get("Underconnectivity")
+                print(over_auc,under_auc)
+                #print(f"{bcolors.YELLOW}Trial {t.number} | value = {t.value} | Overconnectivity AUC = {val}{bcolors.RESET}")
 
 
     rows = []

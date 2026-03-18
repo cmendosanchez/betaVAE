@@ -94,7 +94,15 @@ def objective(trial, config):
         # ---- BATCH SIZE (int) ----
         if is_range(config.optuna_batch_size):
             low, high = validate_range(config.optuna_batch_size, "optuna_batch_size")
-            BATCH_SIZE = trial.suggest_int("Batch size", int(low), int(high))
+            batch_size_list = []
+            v = 1
+            while v <= high:
+                if v >= low:
+                    values.append(v)
+                v *= 2
+            print(batch_size_list)
+            LATENT_DIMENSIONS = trial.suggest_categorical("Batch size", batch_size_list)
+            
         elif isinstance(config.optuna_batch_size, int):
             BATCH_SIZE = config.optuna_batch_size
         else:
@@ -103,9 +111,16 @@ def objective(trial, config):
         # ---- LATENT DIMENSIONS (int) ----
         if is_range(config.optuna_ndim):
             low, high = validate_range(config.optuna_ndim, "optuna_ndim")
-            LATENT_DIMENSIONS = trial.suggest_int(
-                "Dimensions", int(low), int(high)
-            )
+            # Generar potencias de 2 dentro del rango
+            dim_list = []
+            v = 1
+            while v <= high:
+                if v >= low:
+                    values.append(v)
+                v *= 2
+            print(dim_list)
+            LATENT_DIMENSIONS = trial.suggest_categorical("Dimensions", dim_list)
+
         elif isinstance(config.optuna_ndim, int):
             LATENT_DIMENSIONS = config.optuna_ndim
         else:
