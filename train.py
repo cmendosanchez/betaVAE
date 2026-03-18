@@ -333,7 +333,8 @@ def get_AUC(config, vae, device,criterion):
 
         weighted_aucs = np.asarray(aucs_list) * auc_weights
         resulting_aucs[Anomaly] = np.sum(weighted_aucs)
-        print(f'{bcolors.RED}Final AUC {Anomaly}: {np.sum(weighted_aucs)} {individual_aucs}{bcolors.RESET}')
+        
+    print(f'{bcolors.RED}Final AUC: {resulting_aucs} {individual_aucs}{bcolors.RESET}')
     return resulting_aucs, individual_aucs
 
 def train_vae_optuna(config, trial,root_dir=None):
@@ -516,7 +517,7 @@ def train_vae_optuna(config, trial,root_dir=None):
 
             for key,val in individual_auc.items():
                 trial.set_user_attr(key, val)
-                
+
             break
         # prints on the terminal
         print(f"{bcolors.YELLOW}[{epoch}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
