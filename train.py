@@ -262,6 +262,7 @@ def get_AUC(config, vae, device,criterion):
         class_subjects       = read_one_column_tsv(config.Class_val_list)
         mid = int(len(class_subjects) // 2)
         normal_group = class_subjects[:mid]
+        anomaly_group = class_subjects[mid:]
         normal_subset = create_subset_from_list(config, normal_group)
         normal_loader = torch.utils.data.DataLoader(normal_subset, batch_size=32, num_workers=4, shuffle=False)
         embeddings_normal = []
@@ -298,7 +299,7 @@ def get_AUC(config, vae, device,criterion):
         
         for nbun in range(1,max_bundles+1):
             embeddings_anomaly = []
-            anomaly_subset, nsubjects = create_subset_for_anomaly(config,Anomaly,class_subjects,nbun)
+            anomaly_subset, nsubjects = create_subset_for_anomaly(config,Anomaly,anomaly_group,nbun)
             print(f'Nbundles {nbun} Nsubjects {nsubjects}')
             anomloader = torch.utils.data.DataLoader(anomaly_subset,batch_size=32,num_workers=4, shuffle=False)
             for inputs, path in anomloader:
