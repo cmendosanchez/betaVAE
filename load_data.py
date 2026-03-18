@@ -452,7 +452,7 @@ def create_subset_for_anomaly(config,Anomaly,anomaly_ids,nbun):
                     nsubs+=1
 
             if Anomaly == 'Overconnectivity':
-                if os.path.exists(f'{config.path_anom}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{nbun}_{config.referential}_crop.nii.gz'):
+                if os.path.exists(f'{config.path_anom}/{Anomaly}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{nbun}_{config.referential}_crop.nii.gz'):
                     subject_ids.append(subject_id)
                     list_crops.append([nib.load(f'{config.path_anom}/{Anomaly}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{nbun}_{config.referential}_crop.nii.gz').get_fdata()])
                     nsubs+=1
