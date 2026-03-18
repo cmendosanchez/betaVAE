@@ -7,7 +7,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=96
 #SBATCH --hint=nomultithread
-#SBATCH --time=12:00:00
+#SBATCH --time=20:00:00
 #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/UKB_S.C.-sylv._right_Comm/UKB_S.C.-sylv._right_Comm%j.out
 #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/UKB_S.C.-sylv._right_Comm/UKB_S.C.-sylv._right_Comm%j.out
 ##SBATCH -A miu@v100
@@ -29,4 +29,4 @@ set -x
 cd $WORK
 cd PhD_2026/betaVAE
 
-python3 Regional_Optuna_tuning.py +save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/UKB_S.C.-sylv._right_Comm +dataset=UKB_Train_6Regions/UKB_S.C.-sylv._right_Comm +optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/UKB_S.C.-sylv._right_Comm +optuna_lr=[1e-05,0.01] +optuna_batch_size=[8,32] +optuna_epoch=30 +optuna_ndim=[32,256] +optuna_beta=[1.0,30.0] +optuna_sub_perc=0.25 +optuna_ntrials=4 +optuna_nworkers=5 +optuna_weight_decay=[1e-07,0.01] +patience=4 +delta=150.0 +dataset_folder=/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions
+python3 Regional_Optuna_tuning.py +save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/UKB_S.C.-sylv._right_Comm +dataset=UKB_Train_6Regions/UKB_S.C.-sylv._right_Comm +optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/UKB_S.C.-sylv._right_Comm +optuna_lr=[1e-05,0.01] +optuna_batch_size=[8,32] +optuna_epoch=30 +optuna_ndim=[32,256] +optuna_beta=[1.0,30.0] +optuna_sub_perc=0.25 +optuna_ntrials=6 +optuna_nworkers=5 +optuna_weight_decay=[1e-07,0.01] +patience=4 +delta=150.0 +dataset_folder=/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions
