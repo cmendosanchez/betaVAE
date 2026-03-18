@@ -493,6 +493,7 @@ def train_vae_optuna(config, trial,root_dir=None):
             nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
             nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
             nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+
             resulting_auc, individual_auc = get_AUC(config, vae, device,criterion)
 
             for key,val in resulting_auc.items():
@@ -500,13 +501,8 @@ def train_vae_optuna(config, trial,root_dir=None):
 
             for key,val in individual_auc.items():
                 trial.set_user_attr(key, val)
-
-        resulting_auc, individual_auc = get_AUC(config, vae, device,criterion)
-        for key,val in resulting_auc.items():
-                trial.set_user_attr(key, val)
-
-        for key,val in individual_auc.items():
-            trial.set_user_attr(key, val)
+            break
+        
 
         if epoch == config.nb_epoch:
             affine = np.eye(4)
@@ -514,7 +510,14 @@ def train_vae_optuna(config, trial,root_dir=None):
             nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
             nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
             nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+            resulting_auc, individual_auc = get_AUC(config, vae, device,criterion)
+            for key,val in resulting_auc.items():
+                    trial.set_user_attr(key, val)
 
+            for key,val in individual_auc.items():
+                trial.set_user_attr(key, val)
+                
+            break
         # prints on the terminal
         print(f"{bcolors.YELLOW}[{epoch}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
         print(f"{bcolors.YELLOW}[{epoch}] Val KL loss: {val_kl_loss}        {bcolors.RESET}")
