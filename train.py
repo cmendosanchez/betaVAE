@@ -257,7 +257,7 @@ def linear_weights(n):
 def get_AUC(config, vae, device,criterion):
     print(f'{bcolors.BG_RED} Launching Normal/Anomaly classification {bcolors.RESET}')
     resulting_aucs  = {}
-    individual_aucs = {'Underconnectivity' : [] , 'Overconnectivity' : [] }
+    individual_aucs = {'Underconnectivity_list' : [] , 'Overconnectivity_list' : [] }
 
     for Anomaly in ['Underconnectivity','Overconnectivity']:
         aucs_list = []
@@ -333,7 +333,7 @@ def get_AUC(config, vae, device,criterion):
 
         weighted_aucs = np.asarray(aucs_list) * auc_weights
         resulting_aucs[Anomaly] = np.sum(weighted_aucs)
-        
+
     print(f'{bcolors.RED}Final AUC: {resulting_aucs} {individual_aucs}{bcolors.RESET}')
     return resulting_aucs, individual_aucs
 

@@ -52,9 +52,17 @@ def main():
                 for t in study.trials
                 if 'Beta' in t.params
             ]
-
             print(f'{bcolors.CYAN}{values}{bcolors.RESET}')
             print(best_params,f'{bcolors.YELLOW}{best_trial.last_step}{bcolors.RESET}')
+
+            # Ordenar trials por valor objetivo (mayor es mejor; usa reverse=False si minimizas)
+            top_trials = sorted(study.trials, key=lambda t: t.value, reverse=True)[:5]
+
+            for t in top_trials:
+                val = t.user_attrs.get("Overconnectivity")
+                print(f"{bcolors.YELLOW}Trial {t.number} | value = {t.value} | Overconnectivity AUC = {val}{bcolors.RESET}")
+
+
     rows = []
 
     for region in best_params:
