@@ -329,7 +329,7 @@ def get_AUC(config, vae, device,criterion):
             aucs_list.append(np.mean(aucs))
 
         for idx,v in enumerate(aucs_list):
-            individual_aucs[Anomaly].append((idx+1,v,auc_weights[idx]))
+            individual_aucs[Anomaly+'_list'].append((idx+1,v,auc_weights[idx]))
 
         weighted_aucs = np.asarray(aucs_list) * auc_weights
         resulting_aucs[Anomaly] = np.sum(weighted_aucs)
