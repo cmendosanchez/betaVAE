@@ -255,8 +255,10 @@ def linear_weights(n):
     return weights / weights.sum()
 
 def get_AUC(config, vae, device,criterion):
-    print(f'{bcolors.BG_RED}Launching Normal/Anomaly classification{bcolors.RESET}')
-    resulting_aucs = {}
+    print(f'{bcolors.BG_RED} Launching Normal/Anomaly classification {bcolors.RESET}')
+    resulting_aucs  = {}
+    individual_aucs = {'Underconnectivity' : [] , 'Overconnectivity' : [] }
+
     for Anomaly in ['Underconnectivity','Overconnectivity']:
         aucs_list = []
         class_subjects       = read_one_column_tsv(config.Class_val_list)
@@ -316,7 +318,6 @@ def get_AUC(config, vae, device,criterion):
 
             kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
             aucs = []
-
             for i,(train_index, test_index) in enumerate(kf.split(X, y)):
                 X_train, X_test = X[train_index], X[test_index]
                 y_train, y_test = y[train_index], y[test_index]
@@ -325,14 +326,15 @@ def get_AUC(config, vae, device,criterion):
                 y_prob = model_svm.predict_proba(X_test)[:,1]
                 roc_auc = roc_auc_score(y_test, y_prob)
                 aucs.append(roc_auc)
-
             aucs_list.append(np.mean(aucs))
+
+        for idx,v in enumerate(aucs_list):
+            individual_aucs[Anomaly].append((idx+1,v,auc_weights[idx]))
 
         weighted_aucs = np.asarray(aucs_list) * auc_weights
         resulting_aucs[Anomaly] = np.sum(weighted_aucs)
         print(f'{bcolors.RED}Final AUC {Anomaly}: {np.sum(weighted_aucs)}{bcolors.RESET}')
-        
-    return resulting_aucs
+    return resulting_aucs, individual_aucs
 
 def train_vae_optuna(config, trial,root_dir=None):
     """ Trains beta-VAE for a given hyperparameter configuration
@@ -491,12 +493,21 @@ def train_vae_optuna(config, trial,root_dir=None):
             nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
             nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
             nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
-            resulting_auc = get_AUC(config, vae, device,criterion)
+            resulting_auc, individual_auc = get_AUC(config, vae, device,criterion)
 
             for key,val in resulting_auc.items():
                 trial.set_user_attr(key, val)
 
-        resulting_auc = get_AUC(config, vae, device,criterion)
+            for key,val in individual_auc.items():
+                trial.set_user_attr(key, val)
+
+        resulting_auc, individual_auc = get_AUC(config, vae, device,criterion)
+        for key,val in resulting_auc.items():
+                trial.set_user_attr(key, val)
+
+        for key,val in individual_auc.items():
+            trial.set_user_attr(key, val)
+
         if epoch == config.nb_epoch:
             affine = np.eye(4)
             nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
