@@ -337,7 +337,8 @@ def get_AUC(config, vae, device,criterion):
 
         print(f'{bcolors.RED}Final AUC: {resulting_aucs} {individual_aucs}{bcolors.RESET}')
         return resulting_aucs, individual_aucs
-    except:
+    except Exception as e:
+        print(e)
         return {'Exception':np.nan},{'Exception':np.nan}
 
 def train_vae_optuna(config, trial,root_dir=None):
