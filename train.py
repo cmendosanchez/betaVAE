@@ -298,7 +298,7 @@ def get_AUC(config, vae, device,criterion):
         
         for nbun in range(1,max_bundles+1):
             embeddings_anomaly = []
-            anomaly_subset, nsubjects = create_subset_for_anomaly(config,class_subjects,nbun)
+            anomaly_subset, nsubjects = create_subset_for_anomaly(config,Anomaly,class_subjects,nbun)
             print(f'Nbundles {nbun} Nsubjects {nsubjects}')
             anomloader = torch.utils.data.DataLoader(anomaly_subset,batch_size=32,num_workers=4, shuffle=False)
             for inputs, path in anomloader:
