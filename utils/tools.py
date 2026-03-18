@@ -1,5 +1,5 @@
 class EarlyStopping:
-    def __init__(self, patience=5, delta=0, start_epoch=5, verbose=False):
+    def __init__(self, patience=5, delta=0, start_epoch=3, verbose=False):
         self.patience = patience
         self.delta = delta
         self.start_epoch = start_epoch

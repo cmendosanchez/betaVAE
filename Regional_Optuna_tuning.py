@@ -201,14 +201,14 @@ def Run_optuna_optimization(config):
         if config.Anomaly == None:
             print(f'{bcolors.YELLOW}Minimizing Reconstruction Error{bcolors.RESET}')
             pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
-            sampler = optuna.samplers.TPESampler()
+            sampler = optuna.samplers.TPESampler(n_startup_trials=5)
             study = optuna.create_study(study_name=study_name,directions=['minimize'],
                                         storage=storage_name,sampler=sampler,
                                         pruner=pruner,load_if_exists=True)
         else:
             print(f'{bcolors.YELLOW}Maximizing AUC{bcolors.RESET}')
             pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
-            sampler = optuna.samplers.TPESampler()
+            sampler = optuna.samplers.TPESampler(n_startup_trials=5)
             study = optuna.create_study(study_name=study_name,directions=['maximize'],
                                         storage=storage_name,sampler=sampler,
                                         pruner=pruner,load_if_exists=True)
