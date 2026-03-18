@@ -256,7 +256,8 @@ def linear_weights(n):
 
 def get_AUC(config, vae, device,criterion):
     print(f'{bcolors.BG_RED}Launching Normal/Anomaly classification{bcolors.RESET}')
-    results = {}
+    
+    linear_weights(n)
     for Anomaly in ['Underconnectivity','Overconnectivity']:
         aucs_list = []
         class_subjects       = read_one_column_tsv(config.Class_val_list)
@@ -296,7 +297,7 @@ def get_AUC(config, vae, device,criterion):
         max_bundles = df['Bundles'].max()
         errors_weights = linear_weights(max_bundles)
         print(f'max min bundles: {max_bundles} {min_bundles}')
-        
+        auc_weights = linear_weights(max_bundles)
         for nbun in range(1,max_bundles+1):
             embeddings_anomaly = []
             anomaly_subset, nsubjects = create_subset_for_anomaly(config,Anomaly,anomaly_group,nbun)
