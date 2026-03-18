@@ -98,7 +98,7 @@ def objective(trial, config):
             v = 1
             while v <= high:
                 if v >= low:
-                    batch_size_lists.append(v)
+                    batch_size_list.append(v)
                 v *= 2
             print('Batch size to try:', batch_size_list)
             LATENT_DIMENSIONS = trial.suggest_categorical("Batch size", batch_size_list)
