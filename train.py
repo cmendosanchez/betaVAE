@@ -333,7 +333,7 @@ def get_AUC(config, vae, device,criterion):
 
         weighted_aucs = np.asarray(aucs_list) * auc_weights
         resulting_aucs[Anomaly] = np.sum(weighted_aucs)
-        print(f'{bcolors.RED}Final AUC {Anomaly}: {np.sum(weighted_aucs)}{bcolors.RESET}')
+        print(f'{bcolors.RED}Final AUC {Anomaly}: {np.sum(weighted_aucs)} {individual_aucs}{bcolors.RESET}')
     return resulting_aucs, individual_aucs
 
 def train_vae_optuna(config, trial,root_dir=None):
