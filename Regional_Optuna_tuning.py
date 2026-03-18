@@ -101,7 +101,7 @@ def objective(trial, config):
                     batch_size_list.append(v)
                 v *= 2
             print('Batch size to try:', batch_size_list)
-            LATENT_DIMENSIONS = trial.suggest_categorical("Batch size", batch_size_list)
+            BATCH_SIZE = trial.suggest_categorical("Batch size", batch_size_list)
 
         elif isinstance(config.optuna_batch_size, int):
             BATCH_SIZE = config.optuna_batch_size
