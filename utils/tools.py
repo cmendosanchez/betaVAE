@@ -15,23 +15,25 @@ class EarlyStopping:
         
         self.best_loss = None
         self.best_model_state = None
+        self.best_optimizer_state = None
+        
         self.no_improvement_count = 0
         self.stop_training = False
 
-    def check_early_stop(self, val_loss, epoch, model):
+    def check_early_stop(self, val_loss, epoch, model, optimizer):
 
         # Do not activate early stopping yet
         if epoch < self.start_epoch:
             if self.best_loss is None or val_loss < self.best_loss:
                 self.best_loss = val_loss
-                self._save(model)
+                self._save(model, optimizer, epoch)
             return
 
         # Improvement
         if self.best_loss is None or val_loss < self.best_loss - self.delta:
             self.best_loss = val_loss
             self.no_improvement_count = 0
-            self._save(model)
+            self._save(model, optimizer, epoch)
 
         # No improvement
         else:
@@ -42,11 +44,19 @@ class EarlyStopping:
                 if self.verbose:
                     print("Stopping early as no improvement has been observed.")
 
-    def _save(self, model):
+    def _save(self, model, optimizer, epoch):
         if self.save_best:
-            torch.save(model.state_dict(), self.path)
+            torch.save({
+                "epoch": epoch,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "best_loss": self.best_loss
+            }, self.path)
+
             if self.verbose:
-                print("✅ Best model saved")
+                print("✅ Best model + optimizer saved")
+
         else:
-            # store in memory instead
+            # store in memory
             self.best_model_state = copy.deepcopy(model.state_dict())
+            self.best_optimizer_state = copy.deepcopy(optimizer.state_dict())

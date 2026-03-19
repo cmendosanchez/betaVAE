@@ -490,7 +490,7 @@ def train_vae_optuna(config, trial,root_dir=None):
         if trial.should_prune():
             raise optuna.exceptions.TrialPruned()
 
-        early_stopping.check_early_stop(val_recon_loss, epoch,  vae)
+        early_stopping.check_early_stop(val_recon_loss, epoch,  vae, optimizer)
 
         if early_stopping.stop_training:
             affine = np.eye(4)
@@ -520,8 +520,8 @@ def train_vae_optuna(config, trial,root_dir=None):
 
             for key,val in individual_auc.items():
                 trial.set_user_attr(key, val)
-
             break
+
         # prints on the terminal
         print(f"{bcolors.YELLOW}[{epoch}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
         print(f"{bcolors.YELLOW}[{epoch}] Val KL loss: {val_kl_loss}        {bcolors.RESET}")
@@ -674,7 +674,7 @@ def train_vae_model(config, trial,root_dir=None):
         #Save epoch val loss
         list_val_recon_loss.append(val_recon_loss)
 
-        early_stopping.check_early_stop(val_recon_loss, epoch, vae)
+        early_stopping.check_early_stop(val_recon_loss, epoch, vae, optimizer)
 
         if early_stopping.stop_training:
             affine = np.eye(4)
@@ -690,7 +690,12 @@ def train_vae_model(config, trial,root_dir=None):
             nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
             nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
             nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
-            torch.save(vae.state_dict(), config.path_model)
+            torch.save({
+                "epoch": epoch,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "best_loss": self.best_loss
+            }, config.path_model)
             break
 
         # prints on the terminal
