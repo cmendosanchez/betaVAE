@@ -255,12 +255,13 @@ def linear_weights(n):
     return weights / weights.sum()
 
 def get_AUC(config, vae, device,criterion):
-    try:
-        print(f'{bcolors.BG_RED} Launching Normal/Anomaly classification {bcolors.RESET}')
-        resulting_aucs  = {}
-        individual_aucs = {'Underconnectivity_list' : [] , 'Overconnectivity_list' : [] }
-
-        for Anomaly in ['Underconnectivity','Overconnectivity']:
+    
+    print(f'{bcolors.BG_RED} Launching Normal/Anomaly classification {bcolors.RESET}')
+    resulting_aucs  = {}
+    individual_aucs = {'Underconnectivity_list' : [] , 'Overconnectivity_list' : [] }
+ 
+    for Anomaly in ['Underconnectivity','Overconnectivity']:
+        try:
             aucs_list = []
             class_subjects       = read_one_column_tsv(config.Class_val_list)
             mid = int(len(class_subjects) // 2)
@@ -336,11 +337,16 @@ def get_AUC(config, vae, device,criterion):
             weighted_aucs = np.asarray(aucs_list) * auc_weights
             resulting_aucs[Anomaly] = np.sum(weighted_aucs)
 
-        print(f'{bcolors.RED}Final AUC: {resulting_aucs} {individual_aucs}{bcolors.RESET}')
-        return resulting_aucs, individual_aucs
-    except Exception as e:
-        print(e)
-        return {'Exception':np.nan},{'Exception':np.nan}
+            print(f'{bcolors.RED}Final AUC: {resulting_aucs} {individual_aucs}{bcolors.RESET}')
+
+        except:
+            individual_aucs[Anomaly+'_list'] = np.nan
+            resulting_aucs[Anomaly] = np.nan
+            continue
+        
+    return resulting_aucs, individual_aucs
+
+
 
 def train_vae_optuna(config, trial,root_dir=None):
     """ Trains beta-VAE for a given hyperparameter configuration
