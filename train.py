@@ -384,7 +384,6 @@ def train_vae_optuna(config, trial,root_dir=None):
 
     list_loss_train, list_val_recon_loss, = [], []
     list_aucs = []
-    list_anom_rcon = []
 
     train_subjects      = read_one_column_tsv(config.Train_list)
     n_train             = int(len(train_subjects) * config.sub_perc)
@@ -574,11 +573,9 @@ def train_vae_model(config, trial,root_dir=None):
 
     #optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
     optimizer = torch.optim.AdamW(vae.parameters(), lr=lr, weight_decay=weight_decay)
-    early_stopping = EarlyStopping(patience=config.patience, delta=config.delta, verbose=True)
+    early_stopping = EarlyStopping(patience=config.patience, delta=config.delta, verbose=True, save_best=True,path=config.path_model)
 
     list_loss_train, list_val_recon_loss, = [], []
-    list_aucs = []
-    list_anom_rcon = []
 
     train_subjects      = read_one_column_tsv(config.Train_list)
     n_train             = int(len(train_subjects) * config.sub_perc)
@@ -691,6 +688,7 @@ def train_vae_model(config, trial,root_dir=None):
             nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
             nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
             nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+            torch.save(model.state_dict(), config.path_model)
             break
 
         # prints on the terminal
@@ -701,5 +699,5 @@ def train_vae_model(config, trial,root_dir=None):
         torch.cuda.empty_cache()      
         vae.train()
 
-    print(f"{bcolors.BG_GREEN}Finished Optuna Trial in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 
-    return min(list_val_recon_loss)
+    print(f"{bcolors.BG_GREEN}Finished Train in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 
+    return list_loss_train, 
