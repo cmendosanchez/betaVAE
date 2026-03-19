@@ -294,6 +294,7 @@ def get_AUC(config, vae, device,criterion):
             flat = list(chain.from_iterable(data))
             df = pd.DataFrame(flat)
             if df.empty:
+                print(f'{bcolors.CYAN}Dataframe is empty!{bcolors.RESET}')
                 continue 
 
             min_bundles = df['Bundles'].min()
