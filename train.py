@@ -490,7 +490,7 @@ def train_vae_optuna(config, trial,root_dir=None):
         if trial.should_prune():
             raise optuna.exceptions.TrialPruned()
 
-        early_stopping.check_early_stop(val_recon_loss, epoch)
+        early_stopping.check_early_stop(val_recon_loss, epoch,  model)
 
         if early_stopping.stop_training:
             affine = np.eye(4)
@@ -508,7 +508,6 @@ def train_vae_optuna(config, trial,root_dir=None):
                 trial.set_user_attr(key, val)
             break
         
-
         if epoch == config.nb_epoch:
             affine = np.eye(4)
             nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
@@ -587,14 +586,14 @@ def train_vae_model(config, trial,root_dir=None):
     print(f'Nsubjects Train: {len(train_subjects)}')
     set_train = create_subset_from_list(config,train_subjects)
     start_loading = time.time()
-    trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=6, shuffle=True)
+    trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=12, shuffle=True)
     print(f"{bcolors.MAGENTA}-- -Created trainloader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
 
     validation_subjects = read_one_column_tsv(config.Rcon_val_list)
     n_val = int(len(validation_subjects) * config.sub_perc)
     validation_subjects = validation_subjects[:n_val]
     set_val   = create_subset_from_list(config,validation_subjects)
-    valloader = torch.utils.data.DataLoader(set_val,batch_size=32,num_workers=4, shuffle=False)
+    valloader = torch.utils.data.DataLoader(set_val,batch_size=32,num_workers=6, shuffle=False)
     csv_val = f'{config.save_dir}validation_list.csv'
     df_v = pd.DataFrame(validation_subjects, columns=['Subject'])
     df_v.to_csv(csv_val, index=False)
@@ -640,7 +639,7 @@ def train_vae_model(config, trial,root_dir=None):
         print(f"{bcolors.GREEN}[{epoch}] Train KL loss: {train_kl_loss}        {bcolors.RESET}")
         print(f"{bcolors.GREEN}[{epoch}] Train loss: {train_running_loss}      {bcolors.RESET}")
 
-        #Save epoch loss
+        #Save epoch train loss
         list_loss_train.append(train_running_loss)
 
         # Validation losses
@@ -672,7 +671,10 @@ def train_vae_model(config, trial,root_dir=None):
         val_kl_loss        /=  len(validation_subjects)
         val_running_loss   /=  len(validation_subjects)
         
-        early_stopping.check_early_stop(val_recon_loss, epoch)
+        #Save epoch val loss
+        list_val_recon_loss.append(val_recon_loss)
+
+        early_stopping.check_early_stop(val_recon_loss, epoch, model)
 
         if early_stopping.stop_training:
             affine = np.eye(4)
