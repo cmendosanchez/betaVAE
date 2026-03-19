@@ -283,9 +283,9 @@ def get_AUC(config, vae, device,criterion):
                         partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) 
             
             embeddings_normal = np.vstack(embeddings_normal)
-            y_normal = np.asarray([0]*len(normal_group)).reshape(-1)
-            anomaly_group = class_subjects[mid:]
+            y_normal = np.asarray([0]*len(normal_loader.dataset)).reshape(-1)
 
+            anomaly_group = class_subjects[mid:]
             with open(f'{config.path_stats}{Anomaly}_{config.Criteria}.pkl', 'rb') as file:
                 results = pickle.load(file)
 
@@ -297,6 +297,7 @@ def get_AUC(config, vae, device,criterion):
 
             min_bundles = df['Bundles'].min()
             max_bundles = df['Bundles'].max()
+            
             errors_weights = linear_weights(max_bundles)
             print(f'max min bundles: {max_bundles} {min_bundles}')
             auc_weights = linear_weights(max_bundles)
@@ -304,8 +305,8 @@ def get_AUC(config, vae, device,criterion):
                 embeddings_anomaly = []
                 anomaly_subset, nsubjects = create_subset_for_anomaly(config,Anomaly,anomaly_group,nbun)
                 print(f'Nbundles {nbun} Nsubjects {nsubjects}')
-                anomloader = torch.utils.data.DataLoader(anomaly_subset,batch_size=32,num_workers=4, shuffle=False)
-                for inputs, path in anomloader:
+                anom_loader = torch.utils.data.DataLoader(anomaly_subset,batch_size=32,num_workers=4, shuffle=False)
+                for inputs, path in anom_loader:
                     with torch.no_grad():
                         inputs = Variable(inputs).to(device, dtype=torch.float32)
                         output, z, logvar = vae(inputs)
@@ -534,3 +535,172 @@ def train_vae_optuna(config, trial,root_dir=None):
     print(f"{bcolors.BG_GREEN}Finished Optuna Trial in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 
     return min(list_val_recon_loss)
 
+
+
+def train_vae_optuna(config, trial,root_dir=None):
+    """ Trains beta-VAE for a given hyperparameter configuration
+    Args:
+        config: instance of class Config
+        trainloader: torch loader of training data
+        valloader: torch loader of validation data
+        root_dir: str, directory where to save model
+    Returns:
+        vae: trained model
+        final_loss_val
+    """
+    start_time = time.time()
+    torch.manual_seed(5)
+
+    #writer = SummaryWriter(log_dir= config.save_dir+'logs/',comment="")
+    lr = config.lr
+    weight_decay= config.weight_decay
+    
+    vae = VAE(config.in_shape, config.n, depth=config.depth, loss_selected=config.loss)
+    device = "cpu"
+    if torch.cuda.is_available():
+        device = "cuda:0"
+    vae.to(device)
+
+    #summary(vae, list(config.in_shape))
+    print(f'{bcolors.MAGENTA}train_vae_optuna() \n Config:\n{config}{bcolors.RESET}')
+    if config.loss == 'CrossEntropy':
+        print('Using Cross Entropy Loss, reduction=sum')
+        weights = [1, 2]
+        class_weights = torch.FloatTensor(weights).to(device)
+        criterion = nn.CrossEntropyLoss(weight=class_weights, reduction='sum')
+        
+    elif config.loss == 'MSE':
+        print('Using Mean Square Error Loss, reduction=sum')
+        criterion = nn.MSELoss(reduction='sum')
+
+    #optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
+    optimizer = torch.optim.AdamW(vae.parameters(), lr=lr, weight_decay=weight_decay)
+    early_stopping = EarlyStopping(patience=config.patience, delta=config.delta, verbose=True)
+
+    list_loss_train, list_val_recon_loss, = [], []
+    list_aucs = []
+    list_anom_rcon = []
+
+    train_subjects      = read_one_column_tsv(config.Train_list)
+    n_train             = int(len(train_subjects) * config.sub_perc)
+    train_subjects      = train_subjects[:n_train]
+    csv_train           = f'{config.save_dir}train_list.csv'
+    df_t                = pd.DataFrame(train_subjects, columns=['Subject'])
+    df_t.to_csv(csv_train, index=False)
+    print(f"Data written to {csv_train}")
+    print(f'Nsubjects Train: {len(train_subjects)}')
+    set_train = create_subset_from_list(config,train_subjects)
+    start_loading = time.time()
+    trainloader = torch.utils.data.DataLoader(set_train,batch_size=config.batch_size,num_workers=6, shuffle=True)
+    print(f"{bcolors.MAGENTA}-- -Created trainloader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
+
+    validation_subjects = read_one_column_tsv(config.Rcon_val_list)
+    n_val = int(len(validation_subjects) * config.sub_perc)
+    validation_subjects = validation_subjects[:n_val]
+    set_val   = create_subset_from_list(config,validation_subjects)
+    valloader = torch.utils.data.DataLoader(set_val,batch_size=32,num_workers=4, shuffle=False)
+    csv_val = f'{config.save_dir}validation_list.csv'
+    df_v = pd.DataFrame(validation_subjects, columns=['Subject'])
+    df_v.to_csv(csv_val, index=False)
+    print(f"Data written to {csv_val}")
+    print(f'Validation:{len(validation_subjects)}')
+    
+    vae.train()
+    for epoch in range(1,config.nb_epoch+1):
+        start_time_epoch = time.time()
+        print(f'{bcolors.RED}{bcolors.UNDERLINE}~~ Starting epoch {epoch}{bcolors.RESET}')
+        #Defined epoch losses
+        train_recon_loss   = 0.0
+        train_kl_loss      = 0.0
+        train_running_loss = 0.0
+
+        for inputs, path in trainloader: #Training
+            optimizer.zero_grad()
+            inputs = Variable(inputs).to(device, dtype=torch.float32)
+            output, z, logvar = vae(inputs)
+
+            if config.loss == 'CrossEntropy':
+                target = torch.squeeze(inputs, dim=1).long()
+                partial_recon_loss, partial_kl_loss, partial_loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl) 
+                output = torch.argmax(output, dim=1) 
+            
+            elif config.loss== 'MSE':
+                partial_recon_loss, partial_kl_loss, partial_loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) 
+
+            partial_loss.backward()
+            optimizer.step()
+            #Update errors
+            train_recon_loss    += partial_recon_loss
+            train_kl_loss       += partial_kl_loss
+            train_running_loss  += partial_loss.item()
+
+        print(f'--- %s seconds epoch --- {time.time() - start_time_epoch}')
+
+        train_recon_loss      /=  len(train_subjects)
+        train_kl_loss         /=  len(train_subjects)
+        train_running_loss    /=  len(train_subjects)
+
+        print(f"{bcolors.GREEN}[{epoch}] Train Recon loss: {train_recon_loss}  {bcolors.RESET}")
+        print(f"{bcolors.GREEN}[{epoch}] Train KL loss: {train_kl_loss}        {bcolors.RESET}")
+        print(f"{bcolors.GREEN}[{epoch}] Train loss: {train_running_loss}      {bcolors.RESET}")
+
+        #Save epoch loss
+        list_loss_train.append(train_running_loss)
+
+        # Validation losses
+        val_recon_loss   = 0.0
+        val_kl_loss      = 0.0
+        val_running_loss = 0.0
+
+        vae.eval() #Eval mode
+        for inputs, path in valloader:
+            with torch.no_grad():
+                inputs = Variable(inputs).to(device, dtype=torch.float32)
+                output, z, logvar = vae(inputs)
+                #print('tensor shape',inputs.shape,output.shape)
+                if config.loss == 'CrossEntropy':
+                    target = torch.squeeze(inputs, dim=1).long()
+                    partial_recon_loss_val, partial_kl_loss_val, partial_loss_val = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
+                    output = torch.argmax(output, dim=1)
+
+                elif config.loss == 'MSE':
+                    partial_recon_loss_val, partial_kl_loss_val, partial_loss_val = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl)
+
+                #Update losses for each sample
+                val_recon_loss    += partial_recon_loss_val.cpu().numpy()
+                val_kl_loss       += partial_kl_loss_val
+                val_running_loss  += partial_loss_val.item()
+
+        #Average
+        val_recon_loss     /=  len(validation_subjects)
+        val_kl_loss        /=  len(validation_subjects)
+        val_running_loss   /=  len(validation_subjects)
+        
+        early_stopping.check_early_stop(val_recon_loss, epoch)
+
+        if early_stopping.stop_training:
+            affine = np.eye(4)
+            nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
+            nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
+            nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
+            nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+            break
+
+        if epoch == config.nb_epoch:
+            affine = np.eye(4)
+            nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
+            nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
+            nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
+            nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+            break
+
+        # prints on the terminal
+        print(f"{bcolors.YELLOW}[{epoch}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
+        print(f"{bcolors.YELLOW}[{epoch}] Val KL loss: {val_kl_loss}        {bcolors.RESET}")
+        print(f"{bcolors.YELLOW}[{epoch}] Val loss: {val_running_loss}      {bcolors.RESET}")
+
+        torch.cuda.empty_cache()      
+        vae.train()
+
+    print(f"{bcolors.BG_GREEN}Finished Optuna Trial in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 
+    return min(list_val_recon_loss)
