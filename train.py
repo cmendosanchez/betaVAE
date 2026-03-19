@@ -337,13 +337,14 @@ def get_AUC(config, vae, device,criterion):
             weighted_aucs = np.asarray(aucs_list) * auc_weights
             resulting_aucs[Anomaly] = np.sum(weighted_aucs)
 
-            print(f'{bcolors.RED}Final AUC: {resulting_aucs} {individual_aucs}{bcolors.RESET}')
+            
 
         except:
             individual_aucs[Anomaly+'_list'] = np.nan
             resulting_aucs[Anomaly] = np.nan
             continue
         
+    print(f'{bcolors.RED}Final AUC: {resulting_aucs} {individual_aucs}{bcolors.RESET}')
     return resulting_aucs, individual_aucs
 
 
