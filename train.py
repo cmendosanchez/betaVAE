@@ -536,8 +536,7 @@ def train_vae_optuna(config, trial,root_dir=None):
     return min(list_val_recon_loss)
 
 
-
-def train_vae_optuna(config, trial,root_dir=None):
+def train_vae_model(config, trial,root_dir=None):
     """ Trains beta-VAE for a given hyperparameter configuration
     Args:
         config: instance of class Config
