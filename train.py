@@ -295,6 +295,8 @@ def get_AUC(config, vae, device,criterion):
             df = pd.DataFrame(flat)
             if df.empty:
                 print(f'{bcolors.CYAN}Dataframe is empty!{bcolors.RESET}')
+                individual_aucs[Anomaly+'_list'] = np.nan
+                resulting_aucs[Anomaly] = np.nan
                 continue 
 
             min_bundles = df['Bundles'].min()
