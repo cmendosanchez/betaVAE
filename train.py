@@ -312,7 +312,7 @@ def get_AUC(config, vae, device,criterion):
                         embeddings_anomaly.append(z.cpu().numpy())
 
                 embeddings_anomaly = np.vstack(embeddings_anomaly)
-                y_anomaly = np.asarray([1]*len(nsubjects)).reshape(-1)
+                y_anomaly = np.asarray([1]*nsubjects).reshape(-1)
 
                 X = np.vstack((embeddings_normal, embeddings_anomaly))
                 y = np.concatenate((y_normal, y_anomaly))
