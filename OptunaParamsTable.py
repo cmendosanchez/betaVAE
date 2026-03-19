@@ -56,7 +56,7 @@ def main():
             for t in top_trials:
                 over_auc = t.user_attrs.get("Overconnectivity")
                 under_auc = t.user_attrs.get("Underconnectivity")
-                print(t.value,'AUC over:',over_auc,'AUC under:',under_auc)
+                print(t.params,t.value,'AUC over:',over_auc,'AUC under:',under_auc)
                 #print(f"{bcolors.YELLOW}Trial {t.number} | value = {t.value} | Overconnectivity AUC = {val}{bcolors.RESET}")
 
 
