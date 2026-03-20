@@ -254,7 +254,7 @@ def linear_weights(n):
     weights = np.arange(n, 0, -1)   # n, n-1, ..., 1
     return weights / weights.sum()
 
-def get_AUC(config, vae, device,criterion):
+def get_AUC(config, vae, device, criterion):
     
     print(f'{bcolors.BG_RED} Launching Normal/Anomaly classification {bcolors.RESET}')
     resulting_aucs  = {}
@@ -342,7 +342,8 @@ def get_AUC(config, vae, device,criterion):
 
             
 
-        except:
+        except Exception as e:
+            print(e)
             individual_aucs[Anomaly+'_list'] = np.nan
             resulting_aucs[Anomaly] = np.nan
             continue

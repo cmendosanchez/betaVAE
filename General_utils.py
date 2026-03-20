@@ -622,3 +622,7 @@ def adjust_in_shape(config):
             dim+=(2**config.depth-r)
         dims.append(dim)
     return((1, dims[0]+4, dims[1], dims[2]))
+
+
+
+

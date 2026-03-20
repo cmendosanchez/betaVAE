@@ -393,8 +393,8 @@ def create_anomaly_set(config,subjects_ids):
         subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
         #print('------- Successfully created dataset subset')
         return subset
-    except:
-        print('Error during creation of subset from list')
+    except Exception as e:
+        print(f'Error during creation of subset from list: {e}')
 
 
 def get_subjects_by_removed_number(config, number):
@@ -496,5 +496,5 @@ def create_subset_for_anomaly(config,Anomaly,anomaly_ids,nbun):
         subset = SkeletonDataset(config=config, dataframe=tmp, filenames=filenames)
         #print('------- Successfully created dataset subset')
         return subset, nsubs
-    except:
-        print('Error during creation of subset from list')
+    except Exception as e:
+        print(f'Error during creation of subset from list: {e}')

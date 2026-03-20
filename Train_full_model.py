@@ -86,7 +86,6 @@ def train(config):
     # Configuration step
     config = process_config(config)
     torch.manual_seed(3)
-    config.save_dir = config.save_dir + f"/{now:%Y-%m-%d}/{config.dataset_name}_dim_{config.n}_beta_{config.kl}_{now:%H-%M-%S}/"
     # Create the save directory
     try:
         os.makedirs(config.save_dir)
