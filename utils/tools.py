@@ -54,7 +54,7 @@ class EarlyStopping:
             }, self.path)
 
             if self.verbose:
-                print("✅ Best model + optimizer saved")
+                print("Best model + optimizer saved")
 
         else:
             # store in memory
