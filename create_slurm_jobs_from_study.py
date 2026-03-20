@@ -5,7 +5,7 @@ from colors import bcolors
 from datetime import datetime
 import pandas as pd
 #EXAMPLE
-#python create_slurm_jobs_from_study.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/slurm_files/Train_6Regions_FullModel --train_tag 6Regions --dataset_folder /lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions --epochs 50 --path_params ../../../../OptunaResults/summary.csv
+#python3 create_slurm_jobs_from_study.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/slurm_files/Train_6Regions_FullModel --train_tag 6Regions --dataset_folder /lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions --epochs 50 --path_params ../../../../OptunaResults/summary.csv --delta 150 --patience 5
 
 
 def format_range(values):
@@ -169,7 +169,7 @@ def main():
                 #SBATCH --nodes=1
                 #SBATCH --ntasks-per-node=1
                 #SBATCH --gres=gpu:1
-                #SBATCH --cpus-per-task=24
+                #SBATCH --cpus-per-task=48
                 #SBATCH --hint=nomultithread
                 #SBATCH --time=20:00:00
                 #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/{job_name}/{job_name}%j.out
