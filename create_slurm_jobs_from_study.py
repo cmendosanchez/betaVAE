@@ -93,7 +93,7 @@ def parse_args():
     parser.add_argument(
         "--delta",
         type=float,
-        default=5,
+        default=150,
         help="Delta for Early Stopping"
     )
 
