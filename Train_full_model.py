@@ -81,9 +81,6 @@ def train(config):
     print(f'{bcolors.GREEN}{bcolors.UNDERLINE}Launching Train_full_model.py{bcolors.RESET}')
     print(f'{bcolors.YELLOW}Config:{config}{bcolors.RESET}')
     
-    if not os.path.exists(STUDY_FOLDER_):
-        os.makedirs(STUDY_FOLDER_,exist_ok=True)
-
     print("Load data and generate torch datasets within train")
     config.in_shape = adjust_in_shape(config)
     # Configuration step
