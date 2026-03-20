@@ -153,6 +153,7 @@ def main():
                     f"+patience={patience} "
                     f"+delta={delta} "
                     f"+dataset_folder={dataset_folder} "
+                    f"+path_model=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/{job_name}/model.pt "
                     f"n={ndims} "
                     f"kl={beta} "
                     f"lr={lr} "
