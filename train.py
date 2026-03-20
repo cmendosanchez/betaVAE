@@ -391,7 +391,7 @@ def train_vae_optuna(config, trial,root_dir=None):
 
     #optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
     optimizer = torch.optim.AdamW(vae.parameters(), lr=lr, weight_decay=weight_decay)
-    early_stopping = EarlyStopping(patience=config.patience, delta=config.delta, verbose=True)
+    early_stopping = EarlyStopping(patience=config.patience, delta=config.delta, start_epoch=5, verbose=True)
 
     list_loss_train, list_val_recon_loss, = [], []
     list_aucs = []
