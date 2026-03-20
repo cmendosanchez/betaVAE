@@ -3,11 +3,9 @@ import argparse
 import textwrap
 from colors import bcolors
 from datetime import datetime
-from optuna.storages import JournalStorage
-from optuna.storages.journal import JournalFileBackend
-import optuna
+import pandas as pd
 #EXAMPLE
-#python create_slurm_jobs_from_study.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left --optuna_study ../../../../OptunaResults --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/slurm_files/Train_6Regions_2 --train_tag 6Regions_with_anom --dataset_folder /lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions --epochs 50 --beta 0.01 10 --sub_perc 1.0 --ntrials 12 --nworkers 3 --anom Underconnectivity Overconnectivity
+#python create_slurm_jobs_from_study.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/slurm_files/Train_6Regions_FullModel --train_tag 6Regions --dataset_folder /lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions --epochs 50 --path_params ../../../../OptunaResults/summary.csv
 
 
 def format_range(values):
@@ -45,12 +43,6 @@ def parse_args():
         help="List of region names"
     )
 
-    parser.add_argument(
-        "--optuna_study",
-        type=str,
-        default=10,
-        help="Path to_optuna_study"
-    )
 
     parser.add_argument(
         "--output",
@@ -86,47 +78,9 @@ def parse_args():
 
     parser.add_argument(
         "--epochs",
-        nargs="+",
-        default=[50],
         type=int,
+        default=50,
         help="Number of epochs"
-    )
-
-    parser.add_argument(
-        "--ndims",
-        nargs="+",
-        default=[32,256],
-        type=int,
-        help="Number of latent dimensions"
-    )
-
-    parser.add_argument(
-        "--beta",
-        nargs="+",
-        default=[0.01,10],
-        type=float,
-        help="Beta"
-    )
-
-    parser.add_argument(
-        "--sub_perc",
-        type=float,
-        default=0.05,
-        help="Subject percentage (default: 0.05)"
-    )
-
-    parser.add_argument(
-        "--ntrials",
-        type=int,
-        default=10,
-        help="Number of optuna trials (default: 10)"
-    )
-
-    parser.add_argument(
-        "--nworkers",
-        type=int,
-        default=5,
-        help="Number of optuna workers(default: 5)"
     )
 
     parser.add_argument(
@@ -144,10 +98,10 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--anom",
-        nargs="+",
-        default=['None'],
-        help="Anom to to use (Underconnectivity/Overconnectivity)"
+        "--path_params",
+        type=str,
+        required=True,
+        help="Path to .csv containing the parameters"
     )
 
     return parser.parse_args()
@@ -166,100 +120,84 @@ def main():
     output         = args.output
     dataset_folder = args.dataset_folder
     train_tag      = args.train_tag
-    optuna_study   = args.optuna_study
-    epochs         = args.epochs
-    beta           = args.beta
-    ndims          = args.ndims
-    anoms          = args.anom
-    ntrials        = args.ntrials
-    sub_perc       = args.sub_perc
-    nworkers       = args.nworkers
     patience       = args.patience
     delta          = args.delta
+    epochs         = args.epochs
+    path_params    = args.path_params
 
     os.makedirs(output, exist_ok=True)
+    for database in databases:
+        for region in region_list:
+            for mode in modes:
+                config_name = f"{database}_{region}_{mode}"
+                
+                df = pd.read_csv(path_params)
+                params  = df[
+                (df["Region"] == region) & 
+                (df["Seg. Criteria"] == mode)
+                ]
 
-    for anom in anoms:
-        for database in databases:
-            for region in region_list:
+                ndims = params['Dimensions'].iloc[0]
+                beta  = params['Beta'].iloc[0]
+                lr    = params['Learning Rate'].iloc[0]
+                batch_size = params['Batch size'].iloc[0]
+                weight_decay = params['Weight decay'].iloc[0]
 
-                for mode in modes:
+                #job_name = f'{config_name}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}'
+                job_name = f'{config_name}'
+                print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
+                python_call = (
+                    f"python3 Train_full_model.py "
+                    f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/{job_name} "
+                    f"+dataset=UKB_Train_{train_tag}/{config_name} "
+                    f"+patience={patience} "
+                    f"+delta={delta} "
+                    f"+dataset_folder={dataset_folder} "
+                    f"n={ndims} "
+                    f"kl={beta} "
+                    f"lr={lr} "
+                    f"batch_size={batch_size} "
+                    f"weight_decay={weight_decay} "
+                    f"nb_epoch={epochs}")
 
-                    if anom != 'None':
-                        config_name = f"{database}_{region}_{mode}_{anom}"
-                    else:
-                        config_name = f"{database}_{region}_{mode}"
+                script = textwrap.dedent(f"""\
+                #!/bin/bash
+                #SBATCH --job-name={job_name}
+                #SBATCH -C v100-32g
+                ##SBATCH -C h100
+                #SBATCH --nodes=1
+                #SBATCH --ntasks-per-node=1
+                #SBATCH --gres=gpu:1
+                #SBATCH --cpus-per-task=24
+                #SBATCH --hint=nomultithread
+                #SBATCH --time=20:00:00
+                #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/{job_name}/{job_name}%j.out
+                #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/{job_name}/{job_name}%j.out
+                ##SBATCH -A miu@v100
+                ##SBATCH -A miu@h100
+                #SBATCH -A miu@v100
 
-                     # Load study
-                    journal_path = os.path.join(f'{args.optuna_study}/{database}_{region}_{mode}', "journal.log")
-                    storage = JournalStorage(JournalFileBackend(journal_path))
-                    study_name="journal_storage_multiprocess"
-                    study = optuna.load_study(
-                        study_name=study_name,
-                        storage=storage)
+                module purge
+                ##module load arch/h100
+                module load pytorch-gpu/py3/2.8.0
 
-                    best_trial = study.best_trial
-                    Params = best_trial.params
-                    print(Params)
-                    #job_name = f'{config_name}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}'
-                    job_name = f'{config_name}'
-                    print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
-                    python_call = (
-                        f"python3 Regional_Optuna_tuning.py "
-                        f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults2/{job_name} "
-                        f"+dataset=UKB_Train_{train_tag}/{config_name} "
-                        f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults2/{job_name} "
-                        f"+optuna_lr={Params['Learning Rate']} "
-                        f"+optuna_batch_size={Params['Batch size']} "
-                        f"+optuna_epoch={format_range(epochs)} "
-                        f"+optuna_ndim={format_range(ndims)} "
-                        f"+optuna_beta={format_range(beta)} "
-                        f"+optuna_sub_perc={sub_perc} "
-                        f"+optuna_ntrials={ntrials} "
-                        f"+optuna_nworkers={nworkers} "
-                        f"+optuna_weight_decay={Params['Weight decay']} "
-                        f"+patience={patience} "
-                        f"+delta={delta} "
-                        f"+dataset_folder={dataset_folder}"
-                    )
+                nvidia-smi
+                lscpu
+                free -h
 
-                    script = textwrap.dedent(f"""\
-                    #!/bin/bash
-                    #SBATCH --job-name={job_name}
-                    ##SBATCH -C v100-32g
-                    #SBATCH -C h100
-                    #SBATCH --nodes=1
-                    #SBATCH --ntasks-per-node=1
-                    #SBATCH --gres=gpu:1
-                    #SBATCH --cpus-per-task=96
-                    #SBATCH --hint=nomultithread
-                    #SBATCH --time=10:00:00
-                    #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults2/{job_name}/{job_name}%j.out
-                    #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults2/{job_name}/{job_name}%j.out
-                    ##SBATCH -A miu@v100
-                    #SBATCH -A miu@h100
+                echo $SLURM_MEM_PER_CPU
+                echo $SLURM_CPUS_PER_TASK
 
-                    module purge
-                    module load arch/h100
-                    module load pytorch-gpu/py3/2.8.0
+                set -x
 
-                    nvidia-smi
-                    lscpu
-                    free -h
+                cd $WORK
+                cd PhD_2026/betaVAE
 
-                    echo $SLURM_MEM_PER_CPU
-                    echo $SLURM_CPUS_PER_TASK
+                {python_call}
+                """)
 
-                    set -x
-
-                    cd $WORK
-                    cd PhD_2026/betaVAE
-
-                    {python_call}
-                    """)
-
-                    with open(f"{output}/{job_name}.slurm", "w") as f:
-                        f.write(script)
+                with open(f"{output}/{job_name}.slurm", "w") as f:
+                    f.write(script)
 
 
 if __name__ == "__main__":

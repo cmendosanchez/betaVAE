@@ -544,7 +544,7 @@ def train_vae_optuna(config, trial,root_dir=None):
     return min(list_val_recon_loss)
 
 
-def train_vae_model(config, trial,root_dir=None):
+def train_vae_model(config, root_dir=None):
     """ Trains beta-VAE for a given hyperparameter configuration
     Args:
         config: instance of class Config
@@ -558,7 +558,6 @@ def train_vae_model(config, trial,root_dir=None):
     start_time = time.time()
     torch.manual_seed(5)
 
-    #writer = SummaryWriter(log_dir= config.save_dir+'logs/',comment="")
     lr = config.lr
     weight_decay= config.weight_decay
     
@@ -569,7 +568,7 @@ def train_vae_model(config, trial,root_dir=None):
     vae.to(device)
 
     #summary(vae, list(config.in_shape))
-    print(f'{bcolors.MAGENTA}train_vae_optuna() \n Config:\n{config}{bcolors.RESET}')
+    print(f'{bcolors.MAGENTA}train_vae_model() \n Config:\n{config}{bcolors.RESET}')
     if config.loss == 'CrossEntropy':
         print('Using Cross Entropy Loss, reduction=sum')
         weights = [1, 2]
@@ -717,4 +716,4 @@ def train_vae_model(config, trial,root_dir=None):
         vae.train()
 
     print(f"{bcolors.BG_GREEN}Finished Train in  --- {time.time() - start_time} seconds ---{bcolors.RESET}") 
-    return list_loss_train, 
+    return 
