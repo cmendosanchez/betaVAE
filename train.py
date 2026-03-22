@@ -711,10 +711,11 @@ def train_vae_model(config, root_dir=None):
                 "model_state_dict": vae.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict()}, config.path_model)
 
+
             data_dict = {'LossTrain': list_loss_train,'klTrain':list_kl_loss_train,'ReconTrain':list_recon_loss_train,
             'LossVal':list_recon_loss_val,'klVal':list_kl_loss_val,'ReconVal':list_loss_val}
-            for key,val in data_dict.items:
-                np.save(f'{key}.npy',val)
+            for key,val in data_dict.items():
+                np.save(f'{key}.npy',np.asarray(val))
             break
 
         # prints on the terminal
