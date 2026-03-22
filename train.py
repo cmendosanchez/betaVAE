@@ -708,7 +708,7 @@ def train_vae_model(config, root_dir=None):
             nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
             torch.save({
                 "epoch": epoch,
-                "model_state_dict": model.state_dict(),
+                "model_state_dict": vae.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict()}, config.path_model)
 
             data_dict = {'LossTrain': list_loss_train,'klTrain':list_kl_loss_train,'ReconTrain':list_recon_loss_train,

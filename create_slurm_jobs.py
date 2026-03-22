@@ -209,7 +209,7 @@ def main():
                     print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
                     python_call = (
                         f"python3 Regional_Optuna_tuning.py "
-                        f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
+                        f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name}/ "
                         f"+dataset=UKB_Train_{train_tag}/{config_name} "
                         f"+optuna_folder=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/OptunaResults/{job_name} "
                         f"+optuna_lr={format_range(lr)} "
