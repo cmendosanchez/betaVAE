@@ -582,9 +582,10 @@ def train_vae_model(config, root_dir=None):
 
     #optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
     optimizer = torch.optim.AdamW(vae.parameters(), lr=lr, weight_decay=weight_decay)
-    early_stopping = EarlyStopping(patience=config.patience, delta=config.delta, verbose=True, save_best=True,path=config.path_model)
+    early_stopping = EarlyStopping(patience=config.patience, delta=config.delta, verbose=True, save_best=True,path=config.path_model, start_epoch=5)
 
-    list_loss_train, list_val_recon_loss, = [], []
+    list_loss_train, list_kl_loss_train, list_recon_loss_train = [], [], []
+    list_loss_val, list_kl_loss_val, list_recon_loss_val = [], [], []
 
     train_subjects      = read_one_column_tsv(config.Train_list)
     n_train             = int(len(train_subjects) * 0.3)
@@ -651,6 +652,8 @@ def train_vae_model(config, root_dir=None):
 
         #Save epoch train loss
         list_loss_train.append(train_running_loss)
+        list_kl_loss_train.append(train_kl_loss)
+        list_recon_loss_train.append(train_recon_loss)
 
         # Validation losses
         val_recon_loss   = 0.0
@@ -682,7 +685,10 @@ def train_vae_model(config, root_dir=None):
         val_running_loss   /=  len(validation_subjects)
         
         #Save epoch val loss
-        list_val_recon_loss.append(val_recon_loss)
+        list_recon_loss_val.append(val_recon_loss)
+        list_kl_loss_val.append(val_kl_loss)
+        list_loss_val.append(val_running_loss)
+
 
         early_stopping.check_early_stop(val_recon_loss, epoch, vae, optimizer)
 
@@ -703,9 +709,12 @@ def train_vae_model(config, root_dir=None):
             torch.save({
                 "epoch": epoch,
                 "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "best_loss": self.best_loss
-            }, config.path_model)
+                "optimizer_state_dict": optimizer.state_dict()}, config.path_model)
+
+            data_dict = {'LossTrain': list_loss_train,'klTrain':list_kl_loss_train,'ReconTrain':list_recon_loss_train,
+            'LossVal':list_recon_loss_val,'klVal':list_kl_loss_val,'ReconVal':list_loss_va}
+            for key,val in data_dict.items:
+                np.save(f'{key}.npy',val)
             break
 
         # prints on the terminal

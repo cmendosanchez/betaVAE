@@ -66,7 +66,7 @@ def main():
 
             best_params[region][mode] = {}
             avg_steps = average_num_steps(study)
-            print(f"{bcolors.YELLOW}Average steps per trial: {avg_steps:.2f}{bcolors.RESET}")
+            #print(f"{bcolors.YELLOW}Average steps per trial: {avg_steps:.2f}{bcolors.RESET}")
 
             #print(best_params,f'{bcolors.YELLOW}{best_trial.last_step}{bcolors.RESET}')
 
@@ -74,10 +74,9 @@ def main():
             # Ordenar trials por valor objetivo (mayor es mejor; usa reverse=False si minimizas)
             completed_trials = sorted(
                 completed_trials,
-                key=lambda t: t.value,
-                reverse=True
+                key=lambda t: t.value
             )[0:5]
-            #top_trials = sorted(study.trials, key=lambda t: t.value, reverse=True)[:30]
+            #top_trials = sorted(study.trials, key=lambda t: t.value, reverse=True)[:3]
 
             for t in completed_trials:
                 over_auc = t.user_attrs.get("Overconnectivity")
@@ -88,10 +87,10 @@ def main():
                 #print(f"{bcolors.YELLOW}Trial {t.number} | value = {t.value} | Overconnectivity AUC = {val}{bcolors.RESET}")
             best_trial_auc = max(completed_trials, key=avg_auc)
             print(f'{bcolors.GREEN}Best trial {best_trial_auc}{bcolors.RESET}')
-            best_params[region][mode]['Step']    = best_trial_auc.last_step
-            best_params[region][mode]['Value']   = best_trial_auc.value
-            best_params[region][mode]['Trial']   = best_trial_auc.number
-            best_params[region][mode]['Status']  = study.best_trial.state
+            best_params[region][mode]['Epochs']    = best_trial_auc.last_step
+            best_params[region][mode]['Recon Error']   = best_trial_auc.value
+            best_params[region][mode]['Trial id']   = best_trial_auc.number
+            #best_params[region][mode]['Status']  = study.best_trial.state
             n_completed = sum(t.state == TrialState.COMPLETE for t in study.trials)
             best_params[region][mode]['Completed Trials']  = n_completed
             best_params[region][mode]['Learning Rate'] = best_trial_auc.params['Learning Rate']
@@ -113,8 +112,13 @@ def main():
     df["Learning Rate"] = df["Learning Rate"].map("{:.2e}".format)
     df["Weight decay"]  = df["Weight decay"].map("{:.2e}".format)
     print(df)
-    print(df.sort_values(by="Seg. Criteria"))
-    df.to_csv(args.out, index=False)
+    #print(df.sort_values(by="Region"))
+    df_sorted = df.sort_values(by="Region")
+    #col = df_sorted.pop("Trial number")
+    col = df_sorted.pop("Completed Trials")
+    df_sorted.insert(2, "Completed Trials", col)
+    print(df_sorted)
+    df_sorted.to_csv(args.out, index=False)
 
 if __name__ == "__main__":
     main()

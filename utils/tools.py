@@ -2,7 +2,7 @@ import torch
 import copy
 
 class EarlyStopping:
-    def __init__(self, patience=5, delta=0, start_epoch=4, verbose=False,
+    def __init__(self, patience=5, delta=0, start_epoch=5, verbose=False,
                  save_best=False, path="best_model.pt"):
         
         self.patience = patience
@@ -50,7 +50,6 @@ class EarlyStopping:
                 "epoch": epoch,
                 "model_state_dict": model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
-                "best_loss": self.best_loss
             }, self.path)
 
             if self.verbose:
