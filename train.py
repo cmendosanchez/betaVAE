@@ -588,7 +588,7 @@ def train_vae_model(config, root_dir=None):
     list_loss_val, list_kl_loss_val, list_recon_loss_val = [], [], []
 
     train_subjects      = read_one_column_tsv(config.Train_list)
-    n_train             = int(len(train_subjects) * 0.3)
+    n_train             = int(len(train_subjects) * 1)
     train_subjects      = train_subjects[:n_train]
     csv_train           = f'{config.save_dir}train_list.csv'
     df_t                = pd.DataFrame(train_subjects, columns=['Subject'])
@@ -601,7 +601,7 @@ def train_vae_model(config, root_dir=None):
     print(f"{bcolors.MAGENTA}-- -Created trainloader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
 
     validation_subjects = read_one_column_tsv(config.Rcon_val_list)
-    n_val = int(len(validation_subjects) * 0.3)
+    n_val = int(len(validation_subjects) * 1)
     validation_subjects = validation_subjects[:n_val]
     set_val   = create_subset_from_list(config,validation_subjects)
     valloader = torch.utils.data.DataLoader(set_val,batch_size=32,num_workers=6, shuffle=False)

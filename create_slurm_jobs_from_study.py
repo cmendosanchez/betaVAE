@@ -159,7 +159,7 @@ def main():
                     f"lr={lr} "
                     f"batch_size={batch_size} "
                     f"weight_decay={weight_decay} "
-                    f"nb_epoch={1}")
+                    f"nb_epoch={epochs}")
 
                 script = textwrap.dedent(f"""\
                 #!/bin/bash

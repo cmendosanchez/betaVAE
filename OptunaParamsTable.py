@@ -9,6 +9,8 @@ from optuna.trial import TrialState
 from collections import defaultdict
 import numpy as np
 
+#python OptunaParamsTable.py ../../../../OptunaResults --study-name journal_storage_multiprocess  --out ../../../../OptunaResults/summary.csv --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left  --modes SWM DWM Comm
+
 def avg_auc(t):
     over_auc = t.user_attrs.get("Overconnectivity")
     under_auc = t.user_attrs.get("Underconnectivity")
