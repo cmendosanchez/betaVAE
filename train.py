@@ -636,9 +636,9 @@ def train_vae_model(config, root_dir=None):
             partial_loss.backward()
             optimizer.step()
             #Update errors
-            train_recon_loss    += partial_recon_loss.cpu().numpy()
-            train_kl_loss       += partial_kl_loss.cpu().numpy()
-            train_running_loss  += partial_loss.cpu().numpy()
+            train_recon_loss    += partial_recon_loss.cpu().detach().numpy()
+            train_kl_loss       += partial_kl_loss.cpu().detach().numpy()
+            train_running_loss  += partial_loss.cpu().detach().numpy()
 
         print(f'--- %s seconds epoch --- {time.time() - start_time_epoch}')
 
@@ -675,9 +675,9 @@ def train_vae_model(config, root_dir=None):
                     partial_recon_loss_val, partial_kl_loss_val, partial_loss_val = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl)
 
                 #Update losses for each sample
-                val_recon_loss    += partial_recon_loss_val.cpu().numpy()
-                val_kl_loss       += partial_kl_loss_val.cpu().numpy()
-                val_running_loss  += partial_loss_val.cpu().numpy()
+                val_recon_loss    += partial_recon_loss_val.cpu().detach().numpy()
+                val_kl_loss       += partial_kl_loss_val.cpu().detach().numpy()
+                val_running_loss  += partial_loss_val.cpu().detach().numpy()
 
         #Average
         val_recon_loss     /=  len(validation_subjects)
