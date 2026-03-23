@@ -693,7 +693,7 @@ def train_vae_model(config, root_dir=None):
         list_recon_loss_val.append(val_recon_loss)
         list_kl_loss_val.append(val_kl_loss)
         list_loss_val.append(val_running_loss)
-        
+
         early_stopping.check_early_stop(val_recon_loss, epoch, vae, optimizer)
 
         if early_stopping.stop_training:
@@ -719,7 +719,7 @@ def train_vae_model(config, root_dir=None):
             data_dict = {'LossTrain': list_loss_train,'klTrain':list_kl_loss_train,'ReconTrain':list_recon_loss_train,
             'LossVal':list_recon_loss_val,'klVal':list_kl_loss_val,'ReconVal':list_loss_val}
             for key,val in data_dict.items():
-                np.save(f'{key}.npy',np.asarray(val))
+                np.save(f'{config.save_dir}{key}.npy',np.asarray(val))
             break
 
         
