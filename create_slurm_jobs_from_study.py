@@ -148,7 +148,7 @@ def main():
                 print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
                 python_call = (
                     f"python3 Train_full_model.py "
-                    f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/{job_name} "
+                    f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/{job_name}/ "
                     f"+dataset=UKB_Train_{train_tag}/{config_name} "
                     f"+patience={patience} "
                     f"+delta={delta} "

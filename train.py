@@ -684,12 +684,16 @@ def train_vae_model(config, root_dir=None):
         val_kl_loss        /=  len(validation_subjects)
         val_running_loss   /=  len(validation_subjects)
         
+        # prints on the terminal
+        print(f"{bcolors.YELLOW}[{epoch}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
+        print(f"{bcolors.YELLOW}[{epoch}] Val KL loss: {val_kl_loss}        {bcolors.RESET}")
+        print(f"{bcolors.YELLOW}[{epoch}] Val loss: {val_running_loss}      {bcolors.RESET}")
+
         #Save epoch val loss
         list_recon_loss_val.append(val_recon_loss)
         list_kl_loss_val.append(val_kl_loss)
         list_loss_val.append(val_running_loss)
-
-
+        
         early_stopping.check_early_stop(val_recon_loss, epoch, vae, optimizer)
 
         if early_stopping.stop_training:
@@ -718,10 +722,7 @@ def train_vae_model(config, root_dir=None):
                 np.save(f'{key}.npy',np.asarray(val))
             break
 
-        # prints on the terminal
-        print(f"{bcolors.YELLOW}[{epoch}] Val Recon loss: {val_recon_loss}  {bcolors.RESET}")
-        print(f"{bcolors.YELLOW}[{epoch}] Val KL loss: {val_kl_loss}        {bcolors.RESET}")
-        print(f"{bcolors.YELLOW}[{epoch}] Val loss: {val_running_loss}      {bcolors.RESET}")
+        
 
         torch.cuda.empty_cache()      
         vae.train()
