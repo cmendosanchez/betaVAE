@@ -3,6 +3,8 @@ import argparse
 from types import SimpleNamespace
 from beta_vae import * 
 import pandas as pd
+import yaml
+
 def create_parser():
     parser = argparse.ArgumentParser(
         description="Run inference using a trained VAE model"
