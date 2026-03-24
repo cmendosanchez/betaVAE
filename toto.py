@@ -1,67 +1,51 @@
-import optuna
-from optuna.storages import JournalStorage
-from optuna.storages.journal import JournalFileBackend
-from optuna.visualization import plot_optimization_history
-from optuna.visualization import plot_parallel_coordinate
-from optuna.visualization import plot_param_importances
-from optuna.visualization import plot_slice
-from optuna.visualization import plot_contour
-from optuna.visualization import plot_edf, plot_timeline
-from optuna.visualization import plot_intermediate_values
-from optuna.visualization import plot_contour
-print('optuna')
-study_path = '/neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/OptunaResults/two_ends_R_S.C.-sylv._Track_0_80_sift2_icbm09c_trial_example2'
-#study = optuna.load_study(
-#    study_name = "trial_7_allnodes",
-#    storage=JournalStorage(JournalFileBackend(f"{study_path}/journal_gpu_prio.log"))
-#)
+# Online Python - IDE, Editor, Compiler, Interpreter
+import numpy as np
 
-study = optuna.load_study(study_name = "example2_study",storage="mysql+mysqlconnector://gaia:Optima1Pass!@rosette:3306/example2")
+# Fake embeddings (e.g., latent vectors of size 3)
+embeddings_normal = np.array([
+    [0.1, 0.2, 0.3],
+    [0.4, 0.5, 0.6]
+])
 
+embeddings_anomaly = np.array([
+    [1.0, 1.1, 1.2],
+    [1.3, 1.4, 1.5],
+    [1.6, 1.7, 1.8]
+])
 
+# Labels
+y_normal = np.array([0, 0])
+y_anomaly = np.array([1, 1, 1])
 
+# Stack
+X = np.vstack((embeddings_normal, embeddings_anomaly))
+y = np.concatenate((y_normal, y_anomaly))
 
-fig = plot_optimization_history(study)
-fig.write_image(f"{study_path}/1.png")
-fig2 = plot_param_importances(study)
-fig2.write_image(f"{study_path}/2.png")
-fig3 = plot_timeline(study)
-fig3.write_image(f"{study_path}/3.png")
-fig4 = plot_intermediate_values(study)
-fig4.write_image(f"{study_path}/4.png")
-fig5 = plot_contour(study,params=["LEARNING_RATE", 'BETA'])
-fig5.write_image(f"{study_path}/5.png")
-fig5 = plot_contour(study,params=["LEARNING_RATE", 'LATENT_DIMENSIONS'])
-fig5.write_image(f"{study_path}/6.png")
+print("X:\n", X)
+print("y:\n", y)
 
-def print_trial_info(study):
-    for trial in study.trials:
-        state = trial.state
-        
-        # Print the state as a string (from the enumeration)
-        state_str = state.name if state is not None else "None"
-        
-        print(f"Trial {trial.number}:")
-        print(f"  State: {state_str} ({state})")  # State as both enum name and integer value
-        print(f"  Value: {trial.value}")
-        print(f"  Parameters: {trial.params}")
-        print(f"  Intermediate values: {trial.intermediate_values}")
-        print(f"  Date created: {trial.datetime_start}")
-        print(f"  Date completed: {trial.datetime_complete}")
-        print("-" * 40)
+print("Shapes:", X.shape, y.shape)
 
-    
-print_trial_info(study)
-print("Number of trials:", len(study.trials))
-print("Best value:", study.best_value)
-print("Best params:", study.best_params)
+from sklearn.model_selection import StratifiedKFold
 
-# Get parameters sorted by the importance values
-importances = optuna.importance.get_param_importances(study)
-params_sorted = list(importances.keys())
+kf = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
+aucs = []
 
-# Plot
-fig6 = optuna.visualization.plot_rank(study, params=params_sorted[:4])
-fig6.write_image(f"{study_path}/6.png")
-fig7 = plot_contour(study,params=["BETA", 'N_SUBJECTS'])
-fig7.write_image(f"{study_path}/7.png")
+for i, (train_index, test_index) in enumerate(kf.split(X, y)):
+    print(f"\n=== Fold {i} ===")
+
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_test = y[train_index], y[test_index]
+
+    print("Train indices:", train_index)
+    print("Test indices:", test_index)
+
+    print("y_train:", y_train)
+    print("y_test:", y_test)
+
+    print("X_train:\n", X_train)
+    print("X_test:\n", X_test)
+
+    # Optional: check class balance
+    print("Train class distribution:", np.bincount(y_train))
+    print("Test class distribution:", np.bincount(y_test))

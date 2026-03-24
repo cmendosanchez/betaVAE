@@ -224,7 +224,6 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                 #embeddings_normal = np.vstack(embeddings_normal)
                 y_normal = np.asarray([0]*len(normal_loader.dataset)).reshape(-1)
 
-                anomaly_group = class_subjects[mid:]
                 with open(f'{config.path_stats}/{database}_{region}_{Anomaly}_{criteria}.pkl', 'rb') as file:
                     results = pickle.load(file)
 
