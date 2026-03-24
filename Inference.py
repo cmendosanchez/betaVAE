@@ -100,9 +100,8 @@ def run(model_dir, region, criteria, outdir, subjects, data):
     print("--- Inference ---")
 
     # ---- loading model ----
-    model_dir = os.path.join(model, f'UKB_{region}_{mode}', 'model.pt') 
     model = VAE(config.in_shape, config.n, depth=config.depth, loss_selected= config.loss)
-    model.load_state_dict(torch.load(model_dir)[0])
+    model.load_state_dict(torch.load(checkpoint_path)[0])
     model = model.to(device)
     model.eval()
 
