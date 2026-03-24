@@ -101,7 +101,7 @@ def run(model_dir, region, criteria, outdir, subjects, data):
 
     # ---- loading model ----
     model = VAE(config.in_shape, config.n, depth=config.depth, loss_selected= config.loss)
-    model.load_state_dict(torch.load(checkpoint_path)[0])
+    model.load_state_dict(torch.load(checkpoint_path)['model_state_dict'])
     model = model.to(device)
     model.eval()
 
