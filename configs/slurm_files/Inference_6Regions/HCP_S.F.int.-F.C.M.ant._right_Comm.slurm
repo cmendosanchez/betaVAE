@@ -5,9 +5,9 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=40
+#SBATCH --cpus-per-task=20
 #SBATCH --hint=nomultithread
-#SBATCH --time=20:00:00
+#SBATCH --time=01:00:00
 #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/Inference/HCP_S.F.int.-F.C.M.ant._right_Comm/HCP_S.F.int.-F.C.M.ant._right_Comm%j.out
 #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/Inference/HCP_S.F.int.-F.C.M.ant._right_Comm/HCP_S.F.int.-F.C.M.ant._right_Comm%j.out
 ##SBATCH -A miu@v100
