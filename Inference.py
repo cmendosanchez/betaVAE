@@ -7,6 +7,7 @@ import yaml
 from General_utils import read_one_column_tsv
 from load_data import create_subset_from_list
 import time
+from colors import bcolors
 
 def create_parser():
     parser = argparse.ArgumentParser(
