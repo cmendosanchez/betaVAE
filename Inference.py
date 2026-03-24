@@ -208,15 +208,17 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                         target = torch.squeeze(inputs, dim=1).long()
                         z, logvar = model.encode(inputs) # z = mean because no random sampling
                         outputs = model.decode(z)
+
                         if config.loss == 'CrossEntropy':
                             target = torch.squeeze(inputs, dim=1).long()
-                            partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
+                            partial_recon_loss_norm, partial_kl_val, loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
                             output = torch.argmax(output, dim=1)
 
                         elif config.loss == 'MSE':
-                            partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) 
+                            partial_recon_loss_norm, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) 
+
                         embeddings_normal.append(z.cpu().detach().numpy())
-                        reconerror_normal.append(partial_recon_loss_anom.cpu().detach().numpy())
+                        reconerror_normal.append(partial_recon_loss_norm.cpu().detach().numpy())
 
                 #embeddings_normal = np.vstack(embeddings_normal)
                 y_normal = np.asarray([0]*len(normal_loader.dataset)).reshape(-1)
@@ -242,17 +244,31 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                 auc_weights = linear_weights(max_bundles)
                 for nbun in range(1,max_bundles+1):
                     embeddings_anomaly = []
+                    reconerror_anomaly = []
                     anomaly_subset, nsubjects = create_subset_for_anomaly(config,Anomaly,anomaly_group,nbun)
                     print(f'Nbundles {nbun} Nsubjects {nsubjects}')
                     anom_loader = torch.utils.data.DataLoader(anomaly_subset,batch_size=32,num_workers=4, shuffle=False)
+
                     for inputs, path in anom_loader:
                         with torch.no_grad():
                             inputs = Variable(inputs).to(device, dtype=torch.float32)
-                            output, z, logvar = vae(inputs)
-                            embeddings_anomaly.append(z.cpu().numpy())
+                            target = torch.squeeze(inputs, dim=1).long()
+                            z, logvar = model.encode(inputs) # z = mean because no random sampling
+                            outputs = model.decode(z)
+
+                            if config.loss == 'CrossEntropy':
+                                target = torch.squeeze(inputs, dim=1).long()
+                                partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
+                                output = torch.argmax(output, dim=1)
+
+                            elif config.loss == 'MSE':
+                                partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) 
+
+                            embeddings_anomaly.append(z.cpu().detach().numpy())
+                            reconerror_anomaly.append(partial_recon_loss_anom.cpu().detach().numpy())
 
                     #embeddings_anomaly = np.vstack(embeddings_anomaly)
-                    y_anomaly = np.asarray([1]*nsubjects).reshape(-1)
+                    y_abomaly = np.asarray([1]*len(anom_loader.dataset)).reshape(-1)
 
                     X = np.vstack((embeddings_normal, embeddings_anomaly))
                     y = np.concatenate((y_normal, y_anomaly))
