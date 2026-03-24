@@ -8,6 +8,7 @@ from General_utils import read_one_column_tsv
 from load_data import create_subset_from_list
 import time
 from colors import bcolors
+import random
 
 def create_parser():
     parser = argparse.ArgumentParser(
@@ -183,7 +184,8 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
         print(f"{bcolors.YELLOW}--- Test in fake anomaly dataset ---{bcolors.RESET}")
         config.path_stats = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/Stats_Anomaly/{database}'
         config.path_anom  = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/FakeAnomaly_crops/{database}'
-        
+        print(config)
+
         if database=='UKB':
             test_anom_subjects = read_one_column_tsv('/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/DataSplit_DL/test_anom.tsv')
         elif database =='HCP':
