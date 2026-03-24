@@ -92,7 +92,7 @@ def run(model_dir, region, criteria, outdir, subjects, data):
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
-    with open(config_file, "r") as file:
+    with open(config_path, "r") as file:
         config = yaml.safe_load(file)
     config = SimpleNamespace(**config)
     print("--- Inference ---")
