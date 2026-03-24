@@ -39,7 +39,13 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--output",
+        "--output_slurm",
+        required=True,
+        help="Output folder for slurm files"
+    )
+
+    parser.add_argument(
+        "--output_inference",
         required=True,
         help="Output folder for slurm files"
     )
@@ -78,10 +84,11 @@ def main():
     databases      = args.databases
     models         = args.models
     modes          = args.modes
-    output         = args.output
+    output_slurm   = args.output_slurm
+    output_inference = args.output_inference
     subjects       = args.subjects
 
-    os.makedirs(output, exist_ok=True)
+    os.makedirs(output_slurm, exist_ok=True)
     for database in databases:
         for region in region_list:
             for mode in modes:
@@ -93,7 +100,7 @@ def main():
                 elif database == 'HCP':
                     data = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/crops_HCP/crops_HCP/{region}/{mode}'
                     subjects = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/HCP1030.tsv'
-                    
+
                 job_name = f'{config_name}'
                 print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
                 python_call = (
@@ -102,7 +109,8 @@ def main():
                     f"--region={region} "
                     f"--criteria={mode} "
                     f"--subjects={subjects} "
-                    f"--data={data}"
+                    f"--data={data} "
+                    f"--outdir={output_inference}/{database}_{region}_{mode} "
                     )
 
                 script = textwrap.dedent(f"""\
@@ -141,7 +149,7 @@ def main():
                 {python_call}
                 """)
 
-                with open(f"{output}/{job_name}.slurm", "w") as f:
+                with open(f"{output_slurm}/{job_name}.slurm", "w") as f:
                     f.write(script)
 
 
