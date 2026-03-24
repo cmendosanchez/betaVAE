@@ -268,7 +268,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                             reconerror_anomaly.append(partial_recon_loss_anom.cpu().detach().numpy())
 
                     #embeddings_anomaly = np.vstack(embeddings_anomaly)
-                    y_abomaly = np.asarray([1]*len(anom_loader.dataset)).reshape(-1)
+                    y_anomaly = np.asarray([1]*len(anom_loader.dataset)).reshape(-1)
 
                     X = np.vstack((embeddings_normal, embeddings_anomaly))
                     y = np.concatenate((y_normal, y_anomaly))
