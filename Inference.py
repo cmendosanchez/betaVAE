@@ -5,7 +5,7 @@ from beta_vae import *
 import pandas as pd
 import yaml
 from General_utils import read_one_column_tsv
-from load_data import create_subset_from_list
+from load_data import create_subset_from_list, create_subset_for_anomaly
 import time
 from colors import bcolors
 import random
@@ -248,7 +248,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                     reconerror_anomaly = []
                     anomaly_subset, nsubjects = create_subset_for_anomaly(config,Anomaly,anomaly_group,nbun)
                     print(f'Nbundles {nbun} Nsubjects {nsubjects}')
-                    anom_loader = torch.utils.data.DataLoader(anomaly_subset,batch_size=32,num_workers=4, shuffle=False)
+                    anom_loader = torch.utils.data.DataLoader(anomaly_subset,batch_size=1,num_workers=4, shuffle=False)
 
                     for inputs, path in anom_loader:
                         with torch.no_grad():
