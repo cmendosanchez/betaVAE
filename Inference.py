@@ -220,8 +220,8 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                         elif config.loss == 'MSE':
                             partial_recon_loss_norm, partial_kl_val, loss = vae_loss(outputs, inputs, z, logvar, criterion, kl_weight=config.kl) 
 
-                        embeddings_normal.append(z.cpu().detach().numpy())
-                        reconerror_normal.append(partial_recon_loss_norm.cpu().detach().numpy())
+                        embeddings_normal.append(z.cpu().numpy())
+                        reconerror_normal.append(partial_recon_loss_norm.cpu().numpy())
 
                 #embeddings_normal = np.vstack(embeddings_normal)
                 embeddings_normal = np.asarray(embeddings_normal)
@@ -267,8 +267,8 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                             elif config.loss == 'MSE':
                                 partial_recon_loss_anom, partial_kl_val, loss = vae_loss(outputs, inputs, z, logvar, criterion, kl_weight=config.kl) 
 
-                            embeddings_anomaly.append(z.cpu().detach().numpy())
-                            reconerror_anomaly.append(partial_recon_loss_anom.cpu().detach().numpy())
+                            embeddings_anomaly.append(z.cpu().numpy())
+                            reconerror_anomaly.append(partial_recon_loss_anom.cpu().numpy())
 
                     #embeddings_anomaly = np.vstack(embeddings_anomaly)
                     embeddings_anomaly = np.asarray(embeddings_anomaly)
