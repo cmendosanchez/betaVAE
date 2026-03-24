@@ -13,6 +13,8 @@ from sklearn.model_selection import StratifiedKFold
 import pickle
 from itertools import chain
 from sklearn import svm
+from sklearn.metrics import  roc_auc_score
+
 
 def create_parser():
     parser = argparse.ArgumentParser(
