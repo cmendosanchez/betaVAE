@@ -30,4 +30,4 @@ set -x
 cd $WORK
 cd PhD_2026/betaVAE
 
-python3 Inference.py --model_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels --region=S.T.s._left --criteria=SWM --subjects=/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/HCP1030.tsv --data=/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/crops_HCP/crops_HCP/S.T.s._left/SWM --outdir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/Inference/HCP_S.T.s._left_SWM 
+python3 Inference.py --model_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/UKB_S.T.s._left_SWM --region=S.T.s._left --criteria=SWM --subjects=/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/HCP1030.tsv --data=/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/crops_HCP/crops_HCP/S.T.s._left/SWM --outdir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/Inference/HCP_S.T.s._left_SWM 

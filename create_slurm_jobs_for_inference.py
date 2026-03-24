@@ -105,7 +105,7 @@ def main():
                 print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
                 python_call = (
                     f"python3 Inference.py "
-                    f"--model_dir={models} "
+                    f"--model_dir={models}/UKB_{region}_{mode} "
                     f"--region={region} "
                     f"--criteria={mode} "
                     f"--subjects={subjects} "
