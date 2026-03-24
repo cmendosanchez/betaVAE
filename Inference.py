@@ -178,12 +178,12 @@ def run(model_dir, region, criteria, outdir, subjects, data):
 
     df_recon.to_csv(f"{outdir}/recon_error.csv", index=False)
 
-    if fake_anom_list != None:
+    """ if fake_anom_list != None:
         subjects_list = read_one_column_tsv(subjects_anom)
         subjects_set  = create_subset_from_list(config,subjects_list)
         start_loading = time.time()
         subjects_loader = torch.utils.data.DataLoader(subjects_set, batch_size=1,num_workers=6, shuffle=False)
-        print(f"{bcolors.MAGENTA}-- -Created subjects loader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
+        print(f"{bcolors.MAGENTA}-- -Created subjects loader in  {time.time() - start_loading} seconds ---{bcolors.RESET}") """
 
 
 
