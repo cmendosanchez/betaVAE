@@ -5,7 +5,8 @@ from colors import bcolors
 from datetime import datetime
 import pandas as pd
 #EXAMPLE
-#python3 create_slurm_jobs_from_study.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left --output /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/slurm_files/Train_6Regions_FullModel --train_tag 6Regions --dataset_folder /lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions --epochs 50 --path_params ../../../../OptunaResults/summary.csv --delta 150 --patience 5
+#python3 create_slurm_jobs_for_inference.py --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left --output_slurm /neurospin/dico/cmendoza/Runs/01_betavae_sulci_crops/Program/betaVAE/configs/slurm_files/Inference_6Regions --databases UKB HCP --models /lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels --modes SWM DWM Comm --output_inference /lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/Inference
+
 
 # -----------------------------
 # Argument parser
@@ -64,11 +65,6 @@ def parse_args():
         help="Modes to use (default: SWM DWM Comm)"
     )
 
-    parser.add_argument(
-        "--subjects",
-        required=True,
-        help="Output folder for slurm files"
-    )
 
     return parser.parse_args()
 
@@ -86,7 +82,6 @@ def main():
     modes          = args.modes
     output_slurm   = args.output_slurm
     output_inference = args.output_inference
-    subjects       = args.subjects
 
     os.makedirs(output_slurm, exist_ok=True)
     for database in databases:
