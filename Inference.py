@@ -225,6 +225,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
 
                 #embeddings_normal = np.vstack(embeddings_normal)
                 embeddings_normal = np.asarray(embeddings_normal)
+                print(embeddings_normal.shape)
                 y_normal = np.asarray([0]*len(normal_loader.dataset)).reshape(-1)
 
                 with open(f'{config.path_stats}/{database}_{region}_{Anomaly}_{criteria}.pkl', 'rb') as file:
@@ -271,6 +272,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
 
                     #embeddings_anomaly = np.vstack(embeddings_anomaly)
                     embeddings_anomaly = np.asarray(embeddings_anomaly)
+                    print(embeddings_anomaly.shape)
                     y_anomaly = np.asarray([1]*len(anom_loader.dataset)).reshape(-1)
 
                     X = np.vstack((embeddings_normal, embeddings_anomaly))
