@@ -197,8 +197,12 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
         elif database =='HCP':
             test_anom_subjects = read_one_column_tsv(subjects)
 
-
+        
         for Anomaly in ['Underconnectivity','Overconnectivity']:
+            print(f'{bcolors.RED} Launching Normal/Anomaly classification {bcolors.RESET}')
+            resulting_aucs  = {}
+            individual_aucs = {'Underconnectivity_list' : [] , 'Overconnectivity_list' : [] }
+
             for i in range(1,11):
                 random.shuffle(test_anom_subjects)
                 mid = int(len(test_anom_subjects) // 2)
