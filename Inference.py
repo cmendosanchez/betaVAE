@@ -186,7 +186,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     if True:
         print(f"{bcolors.YELLOW}--- Test in fake anomaly dataset ---{bcolors.RESET}")
         config.path_stats = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/Stats_Anomaly/{database}'
-        config.path_anom  = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/FakeAnomaly_crops/{database}'
+        config.path_anom  = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/FakeAnomaly_crops/{database}/{region}/{criteria}'
         print(config)
 
         if database=='UKB':
@@ -225,6 +225,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
 
                 #embeddings_normal = np.vstack(embeddings_normal)
                 embeddings_normal = np.asarray(embeddings_normal)
+                embeddings_normal = embeddings_normal.squeeze(1)
                 print(embeddings_normal.shape)
                 y_normal = np.asarray([0]*len(normal_loader.dataset)).reshape(-1)
 
