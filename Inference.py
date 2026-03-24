@@ -11,6 +11,7 @@ from colors import bcolors
 import random
 from sklearn.model_selection import StratifiedKFold
 import pickle
+from itertools import chain
 
 def create_parser():
     parser = argparse.ArgumentParser(
