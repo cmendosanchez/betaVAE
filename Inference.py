@@ -273,6 +273,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
 
                     #embeddings_anomaly = np.vstack(embeddings_anomaly)
                     embeddings_anomaly = np.asarray(embeddings_anomaly)
+                    embeddings_anomaly = embeddings_anomaly.squeeze(1)
                     print(embeddings_anomaly.shape)
                     y_anomaly = np.asarray([1]*len(anom_loader.dataset)).reshape(-1)
 
