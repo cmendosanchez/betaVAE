@@ -9,6 +9,7 @@ from load_data import create_subset_from_list
 import time
 from colors import bcolors
 import random
+from sklearn.model_selection import StratifiedKFold
 
 def create_parser():
     parser = argparse.ArgumentParser(
@@ -211,11 +212,11 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
 
                         if config.loss == 'CrossEntropy':
                             target = torch.squeeze(inputs, dim=1).long()
-                            partial_recon_loss_norm, partial_kl_val, loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
+                            partial_recon_loss_norm, partial_kl_val, loss = vae_loss(outputs, target, z, logvar, criterion, kl_weight=config.kl)
                             output = torch.argmax(output, dim=1)
 
                         elif config.loss == 'MSE':
-                            partial_recon_loss_norm, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) 
+                            partial_recon_loss_norm, partial_kl_val, loss = vae_loss(outputs, inputs, z, logvar, criterion, kl_weight=config.kl) 
 
                         embeddings_normal.append(z.cpu().detach().numpy())
                         reconerror_normal.append(partial_recon_loss_norm.cpu().detach().numpy())
@@ -258,11 +259,11 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
 
                             if config.loss == 'CrossEntropy':
                                 target = torch.squeeze(inputs, dim=1).long()
-                                partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
+                                partial_recon_loss_anom, partial_kl_val, loss = vae_loss(outputs, target, z, logvar, criterion, kl_weight=config.kl)
                                 output = torch.argmax(output, dim=1)
 
                             elif config.loss == 'MSE':
-                                partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) 
+                                partial_recon_loss_anom, partial_kl_val, loss = vae_loss(outputs, inputs, z, logvar, criterion, kl_weight=config.kl) 
 
                             embeddings_anomaly.append(z.cpu().detach().numpy())
                             reconerror_anomaly.append(partial_recon_loss_anom.cpu().detach().numpy())
