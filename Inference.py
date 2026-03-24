@@ -5,6 +5,7 @@ from beta_vae import *
 import pandas as pd
 import yaml
 from General_utils import read_one_column_tsv
+from load_data import create_subset_from_list
 
 def create_parser():
     parser = argparse.ArgumentParser(
