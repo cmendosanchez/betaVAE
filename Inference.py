@@ -183,6 +183,7 @@ def main():
         criteria=args.criteria,
         outdir=args.outdir,
         subjects=args.subjects
+        data=args.data
     )
 
 
