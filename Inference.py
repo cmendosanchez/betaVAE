@@ -143,12 +143,12 @@ def run(model_dir, region, criteria, outdir, subjects, data):
 
             if config.loss == 'CrossEntropy':
                 recon_loss_val, kl_val, loss_val = vae_loss(outputs, target, z, logvar, config.loss,
-                                kl_weight=config.kl_weight) 
+                                kl_weight=config.kl) 
                 outputs = torch.argmax(outputs, dim=1) 
 
             elif config.loss == 'MSE':
                 recon_loss_val, kl_val, loss_val = vae_loss(outputs, inputs, z, logvar, config.loss,
-                                kl_weight=config.kl_weight) 
+                                kl_weight=config.kl) 
             embeddings.append(z.cpu().detach().numpy())
             recon_error_lists.append(recon_loss_val.cpu().detach().numpy())
             subs_ids.append(path)
@@ -179,11 +179,89 @@ def run(model_dir, region, criteria, outdir, subjects, data):
     df_recon.to_csv(f"{outdir}/recon_error.csv", index=False)
 
     """ if fake_anom_list != None:
-        subjects_list = read_one_column_tsv(subjects_anom)
-        subjects_set  = create_subset_from_list(config,subjects_list)
-        start_loading = time.time()
-        subjects_loader = torch.utils.data.DataLoader(subjects_set, batch_size=1,num_workers=6, shuffle=False)
-        print(f"{bcolors.MAGENTA}-- -Created subjects loader in  {time.time() - start_loading} seconds ---{bcolors.RESET}") """
+
+        test_anom_subjects = read_one_column_tsv(subjects_anom)
+        for i in range(0,10):
+            random.shuffle(test_anom_subjects)
+            mid = int(len(test_anom_subjects) // 2)
+            normal_group  = test_anom_subjects[:mid]
+            anomaly_group = test_anom_subjects[mid:]
+            normal_subset = create_subset_from_list(config, normal_group)
+            normal_loader = torch.utils.data.DataLoader(normal_subset, batch_size=1, num_workers=4, shuffle=False)
+            embeddings_normal = []
+            for inputs, path in normal_loader:
+                with torch.no_grad():
+                    inputs = Variable(inputs).to(device, dtype=torch.float32)
+                    target = torch.squeeze(inputs, dim=1).long()
+                    z, logvar = model.encode(inputs) # z = mean because no random sampling
+                    outputs = model.decode(z)
+
+                    embeddings_normal.append(z.cpu().numpy())
+                    if config.loss == 'CrossEntropy':
+                        target = torch.squeeze(inputs, dim=1).long()
+                        partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
+                        output = torch.argmax(output, dim=1)
+
+                    elif config.loss == 'MSE':
+                        partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) 
+            
+            embeddings_normal = np.vstack(embeddings_normal)
+            y_normal = np.asarray([0]*len(normal_loader.dataset)).reshape(-1)
+
+            anomaly_group = class_subjects[mid:]
+            with open(f'{config.path_stats}{Anomaly}_{config.Criteria}.pkl', 'rb') as file:
+                results = pickle.load(file)
+
+            data   = [x for x in results if not isinstance(x, tuple)]
+            flat = list(chain.from_iterable(data))
+            df = pd.DataFrame(flat)
+            if df.empty:
+                print(f'{bcolors.CYAN}Dataframe is empty!{bcolors.RESET}')
+                individual_aucs[Anomaly+'_list'] = np.nan
+                resulting_aucs[Anomaly] = np.nan
+                continue 
+
+            min_bundles = df['Bundles'].min()
+            max_bundles = df['Bundles'].max()
+            
+            errors_weights = linear_weights(max_bundles)
+            print(f'max min bundles: {max_bundles} {min_bundles}')
+            auc_weights = linear_weights(max_bundles)
+            for nbun in range(1,max_bundles+1):
+                embeddings_anomaly = []
+                anomaly_subset, nsubjects = create_subset_for_anomaly(config,Anomaly,anomaly_group,nbun)
+                print(f'Nbundles {nbun} Nsubjects {nsubjects}')
+                anom_loader = torch.utils.data.DataLoader(anomaly_subset,batch_size=32,num_workers=4, shuffle=False)
+                for inputs, path in anom_loader:
+                    with torch.no_grad():
+                        inputs = Variable(inputs).to(device, dtype=torch.float32)
+                        output, z, logvar = vae(inputs)
+                        embeddings_anomaly.append(z.cpu().numpy())
+
+                embeddings_anomaly = np.vstack(embeddings_anomaly)
+                y_anomaly = np.asarray([1]*nsubjects).reshape(-1)
+
+                X = np.vstack((embeddings_normal, embeddings_anomaly))
+                y = np.concatenate((y_normal, y_anomaly))
+
+                kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+                aucs = []
+                for i,(train_index, test_index) in enumerate(kf.split(X, y)):
+                    X_train, X_test = X[train_index], X[test_index]
+                    y_train, y_test = y[train_index], y[test_index]
+                    model_svm = svm.SVC(probability=True, kernel='linear', random_state=42, C=0.01)
+                    model_svm.fit(X_train, y_train)
+                    y_prob = model_svm.predict_proba(X_test)[:,1]
+                    roc_auc = roc_auc_score(y_test, y_prob)
+                    aucs.append(roc_auc)
+                aucs_list.append(np.mean(aucs))
+
+            for idx,v in enumerate(aucs_list):
+                individual_aucs[Anomaly+'_list'].append((idx+1,v,auc_weights[idx],len(normal_loader.dataset),len(anom_loader.dataset)))
+
+            weighted_aucs = np.asarray(aucs_list) * auc_weights
+            resulting_aucs[Anomaly] = np.sum(weighted_aucs) """
+
 
 
 
