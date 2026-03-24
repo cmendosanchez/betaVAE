@@ -129,7 +129,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
 
     config.path_crops = data
 
-    subjects_list = read_one_column_tsv(subjects)
+    subjects_list = read_one_column_tsv(subjects)[0:100]
     subjects_set  = create_subset_from_list(config,subjects_list)
     start_loading = time.time()
     subjects_loader = torch.utils.data.DataLoader(subjects_set, batch_size=1,num_workers=6, shuffle=False)
@@ -169,13 +169,13 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     # ---- Embeddings dataframe ----
     columns = ["subject"] + [f"dim_{i}" for i in range(n)]
     df_embeddings = pd.DataFrame(
-        data=[[subj] + emb.tolist() for subj, emb in zip(subs_id, embeddings)],
+        data=[[subj] + emb.tolist() for subj, emb in zip(subs_ids, embeddings)],
         columns=columns)
     df_embeddings.to_csv(f"{outdir}/embeddings.csv", index=False)
     # ---- Reconstruction error dataframe ----
     # Case 1: scalar error per subject
     df_recon = pd.DataFrame({
-        "subject": subs_id,
+        "subject": subs_ids,
         "recon_error": recon_error})
     df_recon.to_csv(f"{outdir}/recon_error.csv", index=False)
 
