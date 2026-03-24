@@ -182,7 +182,7 @@ def main():
         region=args.region,
         criteria=args.criteria,
         outdir=args.outdir,
-        subjects=args.subjects
+        subjects=args.subjects,
         data=args.data
     )
 
