@@ -118,7 +118,7 @@ def run(model_dir, region, criteria, outdir, subjects, data):
 
     config.path_crops = data
 
-    subjects_list = read_one_column_tsv(subejcts)
+    subjects_list = read_one_column_tsv(subjects)
     subjects_set  = create_subset_from_list(config,subjects_list)
     start_loading = time.time()
     subjects_loader = torch.utils.data.DataLoader(subjects_set, batch_size=1,num_workers=6, shuffle=False)
