@@ -48,7 +48,6 @@ def get_AUC_testing(config, vae, device, criterion):
             min_bundles = df['Bundles'].min()
             max_bundles = df['Bundles'].max()
             
-            errors_weights = linear_weights(max_bundles)
             print(f'max min bundles: {max_bundles} {min_bundles}')
             auc_weights = linear_weights(max_bundles)
             for nbun in range(1,max_bundles+1):
