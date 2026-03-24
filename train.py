@@ -650,6 +650,10 @@ def train_vae_model(config, root_dir=None):
         print(f"{bcolors.GREEN}[{epoch}] Train KL loss: {train_kl_loss}        {bcolors.RESET}")
         print(f"{bcolors.GREEN}[{epoch}] Train loss: {train_running_loss}      {bcolors.RESET}")
 
+        if not np.isfinite(train_recon_loss):
+            print(f"NaN/Inf encountered at epoch {epoch}")
+            return
+
         #Save epoch train loss
         list_loss_train.append(train_running_loss)
         list_kl_loss_train.append(train_kl_loss)

@@ -3,6 +3,7 @@ import os
 import numpy as np
 from soma import aims
 from subprocess import call
+import nibabel as nib
 
 # Initialize the parser
 def create_parser():
@@ -20,32 +21,36 @@ def main():
     parser = create_parser()
     args = parser.parse_args()
     
-    # Access the arguments
-    in_folder = args.in_folder
-    out_folder = args.out_folder
-    threshold = args.threshold
-    if not os.path.exists(out_folder):
-        os.makedirs(out_folder)
+    try:
+        # Access the arguments
+        in_folder = args.in_folder
+        out_folder = args.out_folder
+        threshold = args.threshold
+        if not os.path.exists(out_folder):
+            os.makedirs(out_folder)
 
-    files = [f for f in os.listdir(in_folder) if f.endswith('.npy')]
-    for file in files:  
-        prefix = file.split('.npy')[0]
-        vol_npy = np.load(f'{in_folder}/{file}')
-        vol_npy = np.where(vol_npy>threshold,vol_npy,0)
-        vol_nifty = aims.Volume(vol_npy)
-        vol_nifty.header()['voxel_size'] = [1.0, 1.0, 1.0]
-        aims.write(vol_nifty, f'{out_folder}/{prefix}_{threshold}.nii.gz')
-        if not os.path.exists(f'{out_folder}/tmp_mesh'):
-            os.mkdir(f'{out_folder}/tmp_mesh')
-        if not os.path.exists(f'{out_folder}/tmp_thres'):
-            os.mkdir(f'{out_folder}/tmp_thres')
-        call([f'AimsThreshold -i {out_folder}/{prefix}_{threshold}.nii.gz             -o {out_folder}/tmp_thres/{prefix}_{threshold}_binary.nii.gz -b -m gt -t 0 --fg 1 --verbose 1'],shell=True)
-        call([f'AimsMesh      -i {out_folder}/tmp_thres/{prefix}_{threshold}_binary.nii -o {out_folder}/tmp_mesh/{prefix}_{threshold}.mesh --smooth True --smoothIt 100']      ,shell=True)
-        call([f'AimsZCat      -i {out_folder}/tmp_mesh/*.mesh -o {out_folder}/{prefix}_{threshold}.mesh                           ']                    ,shell=True)
-        call([f'AimsVol2Tex   -i {out_folder}/{prefix}_{threshold}.nii -m {out_folder}/{prefix}_{threshold}.mesh -o {out_folder}/{prefix}_{threshold}.tex -v 1 -height 4 -radius 3 -mode 1'],shell=True)
-        call([f'rm -rfv          {out_folder}/tmp_mesh' ]                                        ,shell=True)
-        call([f'rm -rfv          {out_folder}/tmp_thres']                                        ,shell=True)
-
+        files = [f for f in os.listdir(in_folder) if f.endswith('.nii.gz')]
+        for file in files:  
+            print(file)
+            prefix = file.split('.nii.gz')[0]
+            vol_npy = nib.load(f'{in_folder}/{file}').get_fdata()
+            vol_npy = np.where(vol_npy>threshold,vol_npy,0)
+            vol_nifty = aims.Volume(vol_npy)
+            vol_nifty.header()['voxel_size'] = [1.0, 1.0, 1.0]
+            aims.write(vol_nifty, f'{out_folder}/{prefix}_{threshold}.nii.gz')
+            if not os.path.exists(f'{out_folder}/tmp_mesh'):
+                os.mkdir(f'{out_folder}/tmp_mesh')
+            if not os.path.exists(f'{out_folder}/tmp_thres'):
+                os.mkdir(f'{out_folder}/tmp_thres')
+            call([f'AimsThreshold -i {out_folder}/{prefix}_{threshold}.nii.gz             -o {out_folder}/tmp_thres/{prefix}_{threshold}_binary.nii.gz -b -m gt -t {threshold} --fg 1 --verbose 1'],shell=True)
+            call([f'AimsMesh      -i {out_folder}/tmp_thres/{prefix}_{threshold}_binary.nii -o {out_folder}/tmp_mesh/{prefix}_{threshold}.mesh --smooth True --smoothIt 100']      ,shell=True)
+            call([f'AimsZCat      -i {out_folder}/tmp_mesh/*.mesh -o {out_folder}/{prefix}_{threshold}.mesh                           ']                    ,shell=True)
+            call([f'AimsVol2Tex   -i {out_folder}/{prefix}_{threshold}.nii -m {out_folder}/{prefix}_{threshold}.mesh -o {out_folder}/{prefix}_{threshold}.tex -v 1 -height 4 -radius 3 -mode 1'],shell=True)
+            call([f'rm -rfv          {out_folder}/tmp_mesh' ]                                        ,shell=True)
+            call([f'rm -rfv          {out_folder}/tmp_thres']                                        ,shell=True)
+        print('Nifti to mesh OK')
+    except Exception as e:
+        print(e)
 
 if __name__ == "__main__":
     main()
