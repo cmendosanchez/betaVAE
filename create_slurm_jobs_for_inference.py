@@ -111,6 +111,7 @@ def main():
                     f"--subjects={subjects} "
                     f"--data={data} "
                     f"--outdir={output_inference}/{database}_{region}_{mode} "
+                    f"--database={database} "
                     )
 
                 script = textwrap.dedent(f"""\

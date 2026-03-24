@@ -36,11 +36,19 @@ def create_parser():
     )
 
     parser.add_argument(
-        "-d", "--data",
+        "--data",
         type=str,
         required=True,
         help="Path to data (crops)"
     )
+
+    parser.add_argument(
+         "--database",
+        type=str,
+        required=True,
+        help="Path to data (crops)"
+    )
+
 
     parser.add_argument(
         "-o", "--outdir",
@@ -59,7 +67,7 @@ def create_parser():
     return parser
 
 
-def run(model_dir, region, criteria, outdir, subjects, data):
+def run(model_dir, region, criteria, outdir, subjects, data, database):
     print("=== Running VAE Inference ===")
     print(f"Model dir: {model_dir}")
     print(f"Region: {region}")
@@ -84,16 +92,16 @@ def run(model_dir, region, criteria, outdir, subjects, data):
 
     # ---- Sanity check ---- 
     if not os.path.exists(checkpoint_path):
-        print(f"Model not found: {checkpoint_path}")
+        print(f"{bcolors.RED}Model not found: {checkpoint_path}{bcolors.RESET}")
         return
     else:
-        print(f"Found model: {checkpoint_path}")
+        print(f"{bcolors.CYAN}Found model: {checkpoint_path}{bcolors.RESET}")
 
     if not os.path.exists(config_path):
-        print(f"Config not found: {config_path}")
+        print(f"{bcolors.RED}Config not found: {config_path}{bcolors.RESET}")
         return
     else:
-        print(f"Config found: {config_path}")
+        print(f"{bcolors.CYAN}Config found: {config_path}{bcolors.RESET}")
 
     if not os.path.exists(outdir):
         os.mkdir(outdir)
@@ -101,7 +109,7 @@ def run(model_dir, region, criteria, outdir, subjects, data):
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
     config = SimpleNamespace(**config)
-    print("--- Inference ---")
+    print(f"{bcolors.BLUE}---- Running Inference ----{bcolors.RESET}")
 
     # ---- loading model ----
     model = VAE(config.in_shape, config.n, depth=config.depth, loss_selected= config.loss)
@@ -125,12 +133,13 @@ def run(model_dir, region, criteria, outdir, subjects, data):
     subjects_set  = create_subset_from_list(config,subjects_list)
     start_loading = time.time()
     subjects_loader = torch.utils.data.DataLoader(subjects_set, batch_size=1,num_workers=6, shuffle=False)
-    print(f"{bcolors.MAGENTA}-- -Created subjects loader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
+    print(f"{bcolors.MAGENTA}--- Created subjects loader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
 
     embeddings_list = []
     recon_error_list = []
     subs_ids = []
 
+    start = time.time()
     with torch.no_grad():
 
         for inputs, path in subjects_loader: #We iterate the subjects dataset one by one
@@ -153,30 +162,36 @@ def run(model_dir, region, criteria, outdir, subjects, data):
             recon_error_list.append(recon_loss_val.cpu().detach().numpy())
             subs_ids.append(path[0])
 
-    
+    print(f"{bcolors.MAGENTA}--- Embeddings and Recon Error computed in {time.time() - start} seconds ---{bcolors.RESET}")
     embeddings = np.asarray(embeddings_list)
     recon_error = np.asarray(recon_error_list)
     n = embeddings.shape[1]
     # ---- Embeddings dataframe ----
     columns = ["subject"] + [f"dim_{i}" for i in range(n)]
     df_embeddings = pd.DataFrame(
-        data=[[subj] + emb.tolist() for subj, emb in zip(subjects, embeddings)],
+        data=[[subj] + emb.tolist() for subj, emb in zip(subs_id, embeddings)],
         columns=columns)
     df_embeddings.to_csv(f"{outdir}/embeddings.csv", index=False)
     # ---- Reconstruction error dataframe ----
     # Case 1: scalar error per subject
     df_recon = pd.DataFrame({
-        "subject": subjects,
+        "subject": subs_id,
         "recon_error": recon_error})
     df_recon.to_csv(f"{outdir}/recon_error.csv", index=False)
 
-    """ if True:
+    if True:
+        print(f"{bcolors.YELLOW}--- Test in fake anomaly dataset ---{bcolors.RESET}")
         config.path_stats = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/Stats_Anomaly/{database}'
         config.path_anom  = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/FakeAnomaly_crops/{database}'
         
-        test_anom_subjects = read_one_column_tsv(subjects_anom)
+        if database=='UKB':
+            test_anom_subjects = read_one_column_tsv('/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/DataSplit_DL/test_anom.tsv')
+        elif database =='HCP':
+            test_anom_subjects = read_one_column_tsv(subjects)
+
+
         for Anomaly in ['Underconnectivity','Overconnectivity']:
-            for i in range(0,10):
+            for i in range(1,11):
                 random.shuffle(test_anom_subjects)
                 mid = int(len(test_anom_subjects) // 2)
                 normal_group  = test_anom_subjects[:mid]
@@ -198,13 +213,14 @@ def run(model_dir, region, criteria, outdir, subjects, data):
 
                         elif config.loss == 'MSE':
                             partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) 
-                        embeddings_normal.append(z.cpu().numpy())
-                        reconerror_normal.append(partial_recon_loss_anom.cpu().numpy())
+                        embeddings_normal.append(z.cpu().detach().numpy())
+                        reconerror_normal.append(partial_recon_loss_anom.cpu().detach().numpy())
+
                 #embeddings_normal = np.vstack(embeddings_normal)
                 y_normal = np.asarray([0]*len(normal_loader.dataset)).reshape(-1)
 
                 anomaly_group = class_subjects[mid:]
-                with open(f'{config.path_stats}/{Anomaly}_{config.Criteria}.pkl', 'rb') as file:
+                with open(f'{config.path_stats}/{database}_{region}_{Anomaly}_{criteria}.pkl', 'rb') as file:
                     results = pickle.load(file)
 
                 data   = [x for x in results if not isinstance(x, tuple)]
@@ -259,7 +275,7 @@ def run(model_dir, region, criteria, outdir, subjects, data):
                 print('AUCS',resulting_aucs)
                 df = pd.DataFrame(X, columns=[f"dim_{i}" for i in range(X.shape[1])])
                 df["label"] = y  
-                df.to_csv(f"{outdir}/anom_{i}.csv", sep="\t", index=False) """
+                df.to_csv(f"{outdir}/{Anomaly}_shuffle_{i}.csv", sep="\t", index=False) 
 
 def main():
     parser = create_parser()
@@ -271,7 +287,8 @@ def main():
         criteria=args.criteria,
         outdir=args.outdir,
         subjects=args.subjects,
-        data=args.data
+        data=args.data,
+        database=args.database
     )
 
 
