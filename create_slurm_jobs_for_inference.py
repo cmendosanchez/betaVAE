@@ -35,7 +35,7 @@ def parse_args():
     parser.add_argument(
         "--models",
         required=True,
-        help="Output folder for slurm files"
+        help="Path to models"
     )
 
     parser.add_argument(
@@ -45,7 +45,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--database",
+        "--databases",
         nargs="+",
         default=["UKB"],
         help="Databases to use (default: UKB)"
@@ -88,10 +88,12 @@ def main():
                 config_name = f"{database}_{region}_{mode}"
 
                 if database == 'UKB':
-                    data= f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/crops/{region}/{mode}'
+                    data     = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/crops/{region}/{mode}'
+                    subjects = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/UKB37090.tsv'
                 elif database == 'HCP':
-                    data = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/crops_HCP/{region}/{mode}'
-
+                    data = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/crops_HCP/crops_HCP/{region}/{mode}'
+                    subjects = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/HCP1030.tsv'
+                    
                 job_name = f'{config_name}'
                 print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
                 python_call = (
