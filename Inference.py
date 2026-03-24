@@ -249,6 +249,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                 print(f'max min bundles: {max_bundles} {min_bundles}')
 
                 #auc_weights = linear_weights(max_bundles)
+                aucs_list = []
                 for nbun in range(1,max_bundles+1):
                     embeddings_anomaly = []
                     reconerror_anomaly = []
@@ -296,10 +297,10 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                     aucs_list.append(np.mean(aucs))
 
                 for idx,v in enumerate(aucs_list):
-                    individual_aucs[Anomaly+'_list'].append((idx+1,v,auc_weights[idx],len(normal_loader.dataset),len(anom_loader.dataset)))
+                    individual_aucs[Anomaly+'_list'].append((idx+1,v,len(normal_loader.dataset),len(anom_loader.dataset)))
 
                 #weighted_aucs = np.asarray(aucs_list) * auc_weights
-                resulting_aucs[Anomaly] = aucs
+                resulting_aucs[Anomaly] = aucs_list
                 print('AUCS',resulting_aucs)
                 df = pd.DataFrame(X, columns=[f"dim_{i}" for i in range(X.shape[1])])
                 df["label"] = y  
