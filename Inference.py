@@ -142,12 +142,12 @@ def run(model_dir, region, criteria, outdir, subjects, data):
            
 
             if config.loss == 'CrossEntropy':
-                recon_loss_val, kl_val, loss_val = vae_loss(outputs, target, z, logvar, config.loss,
+                recon_loss_val, kl_val, loss_val = vae_loss(outputs, target, z, logvar, criterion,
                                 kl_weight=config.kl) 
                 outputs = torch.argmax(outputs, dim=1) 
 
             elif config.loss == 'MSE':
-                recon_loss_val, kl_val, loss_val = vae_loss(outputs, inputs, z, logvar, config.loss,
+                recon_loss_val, kl_val, loss_val = vae_loss(outputs, inputs, z, logvar, criterion,
                                 kl_weight=config.kl) 
             embeddings.append(z.cpu().detach().numpy())
             recon_error_lists.append(recon_loss_val.cpu().detach().numpy())
@@ -179,7 +179,9 @@ def run(model_dir, region, criteria, outdir, subjects, data):
     df_recon.to_csv(f"{outdir}/recon_error.csv", index=False)
 
     """ if fake_anom_list != None:
-
+        config.path_stats = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/Stats_Anomaly/{database}'
+        config.path_anom  = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/FakeAnomaly_crops/{database}'
+        
         test_anom_subjects = read_one_column_tsv(subjects_anom)
         for i in range(0,10):
             random.shuffle(test_anom_subjects)
@@ -260,7 +262,7 @@ def run(model_dir, region, criteria, outdir, subjects, data):
                 individual_aucs[Anomaly+'_list'].append((idx+1,v,auc_weights[idx],len(normal_loader.dataset),len(anom_loader.dataset)))
 
             weighted_aucs = np.asarray(aucs_list) * auc_weights
-            resulting_aucs[Anomaly] = np.sum(weighted_aucs) """
+            resulting_aucs[Anomaly] = np.sum(weighted_aucs)  """
 
 
 
