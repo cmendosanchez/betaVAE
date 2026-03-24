@@ -142,12 +142,12 @@ def run(model_dir, region, criteria, outdir, subjects, data):
            
 
             if config.loss == 'CrossEntropy':
-                recon_loss_val, kl_val, loss_val = vae_loss(outputs, target, z, logvar, config.loss_func,
+                recon_loss_val, kl_val, loss_val = vae_loss(outputs, target, z, logvar, config.loss,
                                 kl_weight=config.kl_weight) 
                 outputs = torch.argmax(outputs, dim=1) 
 
             elif config.loss == 'MSE':
-                recon_loss_val, kl_val, loss_val = vae_loss(outputs, inputs, z, logvar, config.loss_func,
+                recon_loss_val, kl_val, loss_val = vae_loss(outputs, inputs, z, logvar, config.loss,
                                 kl_weight=config.kl_weight) 
             embeddings.append(z.cpu().detach().numpy())
             recon_error_lists.append(recon_loss_val.cpu().detach().numpy())
@@ -177,6 +177,15 @@ def run(model_dir, region, criteria, outdir, subjects, data):
         "recon_error": recon_error})
 
     df_recon.to_csv(f"{outdir}/recon_error.csv", index=False)
+
+    if fake_anom_list != None:
+        subjects_list = read_one_column_tsv(subjects_anom)
+        subjects_set  = create_subset_from_list(config,subjects_list)
+        start_loading = time.time()
+        subjects_loader = torch.utils.data.DataLoader(subjects_set, batch_size=1,num_workers=6, shuffle=False)
+        print(f"{bcolors.MAGENTA}-- -Created subjects loader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
+
+
 
 def main():
     parser = create_parser()
