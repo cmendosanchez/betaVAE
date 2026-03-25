@@ -446,7 +446,10 @@ def create_subset_for_anomaly(config,Anomaly,anomaly_ids,nbun):
         
         nsubs = 0
         for i, sub in enumerate(anomaly_ids):
-            subject_id = split_filename(sub)  #We get the subject ID
+            if 'sub-' in sub:
+                sub_id = split_filename(sub)  #We get the subject ID
+            else:
+                sub_id = sub  #We get the subject ID
             
             if Anomaly == 'Underconnectivity':
                 if os.path.exists(f'{config.path_anom}/{Anomaly}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_removed_{nbun}_{config.referential}_crop.nii.gz'):

@@ -151,7 +151,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     with torch.no_grad():
 
         for inputs, path in subjects_loader: #We iterate the subjects dataset one by one
-            print(path)
+            #print(path)
             inputs = Variable(inputs).to(device, dtype=torch.float32)
             target = torch.squeeze(inputs, dim=1).long()
             z, logvar = model.encode(inputs) # z = mean because no random sampling
