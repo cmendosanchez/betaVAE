@@ -192,6 +192,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     torch.cuda.empty_cache()
 
     if True:
+        start = time.time()
         print(f"{bcolors.YELLOW}--- Test in fake anomaly dataset ---{bcolors.RESET}")
         config.path_stats = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/Stats_Anomaly/{database}'
         config.path_anom  = f'/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions/FakeAnomaly_crops/{database}/{region}/{criteria}'
@@ -371,7 +372,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
         df_aucs = pd.DataFrame(rows)
         df_aucs.to_csv(f"{outdir}/aucs_data.csv", index=False)
         print(df_aucs)
-
+        print(f"{bcolors.MAGENTA}---Anomaly Embeddings and Recon Error computed in {time.time() - start} seconds ---{bcolors.RESET}")
 
 
 def main():
