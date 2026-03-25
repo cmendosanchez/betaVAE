@@ -140,7 +140,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     subjects_list = read_one_column_tsv(subjects)
     subjects_set  = create_subset_from_list(config,subjects_list)
     start_loading = time.time()
-    subjects_loader = torch.utils.data.DataLoader(subjects_set, batch_size=1,num_workers=0, shuffle=False)
+    subjects_loader = torch.utils.data.DataLoader(subjects_set, batch_size=1,num_workers=6, shuffle=False)
     print(f"{bcolors.MAGENTA}--- Created subjects loader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
 
     embeddings_list = []
@@ -213,7 +213,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                 normal_group  = test_anom_subjects[:mid]
                 anomaly_group = test_anom_subjects[mid:]
                 normal_subset = create_subset_from_list(config, normal_group)
-                normal_loader = torch.utils.data.DataLoader(normal_subset, batch_size=1, num_workers=0, shuffle=False)
+                normal_loader = torch.utils.data.DataLoader(normal_subset, batch_size=1, num_workers=4, shuffle=False)
                 embeddings_normal = []
                 reconerror_normal = []
                 subs_norm = []
