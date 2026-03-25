@@ -323,10 +323,10 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
 
 
 
-                resulting_aucs[Anomaly][f'Shuffle_{i}'] = aucs_list
+                resulting_aucs[Anomaly][f'Shuffle_{shuffle_i}'] = aucs_list
                 # ---- Embeddings dataframe ----
                 n = embeddings_normal.shape[1]
-                columns = [f"dim_{i}" for i in range(n)]
+                columns = [f"dim_{k}" for k in range(n)]
 
                 # Create dataframes in a vectorized way
                 df_norm_embeddings = pd.DataFrame(embeddings_normal, columns=columns)
