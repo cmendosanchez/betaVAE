@@ -137,7 +137,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     config.path_crops = data
     print(config)
 
-    subjects_list = read_one_column_tsv(subjects)[0:100]
+    subjects_list = read_one_column_tsv(subjects)
     subjects_set  = create_subset_from_list(config,subjects_list)
     start_loading = time.time()
     subjects_loader = torch.utils.data.DataLoader(subjects_set, batch_size=1,num_workers=6, shuffle=False)
@@ -202,7 +202,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
             print(f'{bcolors.RED} Launching Normal/Anomaly classification {bcolors.RESET}')
             resulting_aucs[Anomaly] = {}
 
-            for shuffle_i in range(1,3):
+            for shuffle_i in range(1,30):
                 random.shuffle(test_anom_subjects)
                 mid = int(len(test_anom_subjects) // 2)
                 normal_group  = test_anom_subjects[:mid]
@@ -256,8 +256,8 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                     return 
 
                 min_bundles = df['Bundles'].min()
-                #max_bundles = df['Bundles'].max()
-                max_bundles = 3
+                max_bundles = df['Bundles'].max()
+                #max_bundles = 3
                 print(f'max min bundles: {max_bundles} {min_bundles}')
 
                 #auc_weights = linear_weights(max_bundles)
