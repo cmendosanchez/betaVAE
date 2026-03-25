@@ -202,7 +202,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
             print(f'{bcolors.RED} Launching Normal/Anomaly classification {bcolors.RESET}')
             resulting_aucs[Anomaly] = {}
 
-            for i in range(1,3):
+            for shuffle_i in range(1,3):
                 random.shuffle(test_anom_subjects)
                 mid = int(len(test_anom_subjects) // 2)
                 normal_group  = test_anom_subjects[:mid]
@@ -319,7 +319,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                     df_recon = pd.concat([df_norm_recon_error, df_anorm_recon_error], axis=0, ignore_index=True)
 
                     # Save
-                    df_recon.to_csv(f"{outdir}/reconstruction_error_shuffle_{i}_nbun_{nbun}.csv", index=False)
+                    df_recon.to_csv(f"{outdir}/reconstruction_error_shuffle_{shuffle_i}_nbun_{nbun}.csv", index=False)
 
 
 
@@ -340,7 +340,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                 # Stack (concatenate)
                 df_embeddings = pd.concat([df_norm_embeddings, df_anorm_embeddings], axis=0, ignore_index=True)
                 # Save single file
-                df_embeddings.to_csv(f"{outdir}/embeddings_shuffle_{i}.csv", index=False)
+                df_embeddings.to_csv(f"{outdir}/embeddings_shuffle_{shuffle_i}.csv", index=False)
 
 
         rows = []
@@ -353,6 +353,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                         "position": pos+1,
                         "auc": auc})
         df_aucs = pd.DataFrame(rows)
+        print(df_aucs)
 
 
 
