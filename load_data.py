@@ -449,17 +449,17 @@ def create_subset_for_anomaly(config,Anomaly,anomaly_ids,nbun):
             if 'sub-' in sub:
                 sub_id = split_filename(sub)  #We get the subject ID
             else:
-                sub_id = sub  #We get the subject ID
+                sub_id = sub
             
             if Anomaly == 'Underconnectivity':
                 if os.path.exists(f'{config.path_anom}/{Anomaly}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_removed_{nbun}_{config.referential}_crop.nii.gz'):
-                    subject_ids.append(subject_id)
+                    subject_ids.append(sub_id)
                     list_crops.append([nib.load(f'{config.path_anom}/{Anomaly}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_removed_{nbun}_{config.referential}_crop.nii.gz').get_fdata()])
                     nsubs+=1
 
             if Anomaly == 'Overconnectivity':
                 if os.path.exists(f'{config.path_anom}/{Anomaly}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{nbun}_{config.referential}_crop.nii.gz'):
-                    subject_ids.append(subject_id)
+                    subject_ids.append(sub_id)
                     list_crops.append([nib.load(f'{config.path_anom}/{Anomaly}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_added_{nbun}_{config.referential}_crop.nii.gz').get_fdata()])
                     nsubs+=1
         #print("--- %s seconds ser ---" % (time.time() - start_time_ser))
