@@ -14,7 +14,7 @@ import pickle
 from itertools import chain
 from sklearn import svm
 from sklearn.metrics import  roc_auc_score
-
+import gc
 
 def create_parser():
     parser = argparse.ArgumentParser(
@@ -140,7 +140,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     subjects_list = read_one_column_tsv(subjects)
     subjects_set  = create_subset_from_list(config,subjects_list)
     start_loading = time.time()
-    subjects_loader = torch.utils.data.DataLoader(subjects_set, batch_size=1,num_workers=6, shuffle=False)
+    subjects_loader = torch.utils.data.DataLoader(subjects_set, batch_size=1,num_workers=0, shuffle=False)
     print(f"{bcolors.MAGENTA}--- Created subjects loader in  {time.time() - start_loading} seconds ---{bcolors.RESET}")
 
     embeddings_list = []
@@ -153,7 +153,6 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
         for inputs, path in subjects_loader: #We iterate the subjects dataset one by one
             #print(path)
             inputs = Variable(inputs).to(device, dtype=torch.float32)
-            target = torch.squeeze(inputs, dim=1).long()
             z, logvar = model.encode(inputs) # z = mean because no random sampling
             outputs = model.decode(z)
            
@@ -169,6 +168,8 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
             embeddings_list.append(z.cpu().detach().numpy())
             recon_error_list.append(recon_loss_val.cpu().detach().numpy())
             subs_ids.append(path[0])
+            del inputs, z, logvar, outputs, recon_loss_val, kl_val, loss_val
+
 
     print(f"{bcolors.MAGENTA}--- Embeddings and Recon Error computed in {time.time() - start} seconds ---{bcolors.RESET}")
     embeddings = np.asarray(embeddings_list)
@@ -185,6 +186,10 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
         "subject": subs_ids,
         "recon_error": recon_error})
     df_recon.to_csv(f"{outdir}/reconstruction_error_allsubs.csv", index=False)
+
+    del subjects_set, subjects_loader
+    gc.collect()
+    torch.cuda.empty_cache()
 
     if True:
         print(f"{bcolors.YELLOW}--- Test in fake anomaly dataset ---{bcolors.RESET}")
@@ -208,14 +213,13 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                 normal_group  = test_anom_subjects[:mid]
                 anomaly_group = test_anom_subjects[mid:]
                 normal_subset = create_subset_from_list(config, normal_group)
-                normal_loader = torch.utils.data.DataLoader(normal_subset, batch_size=1, num_workers=4, shuffle=False)
+                normal_loader = torch.utils.data.DataLoader(normal_subset, batch_size=1, num_workers=0, shuffle=False)
                 embeddings_normal = []
                 reconerror_normal = []
                 subs_norm = []
                 for inputs, path in normal_loader:
                     with torch.no_grad():
                         inputs = Variable(inputs).to(device, dtype=torch.float32)
-                        target = torch.squeeze(inputs, dim=1).long()
                         z, logvar = model.encode(inputs) # z = mean because no random sampling
                         outputs = model.decode(z)
 
@@ -230,6 +234,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                         embeddings_normal.append(z.cpu().numpy())
                         reconerror_normal.append(partial_recon_loss_norm.cpu().numpy())
                         subs_norm.append(path[0])
+                        del inputs, z, logvar, outputs, partial_recon_loss_norm, partial_kl_val, loss
 
                 #embeddings_normal = np.vstack(embeddings_normal)
                 embeddings_normal = np.asarray(embeddings_normal)
@@ -272,7 +277,6 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                     for inputs, path in anom_loader:
                         with torch.no_grad():
                             inputs = Variable(inputs).to(device, dtype=torch.float32)
-                            target = torch.squeeze(inputs, dim=1).long()
                             z, logvar = model.encode(inputs) # z = mean because no random sampling
                             outputs = model.decode(z)
 
@@ -287,6 +291,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                             embeddings_anomaly.append(z.cpu().numpy())
                             reconerror_anomaly.append(partial_recon_loss_anom.cpu().numpy())
                             subs_anorm.append(path[0])
+                            del inputs, z, logvar, outputs, partial_recon_loss_norm, partial_kl_val, loss
 
                     #embeddings_anomaly = np.vstack(embeddings_anomaly)
                     embeddings_anomaly = np.asarray(embeddings_anomaly)
@@ -336,9 +341,23 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                     # Save single file
                     df_embeddings.to_csv(f"{outdir}/embeddings_shuffle_{shuffle_i}_nbun_{nbun}.csv", index=False)
 
+                    del anom_loader, anomaly_subset
+                    gc.collect()
+                    torch.cuda.empty_cache()
+
+                    del X, y, embeddings_anomaly, reconerror_anomaly, subs_anorm
+                    gc.collect()
+
 
                 resulting_aucs[Anomaly][f'Shuffle_{shuffle_i}'] = aucs_list
+                del normal_loader, normal_subset
+                gc.collect()
+                torch.cuda.empty_cache()
 
+                del embeddings_normal, reconerror_normal, subs_norm
+                del df_norm_embeddings
+                gc.collect()
+                torch.cuda.empty_cache()
 
         rows = []
         for anomaly, shuffles in resulting_aucs.items():
