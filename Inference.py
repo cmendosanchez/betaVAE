@@ -178,13 +178,13 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     df_embeddings = pd.DataFrame(
         data=[[subj] + emb.tolist() for subj, emb in zip(subs_ids, embeddings)],
         columns=columns)
-    df_embeddings.to_csv(f"{outdir}/embeddings.csv", index=False)
+    df_embeddings.to_csv(f"{outdir}/embeddings_allsubs.csv", index=False)
     # ---- Reconstruction error dataframe ----
     # Case 1: scalar error per subject
     df_recon = pd.DataFrame({
         "subject": subs_ids,
         "recon_error": recon_error})
-    df_recon.to_csv(f"{outdir}/recon_error.csv", index=False)
+    df_recon.to_csv(f"{outdir}/recon_error_allsubs.csv", index=False)
 
     if True:
         print(f"{bcolors.YELLOW}--- Test in fake anomaly dataset ---{bcolors.RESET}")
@@ -197,13 +197,12 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
         elif database =='HCP':
             test_anom_subjects = read_one_column_tsv(subjects)
 
-        
+        resulting_aucs  = {}
         for Anomaly in ['Underconnectivity','Overconnectivity']:
             print(f'{bcolors.RED} Launching Normal/Anomaly classification {bcolors.RESET}')
-            resulting_aucs  = {}
-            individual_aucs = {'Underconnectivity_list' : [] , 'Overconnectivity_list' : [] }
+            resulting_aucs[Anomaly] = {}
 
-            for i in range(1,11):
+            for i in range(1,3):
                 random.shuffle(test_anom_subjects)
                 mid = int(len(test_anom_subjects) // 2)
                 normal_group  = test_anom_subjects[:mid]
@@ -212,6 +211,8 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                 normal_loader = torch.utils.data.DataLoader(normal_subset, batch_size=1, num_workers=4, shuffle=False)
                 embeddings_normal = []
                 reconerror_normal = []
+                subs_norm = []
+                subs_anorm = []
                 for inputs, path in normal_loader:
                     with torch.no_grad():
                         inputs = Variable(inputs).to(device, dtype=torch.float32)
@@ -229,6 +230,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
 
                         embeddings_normal.append(z.cpu().numpy())
                         reconerror_normal.append(partial_recon_loss_norm.cpu().numpy())
+                        subs_norm.append(path[0])
 
                 #embeddings_normal = np.vstack(embeddings_normal)
                 embeddings_normal = np.asarray(embeddings_normal)
@@ -249,7 +251,8 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                     continue 
 
                 min_bundles = df['Bundles'].min()
-                max_bundles = df['Bundles'].max()
+                #max_bundles = df['Bundles'].max()
+                max_bundles = 3
                 print(f'max min bundles: {max_bundles} {min_bundles}')
 
                 #auc_weights = linear_weights(max_bundles)
@@ -258,7 +261,6 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                     embeddings_anomaly = []
                     reconerror_anomaly = []
                     anomaly_subset, nsubjects = create_subset_for_anomaly(config,Anomaly,anomaly_group,nbun)
-                    print(f'Nbundles {nbun} Nsubjects {nsubjects}')
                     anom_loader = torch.utils.data.DataLoader(anomaly_subset,batch_size=1,num_workers=4, shuffle=False)
 
                     for inputs, path in anom_loader:
@@ -278,6 +280,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
 
                             embeddings_anomaly.append(z.cpu().numpy())
                             reconerror_anomaly.append(partial_recon_loss_anom.cpu().numpy())
+                            subs_anorm.append(path[0])
 
                     #embeddings_anomaly = np.vstack(embeddings_anomaly)
                     embeddings_anomaly = np.asarray(embeddings_anomaly)
@@ -300,15 +303,59 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                         aucs.append(roc_auc)
                     aucs_list.append(np.mean(aucs))
 
-                for idx,v in enumerate(aucs_list):
-                    individual_aucs[Anomaly+'_list'].append((idx+1,v,len(normal_loader.dataset),len(anom_loader.dataset)))
 
-                #weighted_aucs = np.asarray(aucs_list) * auc_weights
-                resulting_aucs[Anomaly] = aucs_list
-                print('AUCS',resulting_aucs)
-                df = pd.DataFrame(X, columns=[f"dim_{i}" for i in range(X.shape[1])])
-                df["label"] = y  
-                df.to_csv(f"{outdir}/{Anomaly}_shuffle_{i}.csv", sep="\t", index=False) 
+                resulting_aucs[Anomaly][f'Shuffle_{i}'] = aucs_list
+                # ---- Embeddings dataframe ----
+                n = embeddings_normal.shape[1]
+                columns = [f"dim_{i}" for i in range(n)]
+
+                # Create dataframes in a vectorized way
+                df_norm_embeddings = pd.DataFrame(embeddings_normal, columns=columns)
+                df_norm_embeddings.insert(0, "subject", subs_norm)
+                df_norm_embeddings["label"] = 0
+
+                df_anorm_embeddings = pd.DataFrame(embeddings_anomaly, columns=columns)
+                df_anorm_embeddings.insert(0, "subject", subs_anorm)
+                df_anorm_embeddings["label"] = 1  # <-- important
+
+                # Stack (concatenate)
+                df_embeddings = pd.concat([df_norm_embeddings, df_anorm_embeddings], axis=0, ignore_index=True)
+                # Save single file
+                df_embeddings.to_csv(f"{outdir}/embeddings_shuffle_{i}.csv", index=False)
+
+
+
+                # Create dataframes
+                df_norm_recon_error = pd.DataFrame({
+                    "subject": subs_norm,
+                    "reconstruction_error": reconerror_normal,
+                    "label": 0
+                })
+
+                df_anorm_recon_error = pd.DataFrame({
+                    "subject": subs_anorm,
+                    "reconstruction_error": reconerror_anomaly,
+                    "label": 1
+                })
+
+                # Stack
+                df_recon = pd.concat([df_norm_recon_error, df_anorm_recon_error], axis=0, ignore_index=True)
+
+                # Save
+                df_recon.to_csv(f"{outdir}/reconstruction_error_shuffle_{i}.csv", index=False)
+
+        rows = []
+        for anomaly, shuffles in resulting_aucs.items():
+            for shuffle, auc_list in shuffles.items():
+                for pos, auc in enumerate(auc_list):
+                    rows.append({
+                        "anomaly": anomaly,
+                        "shuffle": shuffle,
+                        "position": pos+1,
+                        "auc": auc})
+        df_aucs = pd.DataFrame(rows)
+
+
 
 def main():
     parser = create_parser()
