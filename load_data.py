@@ -277,7 +277,10 @@ def create_subset_from_list(config,subjects):
         subject_ids = []
         # Load data for each subject file
         for i, sub in enumerate(subjects):
-            sub_id = split_filename(sub)  #We get the subject ID
+            if 'sub-' in sub:
+                sub_id = split_filename(sub)  #We get the subject ID
+            else:
+                sub_id = sub
             file_name = f'{config.path_crops}/{sub}_{config.Region}_{config.Criteria}_{config.minl}_{config.maxl}_{config.referential}.nii.gz'
             if os.path.exists(file_name):
                 subject_ids.append(sub_id)
