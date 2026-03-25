@@ -183,7 +183,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     df_recon = pd.DataFrame({
         "subject": subs_ids,
         "recon_error": recon_error})
-    df_recon.to_csv(f"{outdir}/recon_error_allsubs.csv", index=False)
+    df_recon.to_csv(f"{outdir}/reconstruction_error_allsubs.csv", index=False)
 
     if True:
         print(f"{bcolors.YELLOW}--- Test in fake anomaly dataset ---{bcolors.RESET}")
