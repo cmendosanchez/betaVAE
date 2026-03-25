@@ -291,7 +291,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                             embeddings_anomaly.append(z.cpu().numpy())
                             reconerror_anomaly.append(partial_recon_loss_anom.cpu().numpy())
                             subs_anorm.append(path[0])
-                            del inputs, z, logvar, outputs, partial_recon_loss_norm, partial_kl_val, loss
+                            del inputs, z, logvar, outputs, partial_recon_loss_anom, partial_kl_val, loss
 
                     #embeddings_anomaly = np.vstack(embeddings_anomaly)
                     embeddings_anomaly = np.asarray(embeddings_anomaly)
@@ -345,7 +345,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                     gc.collect()
                     torch.cuda.empty_cache()
 
-                    del X, y, embeddings_anomaly, reconerror_anomaly, subs_anorm
+                    del X, y, embeddings_anomaly, reconerror_anomaly, subs_anorm, df_anorm_embeddings
                     gc.collect()
 
 
