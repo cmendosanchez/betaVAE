@@ -135,6 +135,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
         print('"""Using MSE Loss, reduction=sum')
 
     config.path_crops = data
+    print(config)
 
     subjects_list = read_one_column_tsv(subjects)[0:100]
     subjects_set  = create_subset_from_list(config,subjects_list)
@@ -150,7 +151,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     with torch.no_grad():
 
         for inputs, path in subjects_loader: #We iterate the subjects dataset one by one
-            #print(path)
+            print(path)
             inputs = Variable(inputs).to(device, dtype=torch.float32)
             target = torch.squeeze(inputs, dim=1).long()
             z, logvar = model.encode(inputs) # z = mean because no random sampling
