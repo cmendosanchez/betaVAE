@@ -172,9 +172,8 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     print(f"{bcolors.MAGENTA}--- Embeddings and Recon Error computed in {time.time() - start} seconds ---{bcolors.RESET}")
     embeddings = np.asarray(embeddings_list)
     recon_error = np.asarray(recon_error_list)
-    n = embeddings.shape[1]
     # ---- Embeddings dataframe ----
-    columns = ["subject"] + [f"dim_{i}" for i in range(n)]
+    columns = ["subject"] + [f"dim_{i}" for i in range(1,embeddings.shape[1]+1)]
     df_embeddings = pd.DataFrame(
         data=[[subj] + emb.tolist() for subj, emb in zip(subs_ids, embeddings)],
         columns=columns)
@@ -234,8 +233,14 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                 #embeddings_normal = np.vstack(embeddings_normal)
                 embeddings_normal = np.asarray(embeddings_normal)
                 embeddings_normal = embeddings_normal.squeeze(1)
-                print(embeddings_normal.shape)
+                #print(embeddings_normal.shape)
                 y_normal = np.asarray([0]*len(normal_loader.dataset)).reshape(-1)
+
+                # Create dataframes in a vectorized way
+                df_norm_embeddings = pd.DataFrame(embeddings_normal, columns=[f"dim_{i}" for i in range(1,embeddings_normal.shape[1]+1)])
+                df_norm_embeddings.insert(0, "subject", subs_norm)
+                df_norm_embeddings["label"] = 0
+
 
                 with open(f'{config.path_stats}/{database}_{region}_{Anomaly}_{criteria}.pkl', 'rb') as file:
                     results = pickle.load(file)
@@ -247,7 +252,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                     print(f'{bcolors.CYAN}Dataframe is empty!{bcolors.RESET}')
                     individual_aucs[Anomaly+'_list'] = np.nan
                     resulting_aucs[Anomaly] = np.nan
-                    continue 
+                    return 
 
                 min_bundles = df['Bundles'].min()
                 #max_bundles = df['Bundles'].max()
@@ -303,7 +308,6 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                         aucs.append(roc_auc)
                     aucs_list.append(np.mean(aucs))
 
-
                     # Create dataframes
                     df_norm_recon_error = pd.DataFrame({
                         "subject": subs_norm,
@@ -322,25 +326,17 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                     df_recon.to_csv(f"{outdir}/reconstruction_error_shuffle_{shuffle_i}_nbun_{nbun}.csv", index=False)
 
 
+                    df_anorm_embeddings = pd.DataFrame(embeddings_anomaly, columns=[f"dim_{i}" for i in range(1,embeddings_anomaly.shape[1]+1)])
+                    df_anorm_embeddings.insert(0, "subject", subs_anorm)
+                    df_anorm_embeddings["label"] = 1  # <-- important
+
+                    # Stack (concatenate)
+                    df_embeddings = pd.concat([df_norm_embeddings, df_anorm_embeddings], axis=0, ignore_index=True)
+                    # Save single file
+                    df_embeddings.to_csv(f"{outdir}/embeddings_shuffle_{shuffle_i}.csv", index=False)
+
 
                 resulting_aucs[Anomaly][f'Shuffle_{shuffle_i}'] = aucs_list
-                # ---- Embeddings dataframe ----
-                n = embeddings_normal.shape[1]
-                columns = [f"dim_{k}" for k in range(n)]
-
-                # Create dataframes in a vectorized way
-                df_norm_embeddings = pd.DataFrame(embeddings_normal, columns=columns)
-                df_norm_embeddings.insert(0, "subject", subs_norm)
-                df_norm_embeddings["label"] = 0
-
-                df_anorm_embeddings = pd.DataFrame(embeddings_anomaly, columns=columns)
-                df_anorm_embeddings.insert(0, "subject", subs_anorm)
-                df_anorm_embeddings["label"] = 1  # <-- important
-
-                # Stack (concatenate)
-                df_embeddings = pd.concat([df_norm_embeddings, df_anorm_embeddings], axis=0, ignore_index=True)
-                # Save single file
-                df_embeddings.to_csv(f"{outdir}/embeddings_shuffle_{shuffle_i}.csv", index=False)
 
 
         rows = []
@@ -353,6 +349,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                         "position": pos+1,
                         "auc": auc})
         df_aucs = pd.DataFrame(rows)
+        df_aucs.to_csv(f"{outdir}/aucs_data.csv", index=False)
         print(df_aucs)
 
 
