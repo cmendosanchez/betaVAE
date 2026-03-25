@@ -212,7 +212,6 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                 embeddings_normal = []
                 reconerror_normal = []
                 subs_norm = []
-                subs_anorm = []
                 for inputs, path in normal_loader:
                     with torch.no_grad():
                         inputs = Variable(inputs).to(device, dtype=torch.float32)
@@ -260,6 +259,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                 for nbun in range(1,max_bundles+1):
                     embeddings_anomaly = []
                     reconerror_anomaly = []
+                    subs_anorm = []
                     anomaly_subset, nsubjects = create_subset_for_anomaly(config,Anomaly,anomaly_group,nbun)
                     anom_loader = torch.utils.data.DataLoader(anomaly_subset,batch_size=1,num_workers=4, shuffle=False)
 
@@ -304,6 +304,25 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                     aucs_list.append(np.mean(aucs))
 
 
+                    # Create dataframes
+                    df_norm_recon_error = pd.DataFrame({
+                        "subject": subs_norm,
+                        "reconstruction_error": reconerror_normal,
+                        "label": 0})
+
+                    df_anorm_recon_error = pd.DataFrame({
+                        "subject": subs_anorm,
+                        "reconstruction_error": reconerror_anomaly,
+                        "label": 1})
+
+                    # Stack
+                    df_recon = pd.concat([df_norm_recon_error, df_anorm_recon_error], axis=0, ignore_index=True)
+
+                    # Save
+                    df_recon.to_csv(f"{outdir}/reconstruction_error_shuffle_{i}_nbun_{nbun}.csv", index=False)
+
+
+
                 resulting_aucs[Anomaly][f'Shuffle_{i}'] = aucs_list
                 # ---- Embeddings dataframe ----
                 n = embeddings_normal.shape[1]
@@ -323,26 +342,6 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                 # Save single file
                 df_embeddings.to_csv(f"{outdir}/embeddings_shuffle_{i}.csv", index=False)
 
-
-
-                # Create dataframes
-                df_norm_recon_error = pd.DataFrame({
-                    "subject": subs_norm,
-                    "reconstruction_error": reconerror_normal,
-                    "label": 0
-                })
-
-                df_anorm_recon_error = pd.DataFrame({
-                    "subject": subs_anorm,
-                    "reconstruction_error": reconerror_anomaly,
-                    "label": 1
-                })
-
-                # Stack
-                df_recon = pd.concat([df_norm_recon_error, df_anorm_recon_error], axis=0, ignore_index=True)
-
-                # Save
-                df_recon.to_csv(f"{outdir}/reconstruction_error_shuffle_{i}.csv", index=False)
 
         rows = []
         for anomaly, shuffles in resulting_aucs.items():
