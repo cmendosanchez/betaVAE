@@ -333,7 +333,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
                     # Stack (concatenate)
                     df_embeddings = pd.concat([df_norm_embeddings, df_anorm_embeddings], axis=0, ignore_index=True)
                     # Save single file
-                    df_embeddings.to_csv(f"{outdir}/embeddings_shuffle_{shuffle_i}.csv", index=False)
+                    df_embeddings.to_csv(f"{outdir}/embeddings_shuffle_{shuffle_i}_nbun_{nbun}.csv", index=False)
 
 
                 resulting_aucs[Anomaly][f'Shuffle_{shuffle_i}'] = aucs_list
