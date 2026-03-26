@@ -157,7 +157,7 @@ def objective(trial, config):
         local_config = process_config(local_config)
         torch.manual_seed(3)
 
-        local_config.save_dir = local_config.save_dir + f"/{local_config.dataset_name}_dim_{local_config.n}_beta_{local_config.kl}_{now:%H-%M-%S}_trial_{trial.number}/"
+        local_config.save_dir = local_config.save_dir + f"/{local_config.dataset_name}_trial_{trial.number}/"
 
         # Create the save directory
         try:
