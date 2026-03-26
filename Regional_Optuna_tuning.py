@@ -63,37 +63,36 @@ def validate_range(x, name):
         raise ValueError(f"{name} must contain exactly 2 values (low, high)")
     return x[0], x[1]
 
-now = datetime.now()
 optuna.logging.set_verbosity(optuna.logging.INFO)
 
 # This will be the objective function for Optuna optimization
 def objective(trial, config):
     try:
         print(f"{bcolors.BG_BLUE}{bcolors.YELLOW}Running trial {trial.number=} in {threading.current_thread().name}{bcolors.RESET}")
-        config = deepcopy(config)
+        local_config = deepcopy(config)
         # Suggest hyperparameters with Optuna
         # Optuna will suggest a learning rate and batch size for each trial
         # ---- LEARNING RATE (float, log scale) ----
-        if is_range(config.optuna_lr):
-            low, high = validate_range(config.optuna_lr, "optuna_lr")
+        if is_range(local_config.optuna_lr):
+            low, high = validate_range(local_config.optuna_lr, "optuna_lr")
             LEARNING_RATE = trial.suggest_float("Learning Rate", low, high, log=True)
-        elif isinstance(config.optuna_lr, (float, int)):
-            LEARNING_RATE = float(config.optuna_lr)
+        elif isinstance(local_config.optuna_lr, (float, int)):
+            LEARNING_RATE = float(local_config.optuna_lr)
         else:
             raise TypeError("optuna_lr must be float or [low, high]")
 
         # ---- WEIGHT DECAY (float, log scale) ----
-        if is_range(config.optuna_weight_decay):
-            low, high = validate_range(config.optuna_weight_decay, "optuna_weight_decay")
+        if is_range(local_config.optuna_weight_decay):
+            low, high = validate_range(local_config.optuna_weight_decay, "optuna_weight_decay")
             WEIGHT_DECAY = trial.suggest_float("Weight decay", low, high, log=True)
-        elif isinstance(config.optuna_weight_decay, (float, int)):
-            WEIGHT_DECAY = float(config.optuna_weight_decay)
+        elif isinstance(local_config.optuna_weight_decay, (float, int)):
+            WEIGHT_DECAY = float(local_config.optuna_weight_decay)
         else:
             raise TypeError("optuna_weight_decay must be float or [low, high]")
 
         # ---- BATCH SIZE (int) ----
-        if is_range(config.optuna_batch_size):
-            low, high = validate_range(config.optuna_batch_size, "optuna_batch_size")
+        if is_range(local_config.optuna_batch_size):
+            low, high = validate_range(local_config.optuna_batch_size, "optuna_batch_size")
             batch_size_list = []
             v = 1
             while v <= high:
@@ -103,14 +102,14 @@ def objective(trial, config):
             print('Batch size to try:', batch_size_list)
             BATCH_SIZE = trial.suggest_categorical("Batch size", batch_size_list)
 
-        elif isinstance(config.optuna_batch_size, int):
-            BATCH_SIZE = config.optuna_batch_size
+        elif isinstance(local_config.optuna_batch_size, int):
+            BATCH_SIZE = local_config.optuna_batch_size
         else:
             raise TypeError("optuna_batch_size must be int or [low, high]")
 
         # ---- LATENT DIMENSIONS (int) ----
-        if is_range(config.optuna_ndim):
-            low, high = validate_range(config.optuna_ndim, "optuna_ndim")
+        if is_range(local_config.optuna_ndim):
+            low, high = validate_range(local_config.optuna_ndim, "optuna_ndim")
             # Generar potencias de 2 dentro del rango
             dim_list = []
             v = 1
@@ -121,65 +120,65 @@ def objective(trial, config):
             print('Dimensions to try',dim_list)
             LATENT_DIMENSIONS = trial.suggest_categorical("Dimensions", dim_list)
 
-        elif isinstance(config.optuna_ndim, int):
-            LATENT_DIMENSIONS = config.optuna_ndim
+        elif isinstance(local_config.optuna_ndim, int):
+            LATENT_DIMENSIONS = local_config.optuna_ndim
         else:
             raise TypeError("optuna_ndim must be int or [low, high]")
 
         # ---- BETA (float) ----
-        if is_range(config.optuna_beta):
-            low, high = validate_range(config.optuna_beta, "optuna_beta")
+        if is_range(local_config.optuna_beta):
+            low, high = validate_range(local_config.optuna_beta, "optuna_beta")
             BETA = trial.suggest_float("Beta", float(low), float(high))
-        elif isinstance(config.optuna_beta, (float, int)):
-            BETA = float(config.optuna_beta)
+        elif isinstance(local_config.optuna_beta, (float, int)):
+            BETA = float(local_config.optuna_beta)
         else:
             raise TypeError("optuna_beta must be float or [low, high]")
 
         
         # ---- SUB_PERC (float) ----
-        if is_range(config.optuna_sub_perc):
-            low, high = validate_range(config.optuna_sub_perc, "optuna_sub_perc")
+        if is_range(local_config.optuna_sub_perc):
+            low, high = validate_range(local_config.optuna_sub_perc, "optuna_sub_perc")
             SUB_PERC = trial.suggest_float("Percentage of subjects", float(low), float(high))
-        elif isinstance(config.optuna_sub_perc, (float, int)):
-            SUB_PERC = float(config.optuna_sub_perc)
+        elif isinstance(local_config.optuna_sub_perc, (float, int)):
+            SUB_PERC = float(local_config.optuna_sub_perc)
         else:
             raise TypeError("optuna_sub_perc must be float or [low, high]")
 
         # ---- Assign back to config ----
-        config.lr         = LEARNING_RATE
-        config.batch_size = BATCH_SIZE
-        config.n          = LATENT_DIMENSIONS
-        config.kl         = BETA
-        config.sub_perc   = SUB_PERC
-        config.nb_epoch   = int(config.optuna_epoch)
-
-        config.weight_decay = WEIGHT_DECAY
+        local_config.lr         = LEARNING_RATE
+        local_config.batch_size = BATCH_SIZE
+        local_config.n          = LATENT_DIMENSIONS
+        local_config.kl         = BETA
+        local_config.sub_perc   = SUB_PERC
+        local_config.nb_epoch   = int(local_config.optuna_epoch)
+        local_config.weight_decay = WEIGHT_DECAY
 
         # Configuration step
-        config = process_config(config)
+        local_config = process_config(local_config)
         torch.manual_seed(3)
 
-        config.save_dir = config.save_dir + f"/{config.dataset_name}_dim_{config.n}_beta_{config.kl}_{now:%H-%M-%S}_trial_{trial.number}/"
+        local_config.save_dir = local_config.save_dir + f"/{local_config.dataset_name}_dim_{local_config.n}_beta_{local_config.kl}_{now:%H-%M-%S}_trial_{trial.number}/"
 
         # Create the save directory
         try:
-            os.makedirs(config.save_dir)
+            os.makedirs(local_config.save_dir)
         except FileExistsError:
-            print(f"Directory {config.save_dir} already exists")
+            print(f"Directory {local_config.save_dir} already exists")
             pass
 
         # Save config as a yaml file
-        with open(config.save_dir + "/config.yaml", "w") as f:
-            OmegaConf.save(config, f)
+        with open(local_config.save_dir + "/config.yaml", "w") as f:
+            OmegaConf.save(local_config, f)
         
         print(""" Train model for given configuration """)
-        final_loss_val = train_vae_optuna(config, trial,root_dir=config.save_dir)
+        final_loss_val = train_vae_optuna(local_config, trial, root_dir=local_config.save_dir)
 
         torch.cuda.empty_cache()
         return final_loss_val
     
     except optuna.TrialPruned:
         raise
+
     except RuntimeError as e:
         # Optional: prune on CUDA OOM
         if "CUDA out of memory" in str(e):
@@ -191,32 +190,18 @@ def objective(trial, config):
     
 
 def Run_optuna_optimization(config):
-    # Here, we access the dataset directly in shared memory
     try:
-        print('Run optimization')
-        #storage_name = f"sqlite:///{config.optuna_folder}/study.db"
         study_name="journal_storage_multiprocess"
         storage_name = JournalStorage(JournalFileBackend(file_path=f"{config.optuna_folder}/journal.log"))
+        print(f'{bcolors.YELLOW}Minimizing Reconstruction Error in Val UKB{bcolors.RESET}')
+        pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
+        sampler = optuna.samplers.TPESampler(n_startup_trials=10)
 
-        if config.Anomaly == None:
-            print(f'{bcolors.YELLOW}Minimizing Reconstruction Error{bcolors.RESET}')
-            pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
-            sampler = optuna.samplers.TPESampler(n_startup_trials=10)
-            study = optuna.create_study(study_name=study_name,directions=['minimize'],
-                                        storage=storage_name,sampler=sampler,
-                                        pruner=pruner,load_if_exists=True)
-        else:
-            print(f'{bcolors.YELLOW}Maximizing AUC{bcolors.RESET}')
-            pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=5, interval_steps=1)
-            sampler = optuna.samplers.TPESampler(n_startup_trials=5)
-            study = optuna.create_study(study_name=study_name,directions=['maximize'],
-                                        storage=storage_name,sampler=sampler,
-                                        pruner=pruner,load_if_exists=True)
-        
+        study = optuna.create_study(study_name=study_name,directions=['minimize'],
+                                    storage=storage_name,sampler=sampler,
+                                    pruner=pruner,load_if_exists=True)
+
         study.optimize(lambda trial: objective(trial,config), n_trials=config.optuna_ntrials)
-
-    except optuna.TrialPruned:
-        pass
 
     except Exception as e:
         print(f"Run optimization failed with error: {e}")
@@ -233,7 +218,6 @@ def train(config):
     config.in_shape = adjust_in_shape(config)
 
     print(f'{bcolors.CYAN}~~~~~~ @ Running Optuna Framework @ ~~~~~~{bcolors.RESET}')
-    #Run_optuna_optimization(config)
     nworkers = config.optuna_nworkers
     with Pool(max_workers=nworkers) as pool:
         pool.map(Run_optuna_optimization, [config]*nworkers)

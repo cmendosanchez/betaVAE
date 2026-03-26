@@ -1,7 +1,7 @@
 # @package _global_
-batch_size: None #16
-nb_epoch: None #150
-lr: None #2e-4 for CrossEntropy
+batch_size: None 
+nb_epoch: None 
+lr: None 
 loss: 'MSE'
 preproc: 'LogMinMax'
 sub_perc: None
