@@ -1,21 +1,21 @@
 #!/bin/bash
 #SBATCH --job-name=HCP_S.T.s._right_Comm
-#SBATCH -C v100-32g
-##SBATCH -C h100
+##SBATCH -C v100-32g
+#SBATCH -C h100
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=40
+#SBATCH --cpus-per-task=96
 #SBATCH --hint=nomultithread
 #SBATCH --time=10:00:00
 #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/Inference/HCP_S.T.s._right_Comm/HCP_S.T.s._right_Comm%j.out
 #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/Inference/HCP_S.T.s._right_Comm/HCP_S.T.s._right_Comm%j.out
 ##SBATCH -A miu@v100
-##SBATCH -A miu@h100
-#SBATCH -A miu@v100
+#SBATCH -A miu@h100
+##SBATCH -A miu@v100
 
 module purge
-##module load arch/h100
+#module load arch/h100
 module load pytorch-gpu/py3/2.8.0
 
 nvidia-smi

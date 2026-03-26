@@ -1,21 +1,21 @@
 #!/bin/bash
 #SBATCH --job-name=UKB_S.F.int.-F.C.M.ant._right_SWM
-#SBATCH -C v100-32g
-##SBATCH -C h100
+##SBATCH -C v100-32g
+#SBATCH -C h100
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=40
+#SBATCH --cpus-per-task=96
 #SBATCH --hint=nomultithread
 #SBATCH --time=10:00:00
 #SBATCH --output=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/Inference/UKB_S.F.int.-F.C.M.ant._right_SWM/UKB_S.F.int.-F.C.M.ant._right_SWM%j.out
 #SBATCH --error=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/Inference/UKB_S.F.int.-F.C.M.ant._right_SWM/UKB_S.F.int.-F.C.M.ant._right_SWM%j.out
 ##SBATCH -A miu@v100
-##SBATCH -A miu@h100
-#SBATCH -A miu@v100
+#SBATCH -A miu@h100
+##SBATCH -A miu@v100
 
 module purge
-##module load arch/h100
+#module load arch/h100
 module load pytorch-gpu/py3/2.8.0
 
 nvidia-smi
