@@ -276,7 +276,9 @@ def train_vae_optuna(config, trial,root_dir=None):
         for inputs, path in valloader:
             with torch.no_grad():
                 inputs = Variable(inputs).to(device, dtype=torch.float32)
-                output, z, logvar = vae(inputs)
+                z, logvar = model.encode(inputs) #no random sampling
+                output = model.decode(z)
+                #output, z, logvar = vae(inputs)
                 #print('tensor shape',inputs.shape,output.shape)
                 if config.loss == 'CrossEntropy':
                     target = torch.squeeze(inputs, dim=1).long()
@@ -309,21 +311,21 @@ def train_vae_optuna(config, trial,root_dir=None):
         if config.early_stopping == 1:
             early_stopping.check_early_stop(val_recon_loss, epoch,  vae, optimizer)
 
-        if early_stopping.stop_training:
-            affine = np.eye(4)
-            nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
-            nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
-            nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
-            nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+            if early_stopping.stop_training:
+                affine = np.eye(4)
+                nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
+                nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
+                nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
+                nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
 
-            resulting_auc, individual_auc = get_AUC(config, vae, device, criterion)
+                resulting_auc, individual_auc = get_AUC(config, vae, device, criterion)
 
-            for key,val in resulting_auc.items():
-                trial.set_user_attr(key, val)
+                for key,val in resulting_auc.items():
+                    trial.set_user_attr(key, val)
 
-            for key,val in individual_auc.items():
-                trial.set_user_attr(key, val)
-            break
+                for key,val in individual_auc.items():
+                    trial.set_user_attr(key, val)
+                break
         
         if epoch == config.nb_epoch:
             affine = np.eye(4)
