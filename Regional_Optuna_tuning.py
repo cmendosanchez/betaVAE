@@ -227,7 +227,7 @@ def train(config):
     study = optuna.load_study(
         study_name="journal_storage_multiprocess",
         storage=storage)
-    print(f'{bcolors.CYAN}Best trial: {study.best_trial}')
+    print(f'{bcolors.CYAN}Best trial: {study.best_trial}{bcolors.RESET}')
 
 if __name__ == '__main__':
     train()

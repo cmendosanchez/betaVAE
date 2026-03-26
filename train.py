@@ -61,13 +61,14 @@ def linear_weights(n):
 def get_AUC(config, vae, device, criterion):
     
     print(f'{bcolors.BG_RED} Launching Normal/Anomaly classification {bcolors.RESET}')
+    vae.eval()
     resulting_aucs  = {}
     individual_aucs = {'Underconnectivity_list' : [] , 'Overconnectivity_list' : [] }
- 
+    
     for Anomaly in ['Underconnectivity','Overconnectivity']:
         try:
             aucs_list = []
-            class_subjects       = read_one_column_tsv(config.Class_val_list)
+            class_subjects = read_one_column_tsv(config.Class_val_list)
             mid = int(len(class_subjects) // 2)
             normal_group = class_subjects[:mid]
             anomaly_group = class_subjects[mid:]
@@ -77,19 +78,14 @@ def get_AUC(config, vae, device, criterion):
             for inputs, path in normal_loader:
                 with torch.no_grad():
                     inputs = Variable(inputs).to(device, dtype=torch.float32)
-                    output, z, logvar = vae(inputs)
+                    z, logvar = vae.encode(inputs) #no random sampling
+                    output = vae.decode(z)
                     embeddings_normal.append(z.cpu().numpy())
-                    if config.loss == 'CrossEntropy':
-                        target = torch.squeeze(inputs, dim=1).long()
-                        partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, target, z, logvar, criterion, kl_weight=config.kl)
-                        output = torch.argmax(output, dim=1)
 
-                    elif config.loss == 'MSE':
-                        partial_recon_loss_anom, partial_kl_val, loss = vae_loss(output, inputs, z, logvar, criterion, kl_weight=config.kl) 
-            
             embeddings_normal = np.vstack(embeddings_normal)
             y_normal = np.asarray([0]*len(normal_loader.dataset)).reshape(-1)
-
+            print('Embeddings normal shape',embeddings_normal.shape,'y shape',y_normal.shape)
+            
             anomaly_group = class_subjects[mid:]
             with open(f'{config.path_stats}{Anomaly}_{config.Criteria}.pkl', 'rb') as file:
                 results = pickle.load(file)
@@ -106,25 +102,25 @@ def get_AUC(config, vae, device, criterion):
             min_bundles = df['Bundles'].min()
             max_bundles = df['Bundles'].max()
             
-            errors_weights = linear_weights(max_bundles)
-            print(f'max min bundles: {max_bundles} {min_bundles}')
             auc_weights = linear_weights(max_bundles)
             for nbun in range(1,max_bundles+1):
                 embeddings_anomaly = []
                 anomaly_subset, nsubjects = create_subset_for_anomaly(config,Anomaly,anomaly_group,nbun)
-                print(f'Nbundles {nbun} Nsubjects {nsubjects}')
                 anom_loader = torch.utils.data.DataLoader(anomaly_subset,batch_size=32,num_workers=4, shuffle=False)
                 for inputs, path in anom_loader:
                     with torch.no_grad():
                         inputs = Variable(inputs).to(device, dtype=torch.float32)
-                        output, z, logvar = vae(inputs)
+                        z, logvar = vae.encode(inputs)
                         embeddings_anomaly.append(z.cpu().numpy())
 
                 embeddings_anomaly = np.vstack(embeddings_anomaly)
-                y_anomaly = np.asarray([1]*nsubjects).reshape(-1)
+                y_anomaly = np.asarray([1]*len(anom_loader.dataset)).reshape(-1)
+                print('Embeddings anomaly shape',embeddings_anomaly.shape,'y shape',y_anomaly.shape)
 
                 X = np.vstack((embeddings_normal, embeddings_anomaly))
                 y = np.concatenate((y_normal, y_anomaly))
+
+                print('X y shape',X.shape,'y shape',y.shape)
 
                 kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
                 aucs = []
