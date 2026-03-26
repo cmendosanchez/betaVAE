@@ -276,8 +276,8 @@ def train_vae_optuna(config, trial,root_dir=None):
         for inputs, path in valloader:
             with torch.no_grad():
                 inputs = Variable(inputs).to(device, dtype=torch.float32)
-                z, logvar = model.encode(inputs) #no random sampling
-                output = model.decode(z)
+                z, logvar = vae.encode(inputs) #no random sampling
+                output = vae.decode(z)
                 #output, z, logvar = vae(inputs)
                 #print('tensor shape',inputs.shape,output.shape)
                 if config.loss == 'CrossEntropy':
