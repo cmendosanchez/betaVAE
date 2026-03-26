@@ -706,6 +706,10 @@ def train_vae_model(config, root_dir=None):
             nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
             nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
             nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+            data_dict = {'LossTrain': list_loss_train,'klTrain':list_kl_loss_train,'ReconTrain':list_recon_loss_train,
+            'LossVal':list_recon_loss_val,'klVal':list_kl_loss_val,'ReconVal':list_loss_val}
+            for key,val in data_dict.items():
+                np.save(f'{config.save_dir}{key}.npy',np.asarray(val))
             break
 
         if epoch == config.nb_epoch:
