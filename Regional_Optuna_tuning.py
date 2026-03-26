@@ -223,7 +223,12 @@ def train(config):
         pool.map(Run_optuna_optimization, [config]*nworkers)
 
     print("--- Optuna optimization finish in %s seconds ---" % (time.time() - start_time))
-     
+    storage = JournalStorage(JournalFileBackend(f"{config.optuna_folder}/journal.log"))
+    study = optuna.load_study(
+        study_name="journal_storage_multiprocess",
+        storage=storage)
+    print(f'{bcolors.CYAN}Best trial: {study.best_trial}')
+
 if __name__ == '__main__':
     train()
 
