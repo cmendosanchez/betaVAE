@@ -127,7 +127,7 @@ def main():
                 ##SBATCH -A miu@v100
 
                 module purge
-                #module load arch/h100
+                module load arch/h100
                 module load pytorch-gpu/py3/2.8.0
 
                 nvidia-smi
