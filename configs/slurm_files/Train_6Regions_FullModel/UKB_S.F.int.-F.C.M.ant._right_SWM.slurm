@@ -30,4 +30,4 @@ set -x
 cd $WORK
 cd PhD_2026/betaVAE
 
-python3 Train_full_model.py +save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/UKB_S.F.int.-F.C.M.ant._right_SWM/ +dataset=UKB_Train_6Regions/UKB_S.F.int.-F.C.M.ant._right_SWM +patience=5 +delta=150.0 +dataset_folder=/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions +path_model=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/UKB_S.F.int.-F.C.M.ant._right_SWM/model.pt n=256 kl=1.111655667068466 lr=0.000922 batch_size=32 weight_decay=0.00189 nb_epoch=50
+python3 Train_full_model.py +save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/UKB_S.F.int.-F.C.M.ant._right_SWM/ +dataset=UKB_Train_6Regions/UKB_S.F.int.-F.C.M.ant._right_SWM +dataset_folder=/lustre/fsn1/projects/rech/miu/ugf68us/PhD_2026/Crops_6Regions +path_model=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/UKB_S.F.int.-F.C.M.ant._right_SWM/model.pt +early_stopping=0 n=128 kl=1.4144228313367473 lr=7.61e-05 batch_size=32 weight_decay=1.76e-07 nb_epoch=20

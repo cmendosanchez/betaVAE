@@ -386,7 +386,8 @@ def train_vae_model(config, root_dir=None):
 
     #optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
     optimizer = torch.optim.AdamW(vae.parameters(), lr=lr, weight_decay=weight_decay)
-    early_stopping = EarlyStopping(patience=config.patience, delta=config.delta, verbose=True, save_best=True,path=config.path_model, start_epoch=5)
+    if config.early_stopping == 1:
+        early_stopping = EarlyStopping(patience=config.patience, delta=config.delta, verbose=True, save_best=True,path=config.path_model, start_epoch=5)
 
     list_loss_train, list_kl_loss_train, list_recon_loss_train = [], [], []
     list_loss_val, list_kl_loss_val, list_recon_loss_val = [], [], []
@@ -502,19 +503,19 @@ def train_vae_model(config, root_dir=None):
         list_kl_loss_val.append(val_kl_loss)
         list_loss_val.append(val_running_loss)
 
-        early_stopping.check_early_stop(val_recon_loss, epoch, vae, optimizer)
-
-        if early_stopping.stop_training:
-            affine = np.eye(4)
-            nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
-            nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
-            nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
-            nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
-            data_dict = {'LossTrain': list_loss_train,'klTrain':list_kl_loss_train,'ReconTrain':list_recon_loss_train,
-            'LossVal':list_recon_loss_val,'klVal':list_kl_loss_val,'ReconVal':list_loss_val}
-            for key,val in data_dict.items():
-                np.save(f'{config.save_dir}{key}.npy',np.asarray(val))
-            break
+        if config.early_stopping == 1:
+            early_stopping.check_early_stop(val_recon_loss, epoch, vae, optimizer)
+            if early_stopping.stop_training:
+                affine = np.eye(4)
+                nifti_input  = nib.Nifti1Image(np.array(np.squeeze(inputs[0]).cpu().detach().numpy()), affine)
+                nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
+                nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
+                nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+                data_dict = {'LossTrain': list_loss_train,'klTrain':list_kl_loss_train,'ReconTrain':list_recon_loss_train,
+                'LossVal':list_recon_loss_val,'klVal':list_kl_loss_val,'ReconVal':list_loss_val}
+                for key,val in data_dict.items():
+                    np.save(f'{config.save_dir}{key}.npy',np.asarray(val))
+                break
 
         if epoch == config.nb_epoch:
             affine = np.eye(4)
@@ -522,11 +523,11 @@ def train_vae_model(config, root_dir=None):
             nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
             nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
             nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
+            
             torch.save({
                 "epoch": epoch,
                 "model_state_dict": vae.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict()}, config.path_model)
-
 
             data_dict = {'LossTrain': list_loss_train,'klTrain':list_kl_loss_train,'ReconTrain':list_recon_loss_train,
             'LossVal':list_recon_loss_val,'klVal':list_kl_loss_val,'ReconVal':list_loss_val}

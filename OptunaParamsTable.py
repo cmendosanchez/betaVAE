@@ -9,7 +9,7 @@ from optuna.trial import TrialState
 from collections import defaultdict
 import numpy as np
 
-#python OptunaParamsTable.py ../../../../OptunaResults --study-name journal_storage_multiprocess  --out ../../../../OptunaResults/summary.csv --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left  --modes SWM DWM Comm
+#python3 OptunaParamsTable.py ../../../../OptunaResults --study-name journal_storage_multiprocess  --out ../../../../OptunaResults/summary.csv --regions S.C.-sylv._left S.C.-sylv._right S.T.s._left S.T.s._right S.F.int.-F.C.M.ant._right S.F.int.-F.C.M.ant._left  --modes SWM DWM Comm
 
 def avg_auc(t):
     over_auc = t.user_attrs.get("Overconnectivity")
@@ -45,9 +45,7 @@ def main():
     parser.add_argument("--modes", nargs="+", default=["SWM", "DWM", "Comm"])
     parser.add_argument("--out", default="optuna_summary.csv")
 
-
     args = parser.parse_args()
-
 
     best_params = {}
 
@@ -76,8 +74,7 @@ def main():
             # Ordenar trials por valor objetivo (mayor es mejor; usa reverse=False si minimizas)
             completed_trials = sorted(
                 completed_trials,
-                key=lambda t: t.value
-            )[0:5]
+                key=lambda t: t.value)[0:3]
             #top_trials = sorted(study.trials, key=lambda t: t.value, reverse=True)[:3]
 
             for t in completed_trials:
@@ -111,6 +108,7 @@ def main():
             rows.append(row)
 
     df = pd.DataFrame(rows)
+    print(df)
     df["Learning Rate"] = df["Learning Rate"].map("{:.2e}".format)
     df["Weight decay"]  = df["Weight decay"].map("{:.2e}".format)
     print(df)

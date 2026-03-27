@@ -43,7 +43,6 @@ def parse_args():
         help="List of region names"
     )
 
-
     parser.add_argument(
         "--output",
         required=True,
@@ -82,6 +81,13 @@ def parse_args():
         default=50,
         help="Number of epochs"
     )
+
+    parser.add_argument(
+    "--early_stop",
+    type=int,
+    default=1,
+    required=True,
+    help="Activate early stopping")
 
     parser.add_argument(
         "--patience",
@@ -124,6 +130,7 @@ def main():
     delta          = args.delta
     epochs         = args.epochs
     path_params    = args.path_params
+    early_stop     = args.early_stop
 
     os.makedirs(output, exist_ok=True)
     for database in databases:
@@ -146,20 +153,36 @@ def main():
                 #job_name = f'{config_name}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}'
                 job_name = f'{config_name}'
                 print(f'{bcolors.GREEN}Writing {config_name}{bcolors.RESET}')
-                python_call = (
-                    f"python3 Train_full_model.py "
-                    f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/{job_name}/ "
-                    f"+dataset=UKB_Train_{train_tag}/{config_name} "
-                    f"+patience={patience} "
-                    f"+delta={delta} "
-                    f"+dataset_folder={dataset_folder} "
-                    f"+path_model=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/{job_name}/model.pt "
-                    f"n={ndims} "
-                    f"kl={beta} "
-                    f"lr={lr} "
-                    f"batch_size={batch_size} "
-                    f"weight_decay={weight_decay} "
-                    f"nb_epoch={epochs}")
+                if early_stop == 1:
+                    python_call = (
+                        f"python3 Train_full_model.py "
+                        f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/{job_name}/ "
+                        f"+dataset=UKB_Train_{train_tag}/{config_name} "
+                        f"+early_stopping={early_stop} "
+                        f"+patience={patience} "
+                        f"+delta={delta} "
+                        f"+dataset_folder={dataset_folder} "
+                        f"+path_model=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/{job_name}/model.pt "
+                        f"n={ndims} "
+                        f"kl={beta} "
+                        f"lr={lr} "
+                        f"batch_size={batch_size} "
+                        f"weight_decay={weight_decay} "
+                        f"nb_epoch={epochs}")
+                else:
+                    python_call = (
+                        f"python3 Train_full_model.py "
+                        f"+save_dir=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/{job_name}/ "
+                        f"+dataset=UKB_Train_{train_tag}/{config_name} "
+                        f"+dataset_folder={dataset_folder} "
+                        f"+path_model=/lustre/fswork/projects/rech/miu/ugf68us/PhD_2026/betaVAE/FullModels/{job_name}/model.pt "
+                        f"+early_stopping={early_stop} "
+                        f"n={ndims} "
+                        f"kl={beta} "
+                        f"lr={lr} "
+                        f"batch_size={batch_size} "
+                        f"weight_decay={weight_decay} "
+                        f"nb_epoch={epochs}")
 
                 script = textwrap.dedent(f"""\
                 #!/bin/bash
