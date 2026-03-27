@@ -208,7 +208,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
             print(f'{bcolors.RED} Launching Normal/Anomaly classification {bcolors.RESET}')
             resulting_aucs[Anomaly] = {}
 
-            for shuffle_i in range(1,10):
+            for shuffle_i in range(1,11):
                 random.shuffle(test_anom_subjects)
                 mid = int(len(test_anom_subjects) // 2)
                 normal_group  = test_anom_subjects[:mid]
