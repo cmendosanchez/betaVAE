@@ -473,7 +473,8 @@ def train_vae_model(config, root_dir=None):
         for inputs, path in valloader:
             with torch.no_grad():
                 inputs = Variable(inputs).to(device, dtype=torch.float32)
-                output, z, logvar = vae(inputs)
+                z, logvar = vae.encode(inputs) #no random sampling
+                output = vae.decode(z)
                 #print('tensor shape',inputs.shape,output.shape)
                 if config.loss == 'CrossEntropy':
                     target = torch.squeeze(inputs, dim=1).long()
@@ -523,7 +524,7 @@ def train_vae_model(config, root_dir=None):
             nifti_output = nib.Nifti1Image(np.array(np.squeeze(output[0]).cpu().detach().numpy()), affine)
             nib.save(nifti_input  , f'{config.save_dir}input.nii.gz')
             nib.save(nifti_output , f'{config.save_dir}output.nii.gz')
-            
+
             torch.save({
                 "epoch": epoch,
                 "model_state_dict": vae.state_dict(),
