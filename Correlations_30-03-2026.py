@@ -106,7 +106,7 @@ parameters = {
 n_jobs=24
 
 dataset_localization = '/neurospin/dico/data/deep_folding/current/datasets/' # Jean Zay : '/lustre/fswork/projects/rech/tgu/umy22uu/Runs/70_self-supervised_two-regions/Input/'
-hemisphere = 'right'  # 'left' or 'right'
+hemisphere = 'left'  # 'left' or 'right'
 labels_dir = f'{dataset_localization}/hcp/hcp_isomap_labels_STs_{hemisphere}.csv'
 label_list = [f'Isomap_sts_{hemisphere}_dim{k}' for k in range(1,7)]
 splits_basedir = f'{dataset_localization}/hcp/Isomap/splits/train_val_split_'
