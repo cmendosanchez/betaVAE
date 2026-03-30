@@ -252,13 +252,18 @@ df_expanded = pd.concat([fibers_embds.drop(columns=['dim_1']), dims], axis=1)
 
 print(champo_embds,df_expanded)
 
+# Set ID as index
 df1 = champo_embds.set_index('ID')
 df2 = df_expanded.set_index('ID')
 
-
-# Align both dataframes on the same IDs and order
-df1, df2 = df1.align(df2, join='inner')
 print(df1,df2)
+# Find common IDs
+common_ids = df1.index.intersection(df2.index)
+
+# Align rows ONLY (preserve original columns)
+df1 = df1.loc[common_ids]
+df2 = df2.loc[common_ids]
+
 
 X1 = df1.values
 X2 = df2.values
