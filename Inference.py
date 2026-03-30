@@ -174,6 +174,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     print(f"{bcolors.MAGENTA}--- Embeddings and Recon Error computed in {time.time() - start} seconds ---{bcolors.RESET}")
     embeddings = np.asarray(embeddings_list)
     recon_error = np.asarray(recon_error_list)
+    print('Embeddings shape',embeddings.shape)
     # ---- Embeddings dataframe ----
     columns = ["subject"] + [f"dim_{i}" for i in range(1,embeddings.shape[1]+1)]
     df_embeddings = pd.DataFrame(
