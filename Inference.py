@@ -175,7 +175,7 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     embeddings = np.asarray(embeddings_list)
     recon_error = np.asarray(recon_error_list)
     print('Embeddings shape',embeddings.shape)
-    embeddings_normal = embeddings_normal.squeeze(1)
+    embeddings = embeddings.squeeze(1)
     
     # ---- Embeddings dataframe ----
     columns = ["subject"] + [f"dim_{i}" for i in range(1,embeddings.shape[1]+1)]

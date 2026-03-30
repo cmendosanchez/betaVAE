@@ -11,6 +11,7 @@ import seaborn as sns
 from sklearn.model_selection import StratifiedKFold
 from sklearn import svm
 from sklearn.metrics import roc_curve, roc_auc_score,auc
+from sklearn.cross_decomposition import CCA
 
 
 
@@ -106,9 +107,9 @@ parameters = {
 n_jobs=24
 
 dataset_localization = '/neurospin/dico/data/deep_folding/current/datasets/' # Jean Zay : '/lustre/fswork/projects/rech/tgu/umy22uu/Runs/70_self-supervised_two-regions/Input/'
-hemisphere = 'left'  # 'left' or 'right'
-labels_dir = f'{dataset_localization}/hcp/hcp_isomap_labels_STs_{hemisphere}.csv'
-label_list = [f'Isomap_sts_{hemisphere}_dim{k}' for k in range(1,7)]
+hemisphere = 'right'  # 'left' or 'right'
+labels_dir = f'{dataset_localization}/hcp/hcp_isomap_labels_SC-sylv_{hemisphere}.csv'
+label_list = [f'Isomap_central_{hemisphere}_dim{k}' for k in range(1,7)]
 splits_basedir = f'{dataset_localization}/hcp/Isomap/splits/train_val_split_'
 test_subs_dir = f'{dataset_localization}/hcp/Isomap/splits/test_split.csv'
 subject_name = 'Subject'
@@ -116,9 +117,9 @@ subject_name = 'Subject'
 
 
 #models = [f'/neurospin/dico/cmendoza/Inference/HCP_S.C.-sylv._{hemisphere}_SWM/embeddings_allsubs.csv']
-models = [f'/neurospin/dico/cmendoza/Inference/HCP_S.T.s._{hemisphere}_SWM/embeddings_allsubs.csv']
+models = [f'/neurospin/dico/cmendoza/Inference/HCP_S.C.-sylv._{hemisphere}_SWM/embeddings_allsubs.csv']
 res = {}
-for embds_dir in models:
+""" for embds_dir in models:
 
 
     df = pd.read_csv(embds_dir)
@@ -142,7 +143,9 @@ for embds_dir in models:
 
     # load embeddings
     embds = df_expanded
+    #embds = pd.read_csv('/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation/SC-sylv_right/name06-17-02_84/hcp_random_embeddings/full_embeddings.csv')
     embds.columns = ['ID'] + [f'dim{i}' for i in range(embds.shape[1]-1)]
+
     # remove duplicates
     embds = embds.drop_duplicates(subset=['ID'])
     # load labels
@@ -153,6 +156,10 @@ for embds_dir in models:
     labels = labels[labels[subject_name].isin(embds['ID'])].reset_index(drop=True)
     print('labels:',labels)
 
+
+    
+
+
     # align labels and embds on 'ID'
     labels = labels.merge(embds[['ID']], left_on=subject_name, right_on='ID', how='right')
     # order all by ID
@@ -160,6 +167,9 @@ for embds_dir in models:
     labels = labels.sort_values(by='ID').reset_index(drop=True)
     subjects = embds['ID']
     print('Embeddings after merging',embds)
+
+    
+
 
 
     # define X, Y and subjects
@@ -203,7 +213,7 @@ for embds_dir in models:
         cv = [*(logo.split(X_train_val, Y_train_val, groups=groups))]
         # define model
         model = ElasticNet()
-        clf = GridSearchCV(model, parameters, cv=cv, scoring='r2', refit=True, n_jobs=n_jobs)
+        clf = GridSearchCV(model, parameters, cv=cv, scoring='r2', refit=True, n_jobs=n_jobs,verbose=0)
 
         # fit cross-validation
         clf.fit(X_train_val,Y_train_val)
@@ -227,4 +237,42 @@ for embds_dir in models:
     print(f'Mean test R2 across labels: {mean_test_r2:.3f}')
     res[embds_dir]=mean_cross_val_r2
 
-print(res)
+print(res) """
+
+hemisphere='right'
+champo_embds = pd.read_csv(f'/neurospin/dico/data/deep_folding/current/models/Champollion_V1_after_ablation_latent_256/SC-sylv_{hemisphere}/name09-42-54_107/ukb40_random_embeddings/full_embeddings.csv')
+fibers_embds = pd.read_csv(f'/neurospin/dico/cmendoza/Inference/UKB_S.C.-sylv._{hemisphere}_SWM/embeddings_allsubs.csv')
+fibers_embds = fibers_embds.rename(columns={'subject': 'ID'})
+fibers_embds['dim_1'] = fibers_embds['dim_1'].apply(ast.literal_eval)
+dims = pd.DataFrame(fibers_embds['dim_1'].tolist(), index=fibers_embds.index)
+# Rename columns (optional)
+dims.columns = [f'dim{i+1}' for i in range(dims.shape[1])]
+# Concatenate with original dataframe (dropping old column if you want)
+df_expanded = pd.concat([fibers_embds.drop(columns=['dim_1']), dims], axis=1)
+
+print(champo_embds,df_expanded)
+
+df1 = champo_embds.set_index('ID')
+df2 = df_expanded.set_index('ID')
+
+
+# Align both dataframes on the same IDs and order
+df1, df2 = df1.align(df2, join='inner')
+print(df1,df2)
+
+X1 = df1.values
+X2 = df2.values
+print(X1,X1.shape,X2,X2.shape)
+
+
+scaler1 = StandardScaler()
+scaler2 = StandardScaler()
+
+X1 = scaler1.fit_transform(X1)
+X2 = scaler2.fit_transform(X2)
+
+cca = CCA(n_components=10)
+E1_c, E2_c = cca.fit_transform(X1, X2)
+
+corrs = [np.corrcoef(E1_c[:,i], E2_c[:,i])[0,1] for i in range(10)]
+print(np.mean(corrs))
