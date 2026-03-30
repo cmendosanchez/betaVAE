@@ -175,11 +175,14 @@ def run(model_dir, region, criteria, outdir, subjects, data, database):
     embeddings = np.asarray(embeddings_list)
     recon_error = np.asarray(recon_error_list)
     print('Embeddings shape',embeddings.shape)
+    embeddings_normal = embeddings_normal.squeeze(1)
+    
     # ---- Embeddings dataframe ----
     columns = ["subject"] + [f"dim_{i}" for i in range(1,embeddings.shape[1]+1)]
     df_embeddings = pd.DataFrame(
         data=[[subj] + emb.tolist() for subj, emb in zip(subs_ids, embeddings)],
         columns=columns)
+    print(df_embeddings)
     df_embeddings.to_csv(f"{outdir}/embeddings_allsubs.csv", index=False)
     # ---- Reconstruction error dataframe ----
     # Case 1: scalar error per subject
